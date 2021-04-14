@@ -1,5 +1,4 @@
-#!/Users/robertpoenaru/.pyenv/shims/python
-#!/usr/bin/python3
+#!/usr/bin/env python
 
 import numpy as np
 import numpy.random as rd
@@ -9,6 +8,7 @@ import os
 import platform
 import psutil
 import uuid
+
 
 
 log_file = '/tmp/system_info_pysym.log'
@@ -83,6 +83,7 @@ def Log_Line():
 while(True):
     #     Log_Line()
     print(Get_Network_Usage())
+
 
 # print(psutil.virtual_memory()[0] / 1024. / 1024. / 1024.)
 # print(psutil.virtual_memory()[1] / 1024. / 1024. / 1024.)
