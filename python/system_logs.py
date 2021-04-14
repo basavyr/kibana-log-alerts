@@ -9,10 +9,12 @@ import platform
 import psutil
 import uuid
 
+OS = os.uname()[0]
 
-
-log_file = '/tmp/system_info_pysym.log'
-test_file = 'system_info_pysym.log'
+if(OS == 'Darwin'):
+    log_file = 'system_info_pysym.log'
+else:
+    log_file = '/tmp/system_info_pysym.log'
 
 
 k_bytes = lambda value: value / 1024.
@@ -31,7 +33,7 @@ def Get_Network_Usage():
     net_out2 = net().bytes_sent
     traffic = list(map(k_bytes, [
                    (net_in2 - net_in1) / TIME_WINDOW, (net_out2 - net_out1) / TIME_WINDOW]))
-    return(f'network_in:{traffic[0]}KB/s network_out:{traffic[1]}KB/s')
+    return(f'network_in:{traffic[0]} KB/s network_out:{traffic[1]} KB/s')
 
 
 def Get_CPU_Usage():
@@ -60,7 +62,7 @@ def Get_Disk_Usage():
     disk_io_write = disk_io_write_2 - disk_io_write_1
 
     disk_io = list(map(k_bytes, [disk_io_write, disk_io_read]))
-    return(f'disk_write:{disk_io[0]}KB/s disk_read:{disk_io[1]}KB/s')
+    return(f'disk_write:{disk_io[0]} KB/s disk_read:{disk_io[1]} KB/s')
 
 
 def Get_Memory_Usage():
@@ -76,13 +78,14 @@ def Log_Line():
     TIME_STAMP = datetime.utcnow()
     UUID = uuid.uuid4()
     SYSTEM = f'{platform.processor()}-{platform.architecture()[0]}'
-    log_line = f'{TIME_STAMP} cpu:{CPU}% mem:{MEMORY}% {DISK} {NETWORK} sys:{SYSTEM}'
+    log_line = f'{TIME_STAMP} cpu:{CPU} % mem:{MEMORY} % {DISK} {NETWORK} os:{OS} sys:{SYSTEM}'
     return(log_line)
 
 
 while(True):
-    #     Log_Line()
-    print(Get_Network_Usage())
+    line = Log_Line()
+    with open(log_file, 'a+') as logger:
+        logger.write(line + '\n')
 
 
 # print(psutil.virtual_memory()[0] / 1024. / 1024. / 1024.)

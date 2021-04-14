@@ -1,3 +1,11 @@
-2021-04-14 03:57:27.839245 14-4-1 i386-64bit
-2021-04-14 03:57:29.851445 14-4-1 i386-64bit
-2021-04-14 03:57:31.862016 14-4-1 i386-64bit
+2021-04-14 07:54:39.517478 cpu:100.0 % mem:58.4 % disk_write:468.0 KB/s disk_read:0.0 KB/s network_in:1.0 KB/s network_out:1.0 KB/s os:Darwin sys:i386-64bit
+2021-04-14 07:54:41.542850 cpu:4.6 % mem:58.5 % disk_write:52.0 KB/s disk_read:0.0 KB/s network_in:36.0 KB/s network_out:27.0 KB/s os:Darwin sys:i386-64bit
+2021-04-14 07:54:43.558177 cpu:4.9 % mem:58.5 % disk_write:840.0 KB/s disk_read:0.0 KB/s network_in:26.0 KB/s network_out:13.0 KB/s os:Darwin sys:i386-64bit
+2021-04-14 07:54:45.571957 cpu:4.4 % mem:58.5 % disk_write:0.0 KB/s disk_read:0.0 KB/s network_in:0.0 KB/s network_out:2.0 KB/s os:Darwin sys:i386-64bit
+2021-04-14 07:54:47.588694 cpu:3.9 % mem:58.5 % disk_write:28.0 KB/s disk_read:0.0 KB/s network_in:19.0 KB/s network_out:18.0 KB/s os:Darwin sys:i386-64bit
+2021-04-14 07:54:49.603763 cpu:5.6 % mem:58.5 % disk_write:904.0 KB/s disk_read:4.0 KB/s network_in:0.0 KB/s network_out:0.0 KB/s os:Darwin sys:i386-64bit
+2021-04-14 07:54:51.617956 cpu:4.8 % mem:58.5 % disk_write:0.0 KB/s disk_read:0.0 KB/s network_in:105.0 KB/s network_out:10.0 KB/s os:Darwin sys:i386-64bit
+2021-04-14 07:54:53.636184 cpu:4.3 % mem:58.5 % disk_write:980.0 KB/s disk_read:0.0 KB/s network_in:16.0 KB/s network_out:16.0 KB/s os:Darwin sys:i386-64bit
+2021-04-14 07:54:55.654011 cpu:4.9 % mem:58.4 % disk_write:300.0 KB/s disk_read:0.0 KB/s network_in:0.0 KB/s network_out:1.0 KB/s os:Darwin sys:i386-64bit
+2021-04-14 07:54:57.675230 cpu:4.7 % mem:58.4 % disk_write:64.0 KB/s disk_read:0.0 KB/s network_in:9.0 KB/s network_out:8.0 KB/s os:Darwin sys:i386-64bit
+2021-04-14 07:54:59.695769 cpu:4.6 % mem:58.4 % disk_write:516.0 KB/s disk_read:0.0 KB/s network_in:16.0 KB/s network_out:17.0 KB/s os:Darwin sys:i386-64bit
