@@ -22,16 +22,16 @@ g_bytes = lambda value: value / 1024. / 1024. / 1024.
 
 def Get_Network_Usage():
     TIME_WINDOW = 1
-    inf = "en0"
-    net = lambda: psutil.net_io_counters(pernic=True, nowrap=True)[inf]
+    # show the network information for the entire interface group
+    net = lambda: psutil.net_io_counters(pernic=False, nowrap=True)
     net_in1 = net().bytes_recv
     net_out1 = net().bytes_sent
     time.sleep(TIME_WINDOW)
     net_in2 = net().bytes_recv
     net_out2 = net().bytes_sent
-    traffic = ["in:", k_bytes((net_in2 - net_in1) / TIME_WINDOW), "out:",
-               k_bytes((net_out2 - net_out1) / TIME_WINDOW)]
-    return(traffic)
+    traffic = list(map(k_bytes, [
+                   (net_in2 - net_in1) / TIME_WINDOW, (net_out2 - net_out1) / TIME_WINDOW]))
+    return(f'network_in:{traffic[0]}KB/s network_out:{traffic[1]}KB/s')
 
 
 def Get_CPU_Usage():
@@ -40,13 +40,27 @@ def Get_CPU_Usage():
 
 
 def Get_Disk_Usage():
-    partition = '/System/Volumes/Data'
-    du = lambda: psutil.disk_usage(partition).percent
-    # du = lambda: psutil.disk_partitions()
-    # for du_item in du():
-        # print(du_item)
-    print(du())
-    # return(du())
+    # get the partitions of the current system
+    """ !!! Tested only on MacOS
+    """
+    # partitions = [partition[1] for partition in psutil.disk_partitions()]
+    # partition = partitions[0]
+    # du = lambda partition: psutil.disk_usage(partition)
+
+    # get disk info
+    disk_io_info = lambda: psutil.disk_io_counters(perdisk=False, nowrap=True)
+
+    disk_io_read_1 = disk_io_info().read_bytes
+    disk_io_write_1 = disk_io_info().write_bytes
+    time.sleep(1)
+    disk_io_read_2 = disk_io_info().read_bytes
+    disk_io_write_2 = disk_io_info().write_bytes
+
+    disk_io_read = disk_io_read_2 - disk_io_read_1
+    disk_io_write = disk_io_write_2 - disk_io_write_1
+
+    disk_io = list(map(k_bytes, [disk_io_write, disk_io_read]))
+    return(f'disk_write:{disk_io[0]}KB/s disk_read:{disk_io[1]}KB/s')
 
 
 def Get_Memory_Usage():
@@ -62,15 +76,13 @@ def Log_Line():
     TIME_STAMP = datetime.utcnow()
     UUID = uuid.uuid4()
     SYSTEM = f'{platform.processor()}-{platform.architecture()[0]}'
-    log_line = f'{TIME_STAMP} cpu:{CPU}% mem:{MEMORY}% disk_usage:{DISK}% net_in:{NETWORK[1]}KB/s net_out:{NETWORK[3]}KB/s sys:{SYSTEM}'
-    print(log_line)
-    time.sleep(1)
+    log_line = f'{TIME_STAMP} cpu:{CPU}% mem:{MEMORY}% {DISK} {NETWORK} sys:{SYSTEM}'
+    return(log_line)
 
 
-Get_Disk_Usage()
-
-# while(True):
-#     Log_Line()
+while(True):
+    #     Log_Line()
+    print(Get_Network_Usage())
 
 # print(psutil.virtual_memory()[0] / 1024. / 1024. / 1024.)
 # print(psutil.virtual_memory()[1] / 1024. / 1024. / 1024.)
