@@ -16,6 +16,8 @@ if(OS == 'Darwin'):
 else:
     log_file = '/tmp/system_info_pysym.log'
 
+#Generate a machine-id which will be changed after each script execution
+MACHINE_ID = uuid.uuid4()
 
 k_bytes = lambda value: value / 1024.
 m_bytes = lambda value: value / 1024. / 1024.
@@ -78,13 +80,14 @@ def Log_Line():
     TIME_STAMP = datetime.utcnow()
     UUID = uuid.uuid4()
     SYSTEM = f'{platform.processor()}-{platform.architecture()[0]}'
-    log_line = f'{TIME_STAMP} cpu:{CPU} % mem:{MEMORY} % {DISK} {NETWORK} os:{OS} sys:{SYSTEM}'
+    log_line = f'{TIME_STAMP} cpu:{CPU} % mem:{MEMORY} % {DISK} {NETWORK} machine-id:{MACHINE_ID} os:{OS} sys:{SYSTEM}'
     return(log_line)
 
 
 while(True):
     line = Log_Line()
     with open(log_file, 'a+') as logger:
+        print('Writing log-line to the file...')
         logger.write(line + '\n')
 
 
