@@ -27,11 +27,26 @@ def Get_Network_Usage(interval):
     net_out2 = net().bytes_sent
     traffic = [(net_in2 - net_in1) / TIME_WINDOW,
                (net_out2 - net_out1) / TIME_WINDOW]
-    print(list(map(gbytes, traffic)))
+    return(list(map(gbytes, traffic)))
 
 
-while(True):
-    Get_Network_Usage(5)
+def Get_CPU_Usage():
+    cpu_usage = lambda: psutil.cpu_percent()
+    print(cpu_usage())
+    time.sleep(1)
+
+
+def Disk_Usage():
+    du = lambda: psutil.disk_usage("/")
+    print(du())
+    time.sleep(1)
+
+
+def Memory_Usage():
+    mu_percentage = lambda: psutil.virtual_memory()[2]
+    print(mu_percentage())
+    time.sleep(1)
+
 
 # print(psutil.virtual_memory()[0] / 1024. / 1024. / 1024.)
 # print(psutil.virtual_memory()[1] / 1024. / 1024. / 1024.)
