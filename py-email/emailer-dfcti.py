@@ -6,68 +6,70 @@ import smtplib
 import ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-
-port = 465  # For SSL
-
-root_email = 'alerts.dfcti@gmail.com'
-destination_emails = ['robert.poenaru@outlook.com',
-                      'robert.poenaru@gmail.com', 'robert.poenaru@drd.unibuc.ro']
-
-# get the password for the g-mail dev account
-password = open('pass.word', 'r').read()
+import datetime
 
 
-message = MIMEMultipart("alternative")
-message["Subject"] = "Alert via DFCTI system"
-message["From"] = root_email
-message["To"] = ', '.join(destination_emails)
+def Get_Email_List(email_list):
+    EMAIL_LIST = []
+    return EMAIL_LIST
 
 
-text = """\
-Hi,
-How are you?
-Real Python has many great tutorials:
-www.realpython.com"""
+def Get_Message(html_file):
+    HTML_CONTENT = open(html_file, 'r').read()
+    return HTML_CONTENT
 
 
-html = open('message.html', 'r').read()
+def Send_Email(email_list, email_content, alert_state):
+    PORT = 465  # For SSL
+    ROOT_EMAIL = 'alerts.dfcti@gmail.com'
 
-SEND = True
+    # get the password for the g-mail dev account
+    PASSWORD = open('pass.word', 'r').read()
 
-IN_SEND = True
+    message = MIMEMultipart("alternative")
+    message["Subject"] = f'{datetime.datetime.utcnow()} - Alert via DFCTI monitoring system'
+    message["From"] = ROOT_EMAIL
 
-if(SEND):
-    # Turn these into plain/html MIMEText objects
-    # part1 = MIMEText(text, "plain")
-    html_message = MIMEText(html, "html")
+    # https://stackoverflow.com/questions/38151440/can-anyone-tell-my-why-im-getting-the-error-attributeerror-list-object-has
+    message["To"] = ', '.join(email_list)
 
-    # Add HTML/plain-text parts to MIMEMultipart message
-    # The email client will try to render the last part first
-    # message.attach(part1)
-    message.attach(html_message)
+    IN_SEND = False
 
-    # Create a secure SSL context
-    context = ssl.create_default_context()
+    if(alert_state == True):
+        print('Alert service started...⚙️')
+        if(len(email_list) == 0):
+            print('No clients to alert...')
+            return
+        HTML_MESSAGE = MIMEText(email_content, "html")
 
-    with smtplib.SMTP_SSL("smtp.gmail.com", port, context=context) as server:
-        try:
-            server.login(root_email, password)
-        except Exception as exc:
-            print('Cannot log-in!')
-            print(f'Reason: {exc}')
-        else:
-            print(f'Successful log-in into -> {root_email}')
-            print(f'Sending an e-mail to -> {destination_emails}...✉️')
-            for email in destination_emails:
-                if(IN_SEND):
-                    try:
-                        server.sendmail(root_email, email,
-                                        message.as_string())
-                    except Exception as exc:
-                        print(f'Cannot alert send message to {email}...')
-                        print(f'Reason: {exc}')
-                    else:
-                        print(f'Sent message to {email}!')
+        message.attach(HTML_MESSAGE)
 
-else:
-    print('Not sending e-mails...')
+        # Create a secure SSL context
+        CONTEXT = ssl.create_default_context()
+
+        with smtplib.SMTP_SSL("smtp.gmail.com", PORT, context=CONTEXT) as MAIL_SERVER:
+            try:
+                MAIL_SERVER.login(ROOT_EMAIL, PASSWORD)
+            except Exception as exc:
+                print(f'❌ Cannot log-in!')
+                print(f'Reason: {exc}')
+            else:
+                print(f'✅ Successful log-in into -> {ROOT_EMAIL}')
+                print(f'⚙️ Ready to send alerts to -> {email_list}')
+                for email in email_list:
+                    if(IN_SEND):
+                        try:
+                            MAIL_SERVER.sendmail(ROOT_EMAIL, email,
+                                                 message.as_string())
+                        except Exception as exc:
+                            print(f'❌ Cannot send alert to {email}...')
+                            print(f'Reason: {exc}')
+                        else:
+                            print(f'📤 Sent alert to {email}! ✅')
+    else:
+        print('Not sending any alerts...')
+
+
+html_content = Get_Message('message.html')
+Send_Email(['robert.poenaru@outlook.com'], html_content, True)
+Send_Email([], html_content, True)
