@@ -10,7 +10,9 @@ import datetime
 
 
 def Get_Email_List(email_list):
-    EMAIL_LIST = []
+    with open(email_list, 'r') as filer:
+        EMAIL_LIST = filer.readlines()
+    EMAIL_LIST = [x.strip() for x in EMAIL_LIST]
     return EMAIL_LIST
 
 
@@ -27,13 +29,13 @@ def Send_Email(email_list, email_content, alert_state):
     PASSWORD = open('pass.word', 'r').read()
 
     message = MIMEMultipart("alternative")
-    message["Subject"] = f'{datetime.datetime.utcnow()} - Alert via DFCTI monitoring system'
+    message["Subject"] = f'{str(datetime.datetime.utcnow())[:19]} - Alert via DFCTI monitoring system'
     message["From"] = ROOT_EMAIL
 
     # https://stackoverflow.com/questions/38151440/can-anyone-tell-my-why-im-getting-the-error-attributeerror-list-object-has
     message["To"] = ', '.join(email_list)
 
-    IN_SEND = False
+    IN_SEND = True
 
     if(alert_state == True):
         print('Alert service started...⚙️')
@@ -66,10 +68,14 @@ def Send_Email(email_list, email_content, alert_state):
                             print(f'Reason: {exc}')
                         else:
                             print(f'📤 Sent alert to {email}! ✅')
+                    else:
+                        print('Internal alert system is paused...')
+                        print(
+                            'Cannot send alerts at this time ------> #IN_SEND_VALUE:NULL')
     else:
         print('Not sending any alerts...')
 
 
 html_content = Get_Message('message.html')
-Send_Email(['robert.poenaru@outlook.com'], html_content, True)
-Send_Email([], html_content, True)
+email_list = Get_Email_List('email.list')
+Send_Email(email_list, html_content, True)
