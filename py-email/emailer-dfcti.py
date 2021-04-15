@@ -31,7 +31,7 @@ def Send_HTML_Email(email_list, html_content, alert_state):
     ROOT_EMAIL = 'alerts.dfcti@gmail.com'
 
     # get the password for the g-mail dev account
-    PASSWORD = open('pass.word', 'r').read()
+    PASSWORD = open('.password', 'r').read()
 
     message = MIMEMultipart("alternative")
     message["Subject"] = f'{str(datetime.datetime.utcnow())[:19]} - Alert via DFCTI monitoring system'
@@ -86,7 +86,7 @@ def Send_TEXT_Email(email_list, text_content, alert_state):
     ROOT_EMAIL = 'alerts.dfcti@gmail.com'
 
     # get the password for the g-mail dev account
-    PASSWORD = open('pass.word', 'r').read()
+    PASSWORD = open('.password', 'r').read()
 
     message = MIMEMultipart("alternative")
     message["Subject"] = f'{str(datetime.datetime.utcnow())[:19]} - Alert via DFCTI monitoring system'
@@ -136,10 +136,10 @@ def Send_TEXT_Email(email_list, text_content, alert_state):
         print('Not sending any alerts...')
 
 
-text_content = Get_TEXT_Message('message.text')
-html_content = Get_HTML_Message('message.html')
+text_content = Get_TEXT_Message('./messages/message.text')
+html_content = Get_HTML_Message('./messages/message.html')
 
-email_list = [Get_Email_List('email.list')[0]]
+email_list = [Get_Email_List('./emails/email.list')[0]]
 
 Send_HTML_Email(email_list, html_content, False)
 Send_TEXT_Email(email_list, text_content, True)
