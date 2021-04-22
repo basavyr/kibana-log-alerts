@@ -134,7 +134,6 @@ class Watcher:
     @classmethod
     def MeasureTime(self, time_window, time_steps):
         frequency = 1 / time_steps
-        print(frequency)
         counter = 0
         start_time = time.time()
         while(True):
@@ -150,7 +149,7 @@ class Watcher:
                 start_time = time.time()
 
 
-Watcher.MeasureTime(10, 2)
+Watcher.MeasureTime(10, 100)
 # Watcher().Monitor_CPU_Usage(45, 5)
 
 
