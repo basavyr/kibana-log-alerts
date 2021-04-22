@@ -26,7 +26,7 @@ def Get_HTML_Message(html_file):
     return HTML_CONTENT
 
 
-def Send_HTML_Email(email_list, html_content, alert_state):
+def Send_HTML_Email(email_list, html_content, alert_state='False'):
     PORT = 465  # For SSL
     ROOT_EMAIL = 'alerts.dfcti@gmail.com'
 
@@ -61,8 +61,8 @@ def Send_HTML_Email(email_list, html_content, alert_state):
                 print(f'❌ Cannot log-in!')
                 print(f'Reason: {exc}')
             else:
-                print(f'✅ Successful log-in into -> {ROOT_EMAIL}')
-                print(f'⚙️ Ready to send alerts to -> {email_list}')
+                print(f'🔐 Successful log-in into -> {ROOT_EMAIL}')
+                print(f'📤 Ready to send alerts to -> {email_list}')
                 for email in email_list:
                     if(IN_SEND):
                         try:
@@ -72,7 +72,7 @@ def Send_HTML_Email(email_list, html_content, alert_state):
                             print(f'❌ Cannot send alert to {email}...')
                             print(f'Reason: {exc}')
                         else:
-                            print(f'📤 Sent alert to {email}! ✅')
+                            print(f'🚀 Sent alert to {email} ! ✅')
                     else:
                         print('Internal alert system is paused...')
                         print(
@@ -81,7 +81,7 @@ def Send_HTML_Email(email_list, html_content, alert_state):
         print('Not sending any alerts...')
 
 
-def Send_TEXT_Email(email_list, text_content, alert_state):
+def Send_TEXT_Email(email_list, text_content, alert_state=False):
     PORT = 465  # For SSL
     ROOT_EMAIL = 'alerts.dfcti@gmail.com'
 
@@ -98,9 +98,9 @@ def Send_TEXT_Email(email_list, text_content, alert_state):
     IN_SEND = True
 
     if(alert_state == True):
-        print('TEXT-based alert service started...⚙️')
+        print('TEXT-based alert service started...')
         if(len(email_list) == 0):
-            print('No clients to alert...')
+            print('Empty client list! 🗑\nNo clients to alert...')
             return
         TEXT_MESSAGE = MIMEText(text_content, "plain")
 
@@ -116,8 +116,8 @@ def Send_TEXT_Email(email_list, text_content, alert_state):
                 print(f'❌ Cannot log-in!')
                 print(f'Reason: {exc}')
             else:
-                print(f'✅ Successful log-in into -> {ROOT_EMAIL}')
-                print(f'⚙️ Ready to send alerts to -> {email_list}')
+                print(f'🔐 Successful log-in into -> {ROOT_EMAIL}')
+                print(f'📤 Ready to send alerts to -> {email_list}')
                 for email in email_list:
                     if(IN_SEND):
                         try:
@@ -127,7 +127,7 @@ def Send_TEXT_Email(email_list, text_content, alert_state):
                             print(f'❌ Cannot send alert to {email}...')
                             print(f'Reason: {exc}')
                         else:
-                            print(f'📤 Sent alert to {email}! ✅')
+                            print(f'🚀 Sent alert to {email} ! ✅')
                     else:
                         print('Internal alert system is paused...')
                         print(
@@ -136,10 +136,6 @@ def Send_TEXT_Email(email_list, text_content, alert_state):
         print('Not sending any alerts...')
 
 
-text_content = Get_TEXT_Message('./messages/message.text')
-html_content = Get_HTML_Message('./messages/message.html')
-
-email_list = [Get_Email_List('./emails/email.list')[0]]
-
-Send_HTML_Email(email_list, html_content, False)
-Send_TEXT_Email(email_list, text_content, True)
+TEXT_CONTENT = Get_TEXT_Message('./messages/message.text')
+HTML_CONTENT = Get_HTML_Message('./messages/message.html')
+EMAIL_LIST = Get_Email_List('./emails/email.list')
