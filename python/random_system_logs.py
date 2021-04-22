@@ -133,12 +133,12 @@ class Watcher:
 
     @classmethod
     def MeasureTime(self, time_window, time_steps):
-        start_time = time.time()
         frequency = 1 / time_steps
+        print(frequency)
         counter = 0
+        start_time = time.time()
         while(True):
             counter += 1
-            # counter += rd.choice([0, 1])
             time.sleep(frequency)
             elapsed_time = time.time() - start_time
             if(elapsed_time >= time_window):
@@ -146,11 +146,11 @@ class Watcher:
                 print(f'counter value: {counter}')
                 if(counter == time_window * time_steps):
                     print('counter is ok')
-                start_time = time.time()
                 counter = 0
+                start_time = time.time()
 
 
-Watcher.MeasureTime(3, 10)
+Watcher.MeasureTime(10, 2)
 # Watcher().Monitor_CPU_Usage(45, 5)
 
 
