@@ -43,7 +43,7 @@ class SystemLogs:
     def CPU(self):
         """returns the cpu usage as an instant value"""
         MEAN_CPU_USAGE = 45.0
-        STD_DEV = 40
+        STD_DEV = 30
         cpu_usage = lambda: round(rd.normal(MEAN_CPU_USAGE, STD_DEV), 2)
         instant_usage = abs(cpu_usage())
         while(instant_usage > 100):
@@ -87,7 +87,7 @@ class SystemLogs:
 
 class Watcher:
     @classmethod
-    def Monitor_CPU_Usage(self, usage_limit, repeated_cases, time_window):
+    def Monitor_CPU_Usage(self, usage_limit, time_window):
         """
         Constantly watches for CPU usage on the current machine
         In case of high-usage regime, throws an alert
@@ -95,34 +95,45 @@ class Watcher:
         High-usage regime can be configured by the user
             based on a fixed number of repeated values higher than a certain usage limit 
         """
+        refresh_watcher = 2  # cpu info pulls per second
         counter = 0
         Watching = True
         cpu_fail_stack = []
         start_time = time.time()
         while(Watching):
-            cpu_usage = SystemLogs().CPU()
-            if(cpu_usage > usage_limit):
-                counter += 1
-                cpu_fail_stack.append(cpu_usage)
-            else:
-                counter = 0
-                cpu_fail_stack.clear()
-            if(counter == repeated_cases and len(cpu_fail_stack) == repeated_cases):
-                time_elapsed = (time.time() - start_time) / 60.0
-                print(f'🚦 Found anomaly after {time_elapsed} minutes')
-                if(time_elapsed >= time_window):
-                    print('Will Alert!')
-                else:
-                    print('No Alert Needed!')
-                # print(
-                #     f'🔥 HIGH CPU USAGE FOR THE PAST {time_window} MINUTES 🔥 ----> {cpu_fail_stack}')
-                counter = 0
-                cpu_fail_stack.clear()
-                start_time = time.time()
-            time.sleep(0.01)
+            # cpu_usage = SystemLogs().CPU()
+            # # print(cpu_usage)
+            # if(cpu_usage > usage_limit):
+            #     counter += 1
+            #     cpu_fail_stack.append(cpu_usage)
+            # else:
+            #     counter = 0
+            #     cpu_fail_stack.clear()
+            #     start_time = time.time()
+            # if(counter == repeated_cases and len(cpu_fail_stack) == repeated_cases):
+            #     time_elapsed = (time.time() - start_time)
+            #     print(
+            #         f'🚦 Found anomaly after {time_elapsed} seconds)')
+            #     if(time_elapsed >= time_window):
+            #         print('Will Alert!')
+            #         print(
+            #             f'🔥 HIGH CPU USAGE FOR THE PAST {time_window} SECONDS 🔥 ----> {cpu_fail_stack}\nAfter: {time_elapsed}')
+            #         start_time = time.time()
+            #     else:
+            #         print('No Alert Needed!')
+            #         print(
+            #             f'CPU USAGE WAS HIGH BUT ONLY FOR {time_elapsed} SECONDS ----> {cpu_fail_stack}')
+            #     counter = 0
+            #     cpu_fail_stack.clear()
+            time.sleep(1 / refresh_watcher)
+            print(time.time()-start_time)
+            start_time=time.time()
+            time.sleep(1 / refresh_watcher)
+            print(time.time()-start_time)
 
 
-Watcher().Monitor_CPU_Usage(55, 5, 1)
+Watcher().Monitor_CPU_Usage(45, 5)
+
 
 # CPU_USAGES = [SystemLogs.CPU() for _ in range(10000)]
 # MEM_USAGES = [SystemLogs.MEM() for _ in range(10000)]
