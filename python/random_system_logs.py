@@ -41,9 +41,9 @@ class SystemLogs:
 
     @classmethod
     def CPU(self):
-        """returns the CPU_Usage as an instant value"""
-        MEAN_CPU_USAGE = 30.0
-        STD_DEV = 20
+        """returns the cpu usage as an instant value"""
+        MEAN_CPU_USAGE = 45.0
+        STD_DEV = 40
         cpu_usage = lambda: round(rd.normal(MEAN_CPU_USAGE, STD_DEV), 2)
         instant_usage = abs(cpu_usage())
         while(instant_usage > 100):
@@ -52,7 +52,7 @@ class SystemLogs:
 
     @classmethod
     def MEM(self):
-        """returns the MEM_Usage as an instant value"""
+        """returns the memory usage as an instant value"""
         MEAN_MEM_USAGE = 65.0
         STD_DEV = 10
         memory_usage = lambda: round(rd.normal(MEAN_MEM_USAGE, STD_DEV), 2)
@@ -63,7 +63,7 @@ class SystemLogs:
 
     @classmethod
     def DISK(self):
-        """returns the DISK_Usage as an instant value"""
+        """returns the disk usage as an instant value"""
         MEAN_DISK_USAGE = 33.0
         STD_DEV = 20
         disk_usage = lambda: round(rd.normal(MEAN_DISK_USAGE, STD_DEV), 2)
@@ -72,18 +72,70 @@ class SystemLogs:
             instant_usage = abs(disk_usage())
         return instant_usage
 
+    @classmethod
+    def NET(self):
+        """returns the network usage as an instant value"""
+        MEAN_NET_USAGE = 25.0
+        STD_DEV = 10
+        disk_usage = lambda: round(
+            rd.normal(MEAN_NET_USAGE, STD_DEV), 2)
+        instant_usage = abs(disk_usage())
+        while(instant_usage > 100):
+            instant_usage = abs(disk_usage())
+        return instant_usage
 
-CPU_USAGES = [SystemLogs.CPU() for _ in range(10000)]
-MEM_USAGES = [SystemLogs.MEM() for _ in range(10000)]
-DISK_USAGES = [SystemLogs.DISK() for _ in range(10000)]
 
-fig, ax = plt.subplots(3, 1, sharex=True)
+class Watcher:
+    @classmethod
+    def Monitor_CPU_Usage(self, usage_limit, repeated_cases, time_window):
+        """
+        Constantly watches for CPU usage on the current machine
+        In case of high-usage regime, throws an alert
 
-ax[0].hist(CPU_USAGES, bins=50)
-ax[1].hist(MEM_USAGES, bins=50)
-ax[2].hist(DISK_USAGES, bins=50)
-plt.show()
+        High-usage regime can be configured by the user
+            based on a fixed number of repeated values higher than a certain usage limit 
+        """
+        counter = 0
+        Watching = True
+        cpu_fail_stack = []
+        start_time = time.time()
+        while(Watching):
+            cpu_usage = SystemLogs().CPU()
+            if(cpu_usage > usage_limit):
+                counter += 1
+                cpu_fail_stack.append(cpu_usage)
+            else:
+                counter = 0
+                cpu_fail_stack.clear()
+            if(counter == repeated_cases and len(cpu_fail_stack) == repeated_cases):
+                time_elapsed = (time.time() - start_time) / 60.0
+                print(f'🚦 Found anomaly after {time_elapsed} minutes')
+                if(time_elapsed >= time_window):
+                    print('Will Alert!')
+                else:
+                    print('No Alert Needed!')
+                # print(
+                #     f'🔥 HIGH CPU USAGE FOR THE PAST {time_window} MINUTES 🔥 ----> {cpu_fail_stack}')
+                counter = 0
+                cpu_fail_stack.clear()
+                start_time = time.time()
+            time.sleep(0.01)
 
+
+Watcher().Monitor_CPU_Usage(55, 5, 1)
+
+# CPU_USAGES = [SystemLogs.CPU() for _ in range(10000)]
+# MEM_USAGES = [SystemLogs.MEM() for _ in range(10000)]
+# DISK_USAGES = [SystemLogs.DISK() for _ in range(10000)]
+# NET_USAGES = [SystemLogs.NET() for _ in range(10000)]
+
+# fig, ax = plt.subplots(4, 1, sharex=True)
+
+# ax[0].hist(CPU_USAGES, bins=50)
+# ax[1].hist(MEM_USAGES, bins=50)
+# ax[2].hist(DISK_USAGES, bins=50)
+# ax[3].hist(NET_USAGES, bins=50)
+# plt.show()
 custom_message = lambda client_name, c_time, mailID, alert: message.format(
     name=f'{client_name}', time=f'{c_time}', id=f'Message ID: #{mailID}', alert=f'{alert}')
 
