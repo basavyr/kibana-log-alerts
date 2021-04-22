@@ -126,22 +126,39 @@ class Watcher:
             #     counter = 0
             #     cpu_fail_stack.clear()
             time.sleep(1 / refresh_watcher)
-            print(time.time()-start_time)
-            start_time=time.time()
+            print(time.time() - start_time)
+            start_time = time.time()
             time.sleep(1 / refresh_watcher)
-            print(time.time()-start_time)
+            print(time.time() - start_time)
+
+    @classmethod
+    def MeasureTime(self, time_window, time_steps):
+        start_time = time.time()
+        frequency = 1 / time_steps
+        counter = 0
+        while(True):
+            counter += 1
+            # counter += rd.choice([0, 1])
+            time.sleep(frequency)
+            elapsed_time = time.time() - start_time
+            if(elapsed_time >= time_window):
+                print(f'{time_window} seconds passed...')
+                print(f'counter value: {counter}')
+                if(counter == time_window * time_steps):
+                    print('counter is ok')
+                start_time = time.time()
+                counter = 0
 
 
-Watcher().Monitor_CPU_Usage(45, 5)
+Watcher.MeasureTime(3, 10)
+# Watcher().Monitor_CPU_Usage(45, 5)
 
 
 # CPU_USAGES = [SystemLogs.CPU() for _ in range(10000)]
 # MEM_USAGES = [SystemLogs.MEM() for _ in range(10000)]
 # DISK_USAGES = [SystemLogs.DISK() for _ in range(10000)]
 # NET_USAGES = [SystemLogs.NET() for _ in range(10000)]
-
 # fig, ax = plt.subplots(4, 1, sharex=True)
-
 # ax[0].hist(CPU_USAGES, bins=50)
 # ax[1].hist(MEM_USAGES, bins=50)
 # ax[2].hist(DISK_USAGES, bins=50)
