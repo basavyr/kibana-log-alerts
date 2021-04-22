@@ -140,16 +140,17 @@ class Watcher:
             counter += 1
             time.sleep(frequency)
             elapsed_time = time.time() - start_time
-            if(elapsed_time >= time_window):
-                print(f'{time_window} seconds passed...')
-                print(f'counter value: {counter}')
-                if(counter == time_window * time_steps):
-                    print('counter is ok')
-                counter = 0
-                start_time = time.time()
+            print(counter)
+            # if(elapsed_time >= time_window):
+            #     print(f'{time_window} seconds passed...')
+            #     print(f'counter value: {counter}')
+            #     if(counter == time_window * time_steps):
+            #         print('counter is ok')
+            #     counter = 0
+            #     start_time = time.time()
 
 
-Watcher.MeasureTime(10, 100)
+Watcher.MeasureTime(10,22)
 # Watcher().Monitor_CPU_Usage(45, 5)
 
 
