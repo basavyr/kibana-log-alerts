@@ -78,7 +78,8 @@ def Send_HTML_Email(email_list, html_content, alert_state='False'):
                         print(
                             'Cannot send alerts at this time ------> #IN_SEND_VALUE:NULL')
     else:
-        print('Not sending any alerts...')
+        # print('Not sending any alerts...')
+        pass
 
 
 def Send_TEXT_Email(email_list, text_content, alert_state=False):
@@ -133,7 +134,8 @@ def Send_TEXT_Email(email_list, text_content, alert_state=False):
                         print(
                             'Cannot send alerts at this time ------> #IN_SEND_VALUE:NULL')
     else:
-        print('Not sending any alerts...')
+        # print('Not sending any alerts...')
+        pass
 
 
 # TEXT_CONTENT = Get_TEXT_Message('./messages/message.text')
