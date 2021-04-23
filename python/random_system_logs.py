@@ -42,7 +42,7 @@ class SystemLogs:
     @classmethod
     def CPU(self):
         """returns the cpu usage as an instant value"""
-        MEAN_CPU_USAGE = 45.0
+        MEAN_CPU_USAGE = 80.0
         STD_DEV = 30
         cpu_usage = lambda: round(rd.normal(MEAN_CPU_USAGE, STD_DEV), 2)
         instant_usage = abs(cpu_usage())
@@ -98,26 +98,49 @@ class Watcher:
         CPU_USAGE_PULLS = 2  # cpu stat pulls per second. this value must remain unchanged
         refresh_rate = 1 / CPU_USAGE_PULLS
         Watching = True
+        send_state = True
         counter = 0
+        cpu_fail_stack = []
+        cpu_safe_stack = []
         print(f'Refresh rate for the CPU stats: {CPU_USAGE_PULLS}/s')
         start_time = time.time()
         while(Watching):
-            if(time.time() - start_time >= time_window):
-                print(f'{time_window} seconds passed')
-                print(f'a total of {counter} events were recorded')
+            elapsed_time = time.time() - start_time
+            if(elapsed_time >= time_window):
+                # print(f'{elapsed_time} seconds passed')
+                # print(f'a total of {counter} events were recorded')
+                # print(f'fail stack: {cpu_fail_stack}')
+                # print(f'safe stack: {cpu_safe_stack}')
+                # print(
+                # f'the cpu fail stack has a length of {len(cpu_fail_stack)}')
+                # print(
+                #     f'the cpu safe stack has a length of {len(cpu_safe_stack)}')
+                if(counter == len(cpu_fail_stack)):
+                    print(
+                        f'The CPU usage has an unusual behavior!🔥\nWill alert the DevOps team 🥺')
+                    try:
+                        dfcti.Send_TEXT_Email(
+                            dfcti.EMAIL_LIST, message, send_state)
+                    except Exception as exc:
+                        print('❌ There was a problem sending the alert...')
+                        print(f'Reason: {exc}')
+                    else:
+                        # print(f'🚀 Sent the alert to {dfcti.EMAIL_LIST} 📤')
+                        pass
+                else:
+                    print(
+                        f'The CPU usage for the past {time_window} seconds was normal! ✅ ')
                 counter = 0
+                cpu_fail_stack.clear()
+                cpu_safe_stack.clear()
                 start_time = time.time()
+            cpu_usage = SystemLogs().CPU()
             counter += 1
+            if(cpu_usage >= usage_limit):
+                cpu_fail_stack.append(cpu_usage)
+            else:
+                cpu_safe_stack.append(cpu_usage)
             time.sleep(refresh_rate)
-            # cpu_usage = SystemLogs().CPU()
-            # # print(cpu_usage)
-            # if(cpu_usage > usage_limit):
-            #     counter += 1
-            #     cpu_fail_stack.append(cpu_usage)
-            # else:
-            #     counter = 0
-            #     cpu_fail_stack.clear()
-            #     start_time = time.time()
             # if(counter == repeated_cases and len(cpu_fail_stack) == repeated_cases):
             #     time_elapsed = (time.time() - start_time)
             #     print(
@@ -160,8 +183,7 @@ class Watcher:
             time.sleep(frequency)
 
 
-# Watcher.MeasureTime(3, 2)
-Watcher().Monitor_CPU_Usage(45, 5)
+Watcher().Monitor_CPU_Usage(65, 3)
 
 
 # CPU_USAGES = [SystemLogs.CPU() for _ in range(10000)]
@@ -196,4 +218,4 @@ def Log_Emails(client, alert, send_state):
                     f'Time: {current_time_stamp} Mail_ID: {current_mail_id} Client_ID: {client}\n')
 
 
-Log_Emails('Robert', DEFAULT_ALERTS["CPU"], 0)
+# Log_Emails('Robert', DEFAULT_ALERTS["CPU"], 0)
