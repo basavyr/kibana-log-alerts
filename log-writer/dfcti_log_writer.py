@@ -51,3 +51,36 @@ class SystemLogs:
         while(instant_usage > 100):
             instant_usage = abs(memory_usage())
         return instant_usage
+
+
+class Write_Logs:
+    """
+    Writes logs that are collected from other internal classes within the script
+    """
+
+    @classmethod
+    def Generate_Log_Line(self):
+        """
+        Will generate a log line with the required information that needs to be monitored
+        """
+        line = f'This is a log line: {self}'
+        return line
+
+    @classmethod
+    def Write_Log_Line(self, log_line, log_file):
+        """
+        Once a log line has been generated via the proper method, it writes that line into its corresponding log-file
+        """
+        try:
+            with open(log_file, 'a+') as logger:
+                logger.write(log_line)
+                logger.write('\n')
+        except Exception as error:
+            print(
+                f'There was a problem while trying write logs\nReason: {error}')
+
+
+for _ in range(10):
+    line = Write_Logs().Generate_Log_Line()
+    Write_Logs().Write_Log_Line(line, log_file_path)
+    time.sleep(1)
