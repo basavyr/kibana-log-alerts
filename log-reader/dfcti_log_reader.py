@@ -18,27 +18,46 @@ class Modified_State_Handler(FileSystemEventHandler):
         event_path = event.src_path
         if(event_path == '/private' + log_file_path):
             with open(log_file_path, 'r') as reader:
-                last_line = reader.readlines()
+                content = reader.readlines()
+                last_line = content[-1]
                 try:
                     # must append only the value of the cpu or memory
-                    stored_values.append(last_line[len(last_line) - 1])
+                    cpu_stack.append(Reader.get_cpu_usage(last_line))
                 except Exception as error:
-                    print(f'could not write into the array')
+                    print(f'could not add CPU stats into the cpu stack')
+                    print(f'Reason -> {error}')
+                else:
+                    pass
+                try:
+                    # must append only the value of the cpu or memory
+                    mem_stack.append(Reader.get_mem_usage(last_line))
+                except Exception as error:
+                    print(f'could not add MEM stats into the cpu stack')
+                    print(f'Reason -> {error}')
+                else:
+                    pass
+                try:
+                    machine_id = Reader.get_machine_id(last_line)
+                except Exception as error:
+                    print(f'could not get machine ID')
                     print(f'Reason -> {error}')
                 else:
                     pass
 
 
 class Reader():
-    get_cpu_usage = lambda log_line: log_line[log_line.find(
+    get_cpu_usage = lambda log_line: float(log_line[log_line.find(
         'CPU:') + len('CPU:'):log_line.find('%', log_line.find(
-            'CPU:'))]
+            'CPU:'))])
 
-    get_mem_usage = lambda log_line: log_line[log_line.find(
+    get_mem_usage = lambda log_line: float(log_line[log_line.find(
         'MEM:') + len('MEM:'):log_line.find('%', log_line.find(
-            'MEM:'))]
+            'MEM:'))])
 
-    @classmethod
+    get_machine_id = lambda log_line: str(
+        log_line[log_line.find('MACHINE-ID:') + len('MACHINE-ID:'):])
+
+    @ classmethod
     def Watch_Log_File(self, log_file, execution_time):
 
         event_handler = Modified_State_Handler()
@@ -52,8 +71,9 @@ class Reader():
 
         total_execution_time = time.time()
         while(watch_state):
-            # count the stack before updating it
-            current_stack_length_0 = len(stored_values)
+            # count the stacks before updating it
+            cpu_stack_length_0 = len(cpu_stack)
+            mem_stack_length_0 = len(mem_stack)
 
             # stop if the total execution time has passed
             # stop if no new entries are coming into the stored values
@@ -62,15 +82,13 @@ class Reader():
                 watch_state = False
                 return
 
-            print(stored_values)
             time.sleep(1)
 
-            # count the stack after updating it
-            current_stack_length_1 = len(stored_values)
+            # count the stacks after updating it
+            cpu_stack_length_1 = len(cpu_stack)
+            mem_stack_length_1 = len(mem_stack)
 
-            print(stored_values)
-
-            if(current_stack_length_0 == current_stack_length_1):
+            if((cpu_stack_length_0 == cpu_stack_length_1) or (mem_stack_length_0 == mem_stack_length_1)):
                 count += 1
             else:
                 count = 0
@@ -78,11 +96,24 @@ class Reader():
                 print('No incoming logs...')
                 print('Stopping the watcher')
                 watch_state = False
+                print('CPU stack:')
+                print(cpu_stack)
+                print('Memory stack:')
+                print(mem_stack)
+                print('Machine ID')
+                print(machine_id)
                 return
 
         observer.stop()
-        observer.join()
 
 
-# stored_values = []
-# Reader.Watch_Log_File(log_file_path, 1000)
+cpu_stack = []
+mem_stack = []
+machine_id = ''
+Reader.Watch_Log_File(log_file_path, 1000)
+
+string = '2021-04-23 13:54:16.092620 CPU:74.08% MEM:52.45% MACHINE-ID:8273d378-9b1e-4281-a673-9421bde36c79'
+
+# print(string[string.find('MACHINE-ID:') + len('MACHINE-ID:'):])
+
+# print(Reader.get_machine_id(string))
