@@ -134,23 +134,32 @@ class Watcher:
     @classmethod
     def MeasureTime(self, time_window, time_steps):
         frequency = 1 / time_steps
+        print(f'cpu refresh rate: {frequency}')
         counter = 0
         start_time = time.time()
+        total_execution_time = 60
+        process_start_time = time.time()
         while(True):
-            counter += 1
-            time.sleep(frequency)
             elapsed_time = time.time() - start_time
-            print(counter)
-            # if(elapsed_time >= time_window):
-            #     print(f'{time_window} seconds passed...')
-            #     print(f'counter value: {counter}')
-            #     if(counter == time_window * time_steps):
-            #         print('counter is ok')
-            #     counter = 0
-            #     start_time = time.time()
+            if(elapsed_time >= time_window):
+                print(f'{elapsed_time} passed')
+                print(f'a total of {counter} events were recorded')
+                if(counter >= time_steps * time_window):
+                    print('will create alert 🔥')
+                else:
+                    print(
+                        f'the behavior for the past {time_window} seconds is OK ✅')
+                counter = 0
+                start_time = time.time()
+            counter = counter + rd.choice([0, 1])
+            if(time.time() - process_start_time >= total_execution_time):
+                print(
+                    f'{total_execution_time} have passed...Stopping the while loop')
+                break
+            time.sleep(frequency)
 
 
-Watcher.MeasureTime(10,22)
+Watcher.MeasureTime(3, 2)
 # Watcher().Monitor_CPU_Usage(45, 5)
 
 
