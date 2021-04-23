@@ -107,14 +107,6 @@ class Watcher:
         while(Watching):
             elapsed_time = time.time() - start_time
             if(elapsed_time >= time_window):
-                # print(f'{elapsed_time} seconds passed')
-                # print(f'a total of {counter} events were recorded')
-                # print(f'fail stack: {cpu_fail_stack}')
-                # print(f'safe stack: {cpu_safe_stack}')
-                # print(
-                # f'the cpu fail stack has a length of {len(cpu_fail_stack)}')
-                # print(
-                #     f'the cpu safe stack has a length of {len(cpu_safe_stack)}')
                 if(counter == len(cpu_fail_stack)):
                     print(
                         f'The CPU usage has an unusual behavior!🔥\nWill alert the DevOps team 🥺')
@@ -141,19 +133,6 @@ class Watcher:
             else:
                 cpu_safe_stack.append(cpu_usage)
             time.sleep(refresh_rate)
-            # if(counter == repeated_cases and len(cpu_fail_stack) == repeated_cases):
-            #     time_elapsed = (time.time() - start_time)
-            #     print(
-            #         f'🚦 Found anomaly after {time_elapsed} seconds)')
-            #     if(time_elapsed >= time_window):
-            #         print('Will Alert!')
-            #         print(
-            #             f'🔥 HIGH CPU USAGE FOR THE PAST {time_window} SECONDS 🔥 ----> {cpu_fail_stack}\nAfter: {time_elapsed}')
-            #         start_time = time.time()
-            #     else:
-            #         print('No Alert Needed!')
-            #         print(
-            #             f'CPU USAGE WAS HIGH BUT ONLY FOR {time_elapsed} SECONDS ----> {cpu_fail_stack}')
 
 
 Watcher().Monitor_CPU_Usage(65, 3)
