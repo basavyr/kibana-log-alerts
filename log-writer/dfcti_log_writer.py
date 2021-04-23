@@ -13,6 +13,17 @@ log_file_path = '/var/log/dfcti_cpu_logs.log'
 MACHINE_ID = 'TEST-ID-#6969'  # this must be generated on script execution
 
 
+class MachineID:
+    """
+    Generate a machine ID for the current system.
+    
+    When the script is ran for the first time, the presence of a dedicated `MACHINE_ID` file is checked.
+    
+    If the file exists, it checks if it is empty or not. If the file is empty, a new machine ID will be generated and stored just ONCE. If the file is not empty, then the already stored machine ID will be used throughout the logging process.
+
+    It is essential that the machine ID will remain unchanged on the machine.
+    """
+
 class SystemLogs:
     """Generates any stats related to system logs.
     For example, it can generate CPU usage, disk usage, memory (RAM) usage, and also network usage.
