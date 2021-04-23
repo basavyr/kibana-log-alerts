@@ -32,7 +32,7 @@ class MachineID:
         """
         💻 Generate a machine ID for the current system.
         """
-        fail_safe = f'Will generate a machine ID once properly implemented🙈\nUsing the {MACHINE_ID} temporarily'
+        fail_safe = f'Will generate a machine ID once properly implemented\nUsing the {MACHINE_ID} temporarily'
         print(fail_safe)
 
 
