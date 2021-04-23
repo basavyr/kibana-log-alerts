@@ -16,13 +16,22 @@ MACHINE_ID = 'TEST-ID-#6969'  # this must be generated on script execution
 class MachineID:
     """
     Generate a machine ID for the current system.
-    
+
     When the script is ran for the first time, the presence of a dedicated `MACHINE_ID` file is checked.
-    
+
     If the file exists, it checks if it is empty or not. If the file is empty, a new machine ID will be generated and stored just ONCE. If the file is not empty, then the already stored machine ID will be used throughout the logging process.
 
     It is essential that the machine ID will remain unchanged on the machine.
     """
+
+    @classmethod
+    def Generate_Machine_ID(self):
+        """
+        💻 Generate a machine ID for the current system.
+        """
+        fail_safe = f'Will generate a machine ID once properly implemented🙈\nUsing the {MACHINE_ID} temporarily'
+        print(fail_safe)
+
 
 class SystemLogs:
     """Generates any stats related to system logs.
@@ -127,4 +136,4 @@ class Write_Logs:
             time.sleep(wait_time)
 
 
-Write_Logs.Write_Process(20, 1)
+MachineID.Generate_Machine_ID()
