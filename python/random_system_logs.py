@@ -95,12 +95,20 @@ class Watcher:
         High-usage regime can be configured by the user
             based on a fixed number of repeated values higher than a certain usage limit 
         """
-        refresh_watcher = 2  # cpu info pulls per second
-        counter = 0
+        CPU_USAGE_PULLS = 2  # cpu stat pulls per second. this value must remain unchanged
+        refresh_rate = 1 / CPU_USAGE_PULLS
         Watching = True
-        cpu_fail_stack = []
+        counter = 0
+        print(f'Refresh rate for the CPU stats: {CPU_USAGE_PULLS}/s')
         start_time = time.time()
         while(Watching):
+            if(time.time() - start_time >= time_window):
+                print(f'{time_window} seconds passed')
+                print(f'a total of {counter} events were recorded')
+                counter = 0
+                start_time = time.time()
+            counter += 1
+            time.sleep(refresh_rate)
             # cpu_usage = SystemLogs().CPU()
             # # print(cpu_usage)
             # if(cpu_usage > usage_limit):
@@ -123,13 +131,6 @@ class Watcher:
             #         print('No Alert Needed!')
             #         print(
             #             f'CPU USAGE WAS HIGH BUT ONLY FOR {time_elapsed} SECONDS ----> {cpu_fail_stack}')
-            #     counter = 0
-            #     cpu_fail_stack.clear()
-            time.sleep(1 / refresh_watcher)
-            print(time.time() - start_time)
-            start_time = time.time()
-            time.sleep(1 / refresh_watcher)
-            print(time.time() - start_time)
 
     @classmethod
     def MeasureTime(self, time_window, time_steps):
@@ -159,8 +160,8 @@ class Watcher:
             time.sleep(frequency)
 
 
-Watcher.MeasureTime(3, 2)
-# Watcher().Monitor_CPU_Usage(45, 5)
+# Watcher.MeasureTime(3, 2)
+Watcher().Monitor_CPU_Usage(45, 5)
 
 
 # CPU_USAGES = [SystemLogs.CPU() for _ in range(10000)]
