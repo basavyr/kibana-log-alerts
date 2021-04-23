@@ -63,7 +63,7 @@ class Write_Logs:
         """
         Will generate a log line with the required information that needs to be monitored
         """
-        line = f'This is a log line: {self}'
+        line = f'{self} generated at {datetime.utcnow()}'
         return line
 
     @classmethod
@@ -83,4 +83,4 @@ class Write_Logs:
 for _ in range(10):
     line = Write_Logs().Generate_Log_Line()
     Write_Logs().Write_Log_Line(line, log_file_path)
-    time.sleep(1)
+    time.sleep(0.5)
