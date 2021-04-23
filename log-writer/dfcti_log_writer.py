@@ -10,7 +10,10 @@ from datetime import datetime
 
 
 log_file_path = '/var/log/dfcti_cpu_logs.log'
-MACHINE_ID = 'TEST-ID-#6969'  # this must be generated on script execution
+
+# this must be generated on script execution
+# the current value is only for testing
+MACHINE_ID = '8273d378-9b1e-4281-a673-9421bde36c79'
 
 
 class MachineID:
@@ -84,8 +87,8 @@ class Write_Logs:
         Will generate a log line with the required information that needs to be monitored
         """
 
-        CPU_MEAN = 60
-        CPU_SPREAD = 20
+        CPU_MEAN = 70
+        CPU_SPREAD = 10
         MEM_MEAN = 70
         MEM_SPREAD = 10
 
@@ -137,3 +140,4 @@ class Write_Logs:
 
 
 MachineID.Generate_Machine_ID()
+Write_Logs.Write_Process(60, 1)
