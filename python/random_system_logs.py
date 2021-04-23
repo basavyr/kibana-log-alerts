@@ -155,33 +155,6 @@ class Watcher:
             #         print(
             #             f'CPU USAGE WAS HIGH BUT ONLY FOR {time_elapsed} SECONDS ----> {cpu_fail_stack}')
 
-    @classmethod
-    def MeasureTime(self, time_window, time_steps):
-        frequency = 1 / time_steps
-        print(f'cpu refresh rate: {frequency}')
-        counter = 0
-        start_time = time.time()
-        total_execution_time = 60
-        process_start_time = time.time()
-        while(True):
-            elapsed_time = time.time() - start_time
-            if(elapsed_time >= time_window):
-                print(f'{elapsed_time} passed')
-                print(f'a total of {counter} events were recorded')
-                if(counter >= time_steps * time_window):
-                    print('will create alert 🔥')
-                else:
-                    print(
-                        f'the behavior for the past {time_window} seconds is OK ✅')
-                counter = 0
-                start_time = time.time()
-            counter = counter + rd.choice([0, 1])
-            if(time.time() - process_start_time >= total_execution_time):
-                print(
-                    f'{total_execution_time} have passed...Stopping the while loop')
-                break
-            time.sleep(frequency)
-
 
 Watcher().Monitor_CPU_Usage(65, 3)
 
