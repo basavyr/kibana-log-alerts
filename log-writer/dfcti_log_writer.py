@@ -69,7 +69,7 @@ class Write_Logs:
         MEM_MEAN = 70
         MEM_SPREAD = 10
 
-        log_line = f'{datetime.utcnow()} - CPU:{SystemLogs().CPU(CPU_MEAN, CPU_SPREAD)}% MEM:{SystemLogs().MEM(MEM_MEAN, MEM_SPREAD)}% MACHINE-ID:{MACHINE_ID}'
+        log_line = f'{datetime.utcnow()} CPU:{SystemLogs().CPU(CPU_MEAN, CPU_SPREAD)}% MEM:{SystemLogs().MEM(MEM_MEAN, MEM_SPREAD)}% MACHINE-ID:{MACHINE_ID}'
         return log_line
 
     @classmethod
@@ -87,14 +87,19 @@ class Write_Logs:
             pass
 
     @classmethod
-    def Write_Process(execution_time, wait_time):
+    def Write_Process(self, execution_time_secs, wait_time):
         """Starts making log lines
         Each log line is generated after a certain period, given by the user via `wait_time`
         After each line has been successfully generated, it is written in its corresponding log file.
         The process is repeated as long as the runtime is below the total execution time, given through the `execution_time` variable
+        The time measurements are given in seconds (sec,s,secs)
         """
         writing_state = True
+        total_execution_time = time.time()
         while(writing_state):
+            if(time.time() - total_execution_time >= execution_time_secs):
+                print('Total executime time reached.\nStopping the writing process...')
+                break
             print(f'Generating log line...')
             try:
                 new_log_line = Write_Logs().Generate_Log_Line()
@@ -109,3 +114,6 @@ class Write_Logs:
                 else:
                     pass
             time.sleep(wait_time)
+
+
+Write_Logs.Write_Process(20, 1)
