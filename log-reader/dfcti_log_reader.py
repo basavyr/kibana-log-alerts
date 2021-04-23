@@ -20,6 +20,7 @@ class Modified_State_Handler(FileSystemEventHandler):
             with open(log_file_path, 'r') as reader:
                 last_line = reader.readlines()
                 try:
+                    # must append only the value of the cpu or memory
                     stored_values.append(last_line[len(last_line) - 1])
                 except Exception as error:
                     print(f'could not write into the array')
@@ -29,6 +30,14 @@ class Modified_State_Handler(FileSystemEventHandler):
 
 
 class Reader():
+    get_cpu_usage = lambda log_line: log_line[log_line.find(
+        'CPU:') + len('CPU:'):log_line.find('%', log_line.find(
+            'CPU:'))]
+
+    get_mem_usage = lambda log_line: log_line[log_line.find(
+        'MEM:') + len('MEM:'):log_line.find('%', log_line.find(
+            'MEM:'))]
+
     @classmethod
     def Watch_Log_File(self, log_file, execution_time):
 
@@ -75,5 +84,5 @@ class Reader():
         observer.join()
 
 
-stored_values = []
-Reader.Watch_Log_File(log_file_path, 1000)
+# stored_values = []
+# Reader.Watch_Log_File(log_file_path, 1000)
