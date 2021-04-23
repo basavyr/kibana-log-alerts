@@ -63,8 +63,14 @@ class Write_Logs:
         """
         Will generate a log line with the required information that needs to be monitored
         """
-        line = f'{self} generated at {datetime.utcnow()}'
-        return line
+
+        CPU_MEAN = 60
+        CPU_SPREAD = 20
+        MEM_MEAN = 70
+        MEM_SPREAD = 10
+
+        log_line = f'{datetime.utcnow()} - CPU:{SystemLogs().CPU(CPU_MEAN, CPU_SPREAD)}% MEM:{SystemLogs().MEM(MEM_MEAN, MEM_SPREAD)}% MACHINE-ID:{MACHINE_ID}'
+        return log_line
 
     @classmethod
     def Write_Log_Line(self, log_line, log_file):
@@ -73,14 +79,33 @@ class Write_Logs:
         """
         try:
             with open(log_file, 'a+') as logger:
-                logger.write(log_line)
-                logger.write('\n')
+                logger.write(log_line + '\n')
         except Exception as error:
             print(
                 f'There was a problem while trying write logs\nReason: {error}')
+        else:
+            pass
 
-
-for _ in range(10):
-    line = Write_Logs().Generate_Log_Line()
-    Write_Logs().Write_Log_Line(line, log_file_path)
-    time.sleep(0.5)
+    @classmethod
+    def Write_Process(execution_time, wait_time):
+        """Starts making log lines
+        Each log line is generated after a certain period, given by the user via `wait_time`
+        After each line has been successfully generated, it is written in its corresponding log file.
+        The process is repeated as long as the runtime is below the total execution time, given through the `execution_time` variable
+        """
+        writing_state = True
+        while(writing_state):
+            print(f'Generating log line...')
+            try:
+                new_log_line = Write_Logs().Generate_Log_Line()
+            except Exception as exc:
+                print(f'Could not generate log line\nReason: {exc}')
+            else:
+                print(f'Writing log line at {log_file_path}')
+                try:
+                    Write_Logs().Write_Log_Line(new_log_line, log_file_path)
+                except Exception as exc:
+                    print(f'Could not write the log line\nReason: {exc}')
+                else:
+                    pass
+            time.sleep(wait_time)
