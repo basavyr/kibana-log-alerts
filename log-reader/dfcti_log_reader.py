@@ -12,10 +12,8 @@ from watchdog.events import FileSystemEventHandler
 
 
 # Set the path to the log file used for analysis
-log_file_path = '/var/log/dfcti_cpu_logs.log'
+log_file_path = '/var/log/dfcti_system_logs.log'
 
-
-# must change the log file name to: dfcti_system_logs.log
 
 class Attachment:
     @classmethod

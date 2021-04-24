@@ -3,7 +3,7 @@ name: Main
 on:
   push:
     tags:        
-      - v0.*           
+      - v*           
   pull_request:
     branches:
       - main
@@ -20,6 +20,27 @@ jobs:
         run: |
           sudo touch /var/log/dfcti_system_logs.log
           sudo chown 777 /var/log/dfcti_system_logs.log
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Install pipenv for Python
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pipenv
+
+      - name: Install packages for log-writer script
+        run: |
+          cd log-writer
+          ls
+          pipenv install
+
+      - name: Run the python log-writer script
+        run: |
+          cd log-writer
+          pipenv run python dfcti_log_writer.py
 
       - name: Create release | Deliver log-file
         uses: softprops/action-gh-release@v1

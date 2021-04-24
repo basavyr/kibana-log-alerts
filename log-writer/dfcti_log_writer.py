@@ -9,7 +9,7 @@ import time
 from datetime import datetime
 
 
-log_file_path = '/var/log/dfcti_cpu_logs.log'
+log_file_path = '/var/log/dfcti_system_logs.log'
 
 # this must be generated on script execution
 # the current value is only for testing
@@ -140,4 +140,4 @@ class Write_Logs:
 
 
 MachineID.Generate_Machine_ID()
-Write_Logs.Write_Process(10, 1)
+Write_Logs.Write_Process(60, 1)
