@@ -34,16 +34,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: "Get upload_url"
-        run: echo "::set-output name=upload_url::https://uploads.github.com/repos/$GITHUB_REPOSITORY/releases/$(jq --raw-output '.release.id' $GITHUB_EVENT_PATH)/assets{?name,label}"  
-        id: release_url
 
       - name: Upload artifact
         uses: actions/upload-release-asset@v1
         env:
-           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+           GITHUB_TOKEN: ${{ github.token }}
         with:
-          asset_content_type: "text/plain"
-          asset_name: "readme_file"
           asset_path: README.md
-          upload_url: ${{ steps.release_url.outputs.upload_url }}
+          asset_name: readme_file
+          asset_content_type: text/plain
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
