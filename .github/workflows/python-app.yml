@@ -41,7 +41,7 @@ jobs:
           sudo apt-get install zip gzip tar
           zip -r py_log_writer.zip log-writer
       
-          - name: Create py-log-reader package
+      - name: Create py-log-reader package
         run: |
           zip -r py_log_reader.zip log-reader
 
