@@ -44,15 +44,15 @@ jobs:
 
     - name: Build
       run: |
-        echo ${{github.sha}} > Release.txt
-        echo $${{github.job}}> Release.txt
-        echo $${{github.ref}}> Release.txt
-        echo $${{github.repository}}> Release.txt
-        echo $${{github.repository_owner}}> Release.txt
-        echo $${{github.run_id}}> Release.txt
-        echo $${{github.run_number}}> Release.txt
-        echo $${{github.sha}}> Release.txt
-        echo $${{github.token}}> Release.txt
+        echo ${{ github.sha }} >> Release.txt
+        echo ${{ github.job }} >> Release.txt
+        echo ${{ github.ref }} >> Release.txt
+        echo ${{ github.repository }} >> Release.txt
+        echo ${{ github.repository_owner }} >> Release.txt
+        echo ${{ github.run_id }} >> Release.txt
+        echo ${{ github.run_number }} >> Release.txt
+        echo ${{ github.sha }} >> Release.txt
+        echo ${{ github.token }} >> Release.txt
 
     - name: Test
       run: cat Release.txt
