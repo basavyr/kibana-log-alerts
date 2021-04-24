@@ -84,6 +84,13 @@ class Modified_State_Handler(FileSystemEventHandler):
 
 
 class Reader():
+    """
+    Read content from a log file.
+    The reading is done line-by-line.
+    Lambdas are built in order to extract different parameters from each event
+
+    Example: `get_cpu_usage` lambda will parse an event line and search for the CPU usage
+    """
     get_cpu_usage = lambda log_line: float(log_line[log_line.find(
         'CPU:') + len('CPU:'):log_line.find('%', log_line.find(
             'CPU:'))])
@@ -160,8 +167,16 @@ class Reader():
                 # analyze the current stacks for unusual behavior
                 # only analyze the stacks that are full in size
                 # a full-size stack means a stack that has the proper number of events inside, based on the cycle-window-size and the refresh rate of the logger
-                Stats_Analyzer.Analyze_CPU_Usage_Stack(cpu_stack, 70)
-                Stats_Analyzer.Analyze_MEM_Usage_Stack(mem_stack, 70)
+                if(len(cpu_stack) == time_window):
+                    print('the cpu stack has been collected')
+                    Stats_Analyzer.Analyze_CPU_Usage_Stack(cpu_stack, 70)
+                else:
+                    print('cpu stack is skipped -> incomplete')
+                if(len(mem_stack) == time_window):
+                    print('the memory stack has been collected')
+                    Stats_Analyzer.Analyze_MEM_Usage_Stack(mem_stack, 70)
+                else:
+                    print('memory stack is skipped -> incomplete')
 
                 # clear the initial stacks after analysis has been performed
                 cpu_stack.clear()
