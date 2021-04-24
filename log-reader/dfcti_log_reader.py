@@ -27,6 +27,12 @@ class Stats_Analyzer:
         """
         print(
             f'will analyze the cpu stack for unusual behavior\n{cpu_usage_stack}')
+        mean_value = float(sum(cpu_usage_stack) / len(cpu_usage_stack))
+        if(mean_value >= cpu_threshold):
+            print(f'🔥 unusual behavior: {mean_value}≥{cpu_threshold}')
+            return 1
+        print(f'✅ normal behavior: {mean_value}<{cpu_threshold}')
+        return 0
 
     @classmethod
     def Analyze_MEM_Usage_Stack(self, mem_usage_stack, mem_threshold):
@@ -36,6 +42,12 @@ class Stats_Analyzer:
         """
         print(
             f'will analyze the memory stack for unusual behavior\n{mem_usage_stack}')
+        mean_value = float(sum(mem_usage_stack) / len(mem_usage_stack))
+        if(mean_value >= mem_threshold):
+            print(f'🔥 unusual behavior: {mean_value}≥{mem_threshold}')
+            return 1
+        print(f'✅ normal behavior: {mean_value}<{mem_threshold}')
+        return 0
 
 
 class Modified_State_Handler(FileSystemEventHandler):
@@ -148,13 +160,13 @@ class Reader():
                 # analyze the current stacks for unusual behavior
                 # only analyze the stacks that are full in size
                 # a full-size stack means a stack that has the proper number of events inside, based on the cycle-window-size and the refresh rate of the logger
-                Stats_Analyzer.Analyze_CPU_Usage_Stack(cpu_stack, 1)
-                Stats_Analyzer.Analyze_MEM_Usage_Stack(mem_stack, 1)
+                Stats_Analyzer.Analyze_CPU_Usage_Stack(cpu_stack, 70)
+                Stats_Analyzer.Analyze_MEM_Usage_Stack(mem_stack, 70)
 
                 # clear the initial stacks after analysis has been performed
                 cpu_stack.clear()
                 mem_stack.clear()
-                
+
                 # restart cycle
                 cycle_execution_time = time.time()
         observer.stop()
