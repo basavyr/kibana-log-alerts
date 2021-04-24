@@ -1,8 +1,6 @@
 name: Main
 
 on:
-  # Trigger the workflow on push or pull request,
-  # but only for the main branch
   push:
     tags:        
       - v0.*           
@@ -14,38 +12,36 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+
       - name: Checkout
         uses: actions/checkout@v2
+    
       - name: Create log-file in `/var/log`
         run: |
           sudo touch /var/log/dfcti_system_logs.log
           sudo chown 777 /var/log/dfcti_system_logs.log
-          ls -l
-          ls -l /var/log/
 
-      - name: Create release with artifact | Deliver log-file
+      - name: Create release | Deliver log-file
         uses: softprops/action-gh-release@v1
         id: create_release
         if: startsWith(github.ref, 'refs/tags/')
         with:
           body_path: CHANGELOG.md
-          files: |
-            CHANGELOG.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Get release
-        id: get_release
+      - name: Get release `url`
+        id: get_release_url
         uses: bruceadams/get-release@v1.2.2
         env:
           GITHUB_TOKEN: ${{ github.token }}      
 
-      - name: Upload artifact
+      - name: Upload py-log-writer artifact
         uses: actions/upload-release-asset@v1
         env:
            GITHUB_TOKEN: ${{ github.token }}
         with:
-          asset_path: README.md
-          asset_name: readme_file
-          asset_content_type: text/plain
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
+          asset_path: ./log-writer/*
+          asset_name: py_log_writer.zip
+          asset_content_type: application/zip
+          upload_url: ${{ steps.get_release_url.outputs.upload_url }}
