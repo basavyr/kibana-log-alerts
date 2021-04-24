@@ -26,6 +26,9 @@ jobs:
         pip install pipenv
     - name: Test apps
       run: |
-        python --version
-        ls
+        cd log-writer
+        pipenv install
+        pipenv lock
+        pipenv sync
+        pipenv update
       
