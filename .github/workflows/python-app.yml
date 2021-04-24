@@ -5,7 +5,7 @@ on:
   # but only for the main branch
   push:
     tags:        
-      - v0.*           # Push events to v1.0, v1.1, and v1.9 tags
+      - v0.*           
   pull_request:
     branches:
       - main
@@ -28,9 +28,15 @@ jobs:
         with:
           body_path: CHANGELOG.md
           files: |
-            /var/log/dfcti_system_logs.log
             ./python/Pipfile
             CHANGELOG.md
             README.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: upload artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./log-reader/dfcti_log_reader.py
