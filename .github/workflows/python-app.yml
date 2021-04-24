@@ -27,6 +27,10 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           body_path: CHANGELOG.md
-          files: /var/log/dfcti_system_logs.log
+          files: |
+            /var/log/dfcti_system_logs.log
+            /python/Pipfile
+            CHANGELOG.md
+            README.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
