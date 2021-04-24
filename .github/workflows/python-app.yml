@@ -29,6 +29,7 @@ jobs:
     - name: Install packages
       run: |
         cd log-writer
+        ls
         pipenv install
 
     - name: Create log-file
