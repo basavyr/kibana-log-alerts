@@ -31,7 +31,7 @@ jobs:
         cd log-writer
         pipenv install
 
-    - name: Create the log-file
+    - name: Create log-file
       run: |
         sudo touch /var/log/dfcti_cpu_logs.log
         sudo chmod 777 /var/log/dfcti_cpu_logs.log
