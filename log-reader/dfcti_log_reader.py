@@ -15,6 +15,29 @@ from watchdog.events import FileSystemEventHandler
 log_file_path = '/var/log/dfcti_cpu_logs.log'
 
 
+class Attachment:
+    @classmethod
+    def Create_Attachment(data, file_path):
+        content = f'This is an attachment\n{data}\nPath to file: {file_path}'
+        return content
+
+
+class Message:
+    @classmethod
+    def Create_Message(self, name, info, stats):
+        message = """Hey {name},
+        You have received this message because you are on the DevOps list managing the computing resources at DFCTI.
+
+        There are issues with one of the machines. Please take care.
+        More info: {info}
+        Stats: {stats}
+
+        The DFCTI Team,
+        https://elk.nipne.ro
+        """
+        return message
+
+
 class Stats_Analyzer:
     """Analyze a given stack (array) of system stats (e.g., CPU, MEM) and checks whether the values represent an unusual behavior or not
     """
