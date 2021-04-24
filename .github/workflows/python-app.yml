@@ -25,6 +25,10 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install pipenv
         python --version
+    - name: Create output log file
+      run: |
+        sudo touch /var/log/dfcti_cpu_logs.log
+        sudo chmod 775 /var/log/dfcti_cpu_logs.log
     - name: Install packages
       run: |
         cd log-writer
