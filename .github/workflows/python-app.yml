@@ -16,15 +16,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Build
-        run: echo ${{ github.sha }} > Release.txt
-      - name: Test
-        run: cat Release.txt
-      - name: Release
+      - name: Create log-file in `/var/log`
+        run: |
+          sudo touch /var/log/dfcti_system_logs.log
+          sudo chown 777 /var/log/dfcti_system_logs.log
+          ls -l
+          ls -l /var/log/
+      - name: Create release with artifact | Deliver log-file
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
           body_path: CHANGELOG.md
-          files: Release.txt
+          files: /var/log/dfcti_system_logs.log
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

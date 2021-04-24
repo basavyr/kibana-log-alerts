@@ -15,6 +15,8 @@ from watchdog.events import FileSystemEventHandler
 log_file_path = '/var/log/dfcti_cpu_logs.log'
 
 
+# must change the log file name to: dfcti_system_logs.log
+
 class Attachment:
     @classmethod
     def Create_Attachment(data, file_path):
