@@ -31,4 +31,8 @@ jobs:
         pipenv lock
         pipenv sync
         pipenv update
+        which python
+        python3 dfcti_log_writer.py
+        ls -l /var/log/
+
       
