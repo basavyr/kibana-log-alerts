@@ -19,7 +19,7 @@ jobs:
       - name: Create log-file in `/var/log`
         run: |
           sudo touch /var/log/dfcti_system_logs.log
-          sudo chown 777 /var/log/dfcti_system_logs.log
+          sudo chmod 777 /var/log/dfcti_system_logs.log
 
       - name: Set up Python 3.8
         uses: actions/setup-python@v2
@@ -39,8 +39,6 @@ jobs:
 
       - name: Run the python log-writer script
         run: |
-          sudo touch /var/log/dfcti_system_logs.log
-          sudo chown 777 /var/log/dfcti_system_logs.log
           cd log-writer
           pipenv run python dfcti_log_writer.py
 
