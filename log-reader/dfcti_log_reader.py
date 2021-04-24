@@ -25,7 +25,8 @@ class Attachment:
 class Message:
     @classmethod
     def Create_Message(self, name, info, stats):
-        message = """Hey {name},
+        message = """
+        Hey {name},
         You have received this message because you are on the DevOps list managing the computing resources at DFCTI.
 
         There are issues with one of the machines. Please take care.
@@ -35,7 +36,7 @@ class Message:
         The DFCTI Team,
         https://elk.nipne.ro
         """
-        return message
+        return message.format(name=name, info=info, stats=stats)
 
 
 class Stats_Analyzer:
@@ -44,7 +45,7 @@ class Stats_Analyzer:
 
     @classmethod
     def Analyze_CPU_Usage_Stack(self, cpu_usage_stack, cpu_threshold):
-        """Interpret a stack with CPU usages. 
+        """Interpret a stack with CPU usages.
         Raises unusual behavior based on the average value of the stack.
         The average is predefined by the user as a `threshold`
         """
@@ -58,7 +59,7 @@ class Stats_Analyzer:
 
     @classmethod
     def Analyze_MEM_Usage_Stack(self, mem_usage_stack, mem_threshold):
-        """Interpret a stack with MEM usages. 
+        """Interpret a stack with MEM usages.
         Raises unusual behavior based on the average value of the stack.
         The average is predefined by the user as a `threshold`
         """
@@ -238,7 +239,9 @@ class Reader():
         observer.stop()
 
 
-cpu_stack = []
-mem_stack = []
-machine_id = []
-Reader.Watch_Log_File(log_file_path, 100, 20, [70, 70])
+# cpu_stack = []
+# mem_stack = []
+# machine_id = []
+# Reader.Watch_Log_File(log_file_path, 100, 20, [70, 70])
+
+print(Message.Create_Message('RO', 'XX', 'YY'))
