@@ -29,6 +29,7 @@ jobs:
       run: |
         cd log-writer
         pipenv install
+        pipenv shell
         ls -l
         chmod +x dfcti_log_writer.py 
         ./dfcti_log_writer.py
