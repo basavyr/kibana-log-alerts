@@ -29,7 +29,7 @@ jobs:
           body_path: CHANGELOG.md
           files: |
             /var/log/dfcti_system_logs.log
-            /python/Pipfile
+            ./python/Pipfile
             CHANGELOG.md
             README.md
         env:
