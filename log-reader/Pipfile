@@ -5,9 +5,10 @@ name = "pypi"
 
 [packages]
 watchdog = "*"
-numpy = "1.18.5"
-autopep8 ="1.5.6"
-psutil = "5.8.0"
+autopep8 ="*"
+psutil = "*"
+numpy = "==1.18.5"
+
 [dev-packages]
 
 [requires]

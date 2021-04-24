@@ -29,11 +29,11 @@ jobs:
       run: |
         cd log-writer
         pipenv install
-        pipenv update
-        ls
+        pipenv sync
+        ls -l
         echo Python Info
         which python
         echo Running the script
-        python3 dfcti_log_writer.py
+        # python3 dfcti_log_writer.py
 
       
