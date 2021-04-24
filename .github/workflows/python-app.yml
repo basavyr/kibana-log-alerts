@@ -11,34 +11,44 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout
+      uses: actions/checkout@v2
+
     - name: Set up Python 3.8
       uses: actions/setup-python@v2
       with:
         python-version: 3.8
-    - name: Install Python's pipenv
+
+    - name: Install pipenv for Python
       run: |
         python -m pip install --upgrade pip
         python -m pip install pipenv
-        python --version
-    - name: Create output log file
-      run: |
-        sudo touch /var/log/dfcti_cpu_logs.log
-        sudo chmod 777 /var/log/dfcti_cpu_logs.log
+
     - name: Install packages
       run: |
         cd log-writer
         pipenv install
+
+    - name: Create the log-file
+      run: |
+        sudo touch /var/log/dfcti_cpu_logs.log
+        sudo chmod 777 /var/log/dfcti_cpu_logs.log
+        
+    - name: Run the python log-writer script
+      run: |
+        cd log-writer
         pipenv run python dfcti_log_writer.py
-        ls -l /var/log/
+
+    - name: Build
+      run: echo ${{ github.sha }} > Release.txt
+
+    - name: Test
+      run: cat Release.txt
+
     - name: Create artifact
       uses: actions/upload-artifact@v2
       with:
         name: system-logs
         path: /var/log/dfcti_cpu_logs.log
-
-      
