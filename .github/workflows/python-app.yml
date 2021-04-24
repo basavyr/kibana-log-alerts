@@ -4,8 +4,6 @@ on:
   # Trigger the workflow on push or pull request,
   # but only for the main branch
   push:
-    branches:
-      - main
     tags:        
       - v0.*           # Push events to v1.0, v1.1, and v1.9 tags
   pull_request:
