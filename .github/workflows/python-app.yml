@@ -35,5 +35,6 @@ jobs:
         which python
         echo Running the script
         # python3 dfcti_log_writer.py
+        pipenv graph
 
       
