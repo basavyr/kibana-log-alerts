@@ -25,14 +25,13 @@ class Stats_Analyzer:
         Raises unusual behavior based on the average value of the stack.
         The average is predefined by the user as a `threshold`
         """
-        print(
-            f'will analyze the cpu stack for unusual behavior\n{cpu_usage_stack}')
-        mean_value = float(sum(cpu_usage_stack) / len(cpu_usage_stack))
+        mean_value = round(
+            float(sum(cpu_usage_stack) / len(cpu_usage_stack)), 2)
         if(mean_value >= cpu_threshold):
-            print(f'🔥 unusual behavior: {mean_value}≥{cpu_threshold}')
-            return 1
-        print(f'✅ normal behavior: {mean_value}<{cpu_threshold}')
-        return 0
+            # print(f'🔥 unusual behavior: {mean_value}≥{cpu_threshold}')
+            return [1, mean_value]
+        # print(f'✅ normal behavior: {mean_value}<{cpu_threshold}')
+        return [0, mean_value]
 
     @classmethod
     def Analyze_MEM_Usage_Stack(self, mem_usage_stack, mem_threshold):
@@ -40,14 +39,13 @@ class Stats_Analyzer:
         Raises unusual behavior based on the average value of the stack.
         The average is predefined by the user as a `threshold`
         """
-        print(
-            f'will analyze the memory stack for unusual behavior\n{mem_usage_stack}')
-        mean_value = float(sum(mem_usage_stack) / len(mem_usage_stack))
+        mean_value = round(
+            float(sum(mem_usage_stack) / len(mem_usage_stack)), 2)
         if(mean_value >= mem_threshold):
-            print(f'🔥 unusual behavior: {mean_value}≥{mem_threshold}')
-            return 1
-        print(f'✅ normal behavior: {mean_value}<{mem_threshold}')
-        return 0
+            # print(f'🔥 unusual behavior: {mean_value}≥{mem_threshold}')
+            return [1, mean_value]
+        # print(f'✅ normal behavior: {mean_value}<{mem_threshold}')
+        return [0, mean_value]
 
 
 class Modified_State_Handler(FileSystemEventHandler):
@@ -103,9 +101,17 @@ class Reader():
         log_line[log_line.find('MACHINE-ID:') + len('MACHINE-ID:'):])
 
     @classmethod
-    def Watch_Log_File(self, log_file, execution_time, time_window):
-        """Watches a log file for new events
+    def Watch_Log_File(self, log_file, execution_time, cycle_time, threshold):
+        """Watches a log file for new events.
+
         With each new event inside the log-file, the data is parsed, and CPU + MEM stats are extracted, each into its own data stack
+
+        `cycle_time` represents the a time window after which the watcher class will analyze the incoming logs. After the analysis of the ingested stats is made, cycle does a reset, clears the event stack and watches for incoming logs again, in order to make a new analysis.
+
+        The watcher function knows when to consider the event stack for a particular field as "Unusual" depending on the value of its corresponding `threshold`.
+        The `threshold` argument is an array of values, one for each stat.
+
+        The entire process stops after `execution_time` has been reached.
         """
         event_handler = Modified_State_Handler()
 
@@ -116,6 +122,10 @@ class Reader():
         count = 0
         cycle_count = 0
         watch_state = True
+
+        # set the thresholds for each stat value from the log file
+        cpu_threshold = threshold[0]
+        mem_threshold = threshold[1]
 
         total_execution_time = time.time()
         cycle_execution_time = time.time()
@@ -144,39 +154,57 @@ class Reader():
             if(count == 5):  # stop if the log stream hangs up
                 print('No incoming logs...')
                 print('Stopping the watcher')
-                print('CPU stack:')
-                print(cpu_stack)
-                print('Memory stack:')
-                print(mem_stack)
-                print('Machine ID')
-                try:
-                    print(machine_id[0])
-                except IndexError as error:
-                    print(machine_id)
-                else:
-                    pass
+                # print('CPU stack:')
+                # print(cpu_stack)
+                # print('Memory stack:')
+                # print(mem_stack)
+                # print('Machine ID')
+                # try:
+                #     print(machine_id[0])
+                # except IndexError as error:
+                #     print(machine_id)
+                # else:
+                #     pass
                 watch_state = False
                 return
 
             # continue running the watcher in "batches" of time_window seconds
-            if(time.time() - cycle_execution_time >= time_window):
+            if(time.time() - cycle_execution_time >= cycle_time):
                 cycle_count += 1
                 print(
-                    f'{time_window} seconds have passed. Completed cycle {cycle_count}')
+                    f'{cycle_time} seconds have passed. Completed cycle {cycle_count}')
 
                 # analyze the current stacks for unusual behavior
                 # only analyze the stacks that are full in size
                 # a full-size stack means a stack that has the proper number of events inside, based on the cycle-window-size and the refresh rate of the logger
-                if(len(cpu_stack) == time_window):
-                    print('the cpu stack has been collected')
-                    Stats_Analyzer.Analyze_CPU_Usage_Stack(cpu_stack, 70)
+                if(len(cpu_stack) == cycle_time):
+                    # print(
+                    #     f'Analyzing the CPU stats for the past {cycle_time} seconds')
+                    cpu_analysis = Stats_Analyzer.Analyze_CPU_Usage_Stack(
+                        cpu_stack, cpu_threshold)
+                    if(cpu_analysis[0] == 1):
+                        print(
+                            f'CPU usage is above the threshold! ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds\nWill alert the DevOps team!!!')
+                    else:
+                        print(
+                            f'CPU usage is normal ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
                 else:
-                    print('cpu stack is skipped -> incomplete')
-                if(len(mem_stack) == time_window):
-                    print('the memory stack has been collected')
-                    Stats_Analyzer.Analyze_MEM_Usage_Stack(mem_stack, 70)
+                    # print('cpu stack is skipped -> incomplete')
+                    print('Skipping analysis of this cpu usage stack')
+                if(len(mem_stack) == cycle_time):
+                    # print(
+                    #     f'Analyzing the Memory stats for the past {cycle_time} seconds')
+                    mem_analysis = Stats_Analyzer.Analyze_MEM_Usage_Stack(
+                        mem_stack, mem_threshold)
+                    if(mem_analysis[0] == 1):
+                        print(
+                            f'Memory usage is above the threshold! ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds\nWill alert the DevOps team!!!')
+                    else:
+                        print(
+                            f'Memory usage is normal ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
                 else:
-                    print('memory stack is skipped -> incomplete')
+                    # print('memory stack is skipped -> incomplete')
+                    print('Skipping analysis of this memory usage stack')
 
                 # clear the initial stacks after analysis has been performed
                 cpu_stack.clear()
@@ -190,4 +218,4 @@ class Reader():
 cpu_stack = []
 mem_stack = []
 machine_id = []
-Reader.Watch_Log_File(log_file_path, 100, 15)
+Reader.Watch_Log_File(log_file_path, 100, 20, [70, 70])
