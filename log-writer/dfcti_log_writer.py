@@ -140,4 +140,4 @@ class Write_Logs:
 
 
 MachineID.Generate_Machine_ID()
-Write_Logs.Write_Process(6969, 1)
+Write_Logs.Write_Process(120, 1)

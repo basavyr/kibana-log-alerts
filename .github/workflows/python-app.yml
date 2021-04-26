@@ -38,6 +38,12 @@ jobs:
           ls
           pipenv install
 
+      - name: Start generating log lines in the background
+        run: |
+          cd log-writer
+          chmod +x dfcti_log_writer.py
+          nohup ./dfcti_log_writer.py &
+      
       - name: Run the python log-reader script
         run: |
           cd log-reader
