@@ -14,6 +14,44 @@ from watchdog.events import FileSystemEventHandler
 # Set the path to the log file used for analysis
 log_file_path = '/var/log/dfcti_system_logs.log'
 
+# The name and e-mail for each client that needs to be alerted
+EMAIL_LIST = [['ROBERT-MSFT', 'robert.poenaru@outlook.com'],
+              ['ROBERT-GOOGL', 'robert.poenaru@drd.unibuc.ro']]
+
+# the list of potential issues which can occur during monitoring
+RESOURCE_ISSUES = {
+    "CPU": "🔥 HIGH CPU USAGE 🔥",
+    "MEM": "🔥 HIGH (RAM) MEMORY USAGE 🔥"
+}
+
+
+class Alerter:
+
+    @classmethod
+    def Generate_Fail_Stats(self, name, issue, fail_stack):
+        stats = [name, issue, fail_stack]
+        return stats
+
+    @classmethod
+    def Create_Alert(self, stats):
+        """Get:
+        the name
+        +the type of issue which occurred during log monitoring
+        +the fail stack
+
+        `stats` -> {name, issue, fail stack}
+        """
+        name = stats[0]
+        issue_info = stats[1]
+        issue_stats = stats[2]
+        alert_message = Message.Create_Message(name, issue_info, issue_stats)
+        return alert_message
+
+    @classmethod
+    def SendAlert(self, alert, email):
+        print(f'will send\n{alert}\nto {email}')
+        return f'will send\n{alert}\nto {email}'
+
 
 class Attachment:
     @classmethod
@@ -209,26 +247,38 @@ class Reader():
                     if(cpu_analysis[0] == 1):
                         print(
                             f'CPU usage is above the threshold! ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds\nWill alert the DevOps team!!!')
+                        fail_stack = f'AVG_CPU_USAGE for the past {cycle_time} seconds: {cpu_analysis[1]}%, which is above the threshold value {cpu_threshold}%.'
+                        for email in EMAIL_LIST:
+                            fail_stats = Alerter.Generate_Fail_Stats(
+                                email[0], RESOURCE_ISSUES["CPU"], fail_stack)
+                            alert = Alerter.Create_Alert(fail_stats)
+                            Alerter.SendAlert(alert, email[1])
                     else:
                         print(
                             f'CPU usage is normal ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
+                        pass
                 else:
-                    # print('cpu stack is skipped -> incomplete')
-                    print('Skipping analysis of this cpu usage stack')
+                    print(
+                        'Skipping analysis of this CPU usage stack.\nReason: Not enough data to perform analysis')
                 if(len(mem_stack) == cycle_time):
-                    # print(
-                    #     f'Analyzing the Memory stats for the past {cycle_time} seconds')
                     mem_analysis = Stats_Analyzer.Analyze_MEM_Usage_Stack(
                         mem_stack, mem_threshold)
                     if(mem_analysis[0] == 1):
                         print(
                             f'Memory usage is above the threshold! ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds\nWill alert the DevOps team!!!')
+                        fail_stack = f'AVG_MEM_USAGE for the past {cycle_time} seconds: {mem_analysis[1]}%, which is above the threshold value {mem_threshold}%.'
+                        for email in EMAIL_LIST:
+                            fail_stats = Alerter.Generate_Fail_Stats(
+                                email[0], RESOURCE_ISSUES["MEM"], fail_stack)
+                            alert = Alerter.Create_Alert(fail_stats)
+                            Alerter.SendAlert(alert, email[1])
                     else:
                         print(
                             f'Memory usage is normal ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
+                        pass
                 else:
-                    # print('memory stack is skipped -> incomplete')
-                    print('Skipping analysis of this memory usage stack')
+                    print(
+                        'Skipping analysis of this memory usage stack.\nReason: Not enough data to perform analysis')
 
                 # clear the initial stacks after analysis has been performed
                 cpu_stack.clear()
@@ -239,9 +289,9 @@ class Reader():
         observer.stop()
 
 
-# cpu_stack = []
-# mem_stack = []
-# machine_id = []
-# Reader.Watch_Log_File(log_file_path, 100, 20, [70, 70])
+cpu_stack = []
+mem_stack = []
+machine_id = []
+Reader.Watch_Log_File(log_file_path, 100, 20, [70, 70])
 
-print(Message.Create_Message('RO', 'XX', 'YY'))
+# print(Message.Create_Message('RO', 'XX', 'YY'))
