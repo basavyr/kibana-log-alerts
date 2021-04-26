@@ -32,9 +32,9 @@ jobs:
           sudo touch /var/log/dfcti_system_logs.log
           sudo chmod 777 /var/log/dfcti_system_logs.log
 
-      - name: Install packages for log-writer script
+      - name: Install packages for log-reader script
         run: |
-          cd log-writer
+          cd log-reader
           ls
           pipenv install
 
