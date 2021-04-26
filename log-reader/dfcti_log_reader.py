@@ -9,6 +9,10 @@ import time
 from datetime import datetime
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+import smtplib
+import ssl
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 
 # Set the path to the log file used for analysis
@@ -49,8 +53,61 @@ class Alerter:
 
     @classmethod
     def SendAlert(self, alert, email):
-        print(f'will send\n{alert}\nto {email}')
-        return f'will send\n{alert}\nto {email}'
+        Alerter.Send_TEXT_Email(email, alert, True)
+        # return f'will send\n{alert}\nto {email}'
+
+    @classmethod
+    def Send_TEXT_Email(self, email_address, alert_content, alert_state=False):
+        PORT = 465  # For SSL
+        ROOT_EMAIL = 'alerts.dfcti@gmail.com'
+
+        UNICORN_ID = 'v2a&tw@uGVWt7%LVjXFD'
+
+        message = MIMEMultipart("alternative")
+        message["Subject"] = f'{str(datetime.utcnow())[:19]} - Alert via DFCTI monitoring system'
+        message["From"] = ROOT_EMAIL
+
+        # https://stackoverflow.com/questions/38151440/can-anyone-tell-my-why-im-getting-the-error-attributeerror-list-object-has
+        message["To"] = email_address
+
+        IN_SEND = True
+
+        if(alert_state == True):
+            print('TEXT-based alert service started...')
+            if(email_address == ''):
+                print('Invalid e-mail address')
+                return
+
+            # generate the content of the alert e-mail
+            TEXT_MESSAGE = MIMEText(alert_content, "plain")
+            message.attach(TEXT_MESSAGE)
+
+            # Create a secure SSL context
+            CONTEXT = ssl.create_default_context()
+
+            with smtplib.SMTP_SSL("smtp.gmail.com", PORT, context=CONTEXT) as MAIL_SERVER:
+                try:
+                    MAIL_SERVER.login(ROOT_EMAIL, UNICORN_ID)
+                except Exception as exc:
+                    print(f'❌ Cannot log-in!')
+                    print(f'Reason: {exc}')
+                else:
+                    print(f'🔐 Successful log-in into -> {ROOT_EMAIL}')
+                    print(f'📤 Ready to send alerts to -> {email_address}')
+                if(IN_SEND):
+                    try:
+                        MAIL_SERVER.sendmail(
+                            ROOT_EMAIL, email_address, message.as_string())
+                    except Exception as exc:
+                        print(f'❌ Cannot send alert to {email_address}...')
+                        print(f'Reason: {exc}')
+                    else:
+                        print(f'🚀 Sent alert to {email_address} ! ✅')
+                else:
+                    print('Internal alert system is paused...')
+                    print('Cannot send alerts at this time ------> #IN_SEND_VALUE:NULL')
+        else:
+            print('Not sending any alerts...')
 
 
 class Attachment:
@@ -247,10 +304,10 @@ class Reader():
                     if(cpu_analysis[0] == 1):
                         print(
                             f'CPU usage is above the threshold! ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds\nWill alert the DevOps team!!!')
-                        fail_stack = f'AVG_CPU_USAGE for the past {cycle_time} seconds: {cpu_analysis[1]}%, which is above the threshold value {cpu_threshold}%.'
+                        fail_value = f'AVG_CPU_USAGE for the past {cycle_time} seconds: {cpu_analysis[1]}%, which is above the threshold value {cpu_threshold}%.'
                         for email in EMAIL_LIST:
                             fail_stats = Alerter.Generate_Fail_Stats(
-                                email[0], RESOURCE_ISSUES["CPU"], fail_stack)
+                                email[0], RESOURCE_ISSUES["CPU"], fail_value)
                             alert = Alerter.Create_Alert(fail_stats)
                             Alerter.SendAlert(alert, email[1])
                     else:
@@ -266,10 +323,10 @@ class Reader():
                     if(mem_analysis[0] == 1):
                         print(
                             f'Memory usage is above the threshold! ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds\nWill alert the DevOps team!!!')
-                        fail_stack = f'AVG_MEM_USAGE for the past {cycle_time} seconds: {mem_analysis[1]}%, which is above the threshold value {mem_threshold}%.'
+                        fail_value = f'AVG_MEM_USAGE for the past {cycle_time} seconds: {mem_analysis[1]}%, which is above the threshold value {mem_threshold}%.'
                         for email in EMAIL_LIST:
                             fail_stats = Alerter.Generate_Fail_Stats(
-                                email[0], RESOURCE_ISSUES["MEM"], fail_stack)
+                                email[0], RESOURCE_ISSUES["MEM"], fail_value)
                             alert = Alerter.Create_Alert(fail_stats)
                             Alerter.SendAlert(alert, email[1])
                     else:
@@ -292,6 +349,6 @@ class Reader():
 cpu_stack = []
 mem_stack = []
 machine_id = []
-Reader.Watch_Log_File(log_file_path, 100, 20, [70, 70])
+Reader.Watch_Log_File(log_file_path, 100, 10, [70, 70])
 
 # print(Message.Create_Message('RO', 'XX', 'YY'))
