@@ -9,7 +9,9 @@ import time
 from datetime import datetime
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-import email, smtplib, ssl
+import email
+import smtplib
+import ssl
 from email import encoders
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
@@ -52,62 +54,111 @@ class Alerter:
         return alert_message
 
     @classmethod
-    def SendAlert(self, alert, email):
-        Alerter.Send_TEXT_Email(email, alert, True)
+    def SendAlert(self, alert, attachment_file, email):
+        Alerter.Send_Email(email, alert, attachment_file, True)
         # return f'will send\n{alert}\nto {email}'
 
     @classmethod
-    def Send_TEXT_Email(self, email_address, alert_content, alert_state=False):
+    def Send_Email(self, email_address, alert_content, attachment_file, alert_state=False):
         PORT = 465  # For SSL
         ROOT_EMAIL = 'alerts.dfcti@gmail.com'
 
         UNICORN_ID = 'v2a&tw@uGVWt7%LVjXFD'
 
-        message = MIMEMultipart("alternative")
-        message["Subject"] = f'{str(datetime.utcnow())[:19]} - Alert via DFCTI monitoring system'
+        message = MIMEMultipart()
         message["From"] = ROOT_EMAIL
-
         # https://stackoverflow.com/questions/38151440/can-anyone-tell-my-why-im-getting-the-error-attributeerror-list-object-has
         message["To"] = email_address
+        message["Subject"] = f'{str(datetime.utcnow())[:19]} - Alert via DFCTI monitoring system'
+
+        # generating the e-mail body
+        message_body = alert_content
+
+        # Adding the body to the actual email
+        message.attach(MIMEText(message_body, "plain"))
+
+        # Open PDF file in binary mode
+        with open(attachment_file, "rb") as attachment:
+            # Add file as application/octet-stream
+            # Email client can usually download this automatically as attachment
+            part = MIMEBase("application", "octet-stream")
+            part.set_payload(attachment.read())
+
+        # Encode file in ASCII characters to send by email
+        encoders.encode_base64(part)
+
+        # Add header as key/value pair to attachment part
+        part.add_header(
+            "Content-Disposition",
+            f"attachment; filename= {attachment_file}",
+        )
+
+        # Add attachment to message and convert message to string
+        message.attach(part)
+        final_alert = message.as_string()
 
         IN_SEND = True
-
-        if(alert_state == True):
-            print('TEXT-based alert service started...')
-            if(email_address == ''):
-                print('Invalid e-mail address')
-                return
-
-            # generate the content of the alert e-mail
-            TEXT_MESSAGE = MIMEText(alert_content, "plain")
-            message.attach(TEXT_MESSAGE)
-
-            # Create a secure SSL context
-            CONTEXT = ssl.create_default_context()
-
-            with smtplib.SMTP_SSL("smtp.gmail.com", PORT, context=CONTEXT) as MAIL_SERVER:
+        CONTEXT = ssl.create_default_context()
+        with smtplib.SMTP_SSL("smtp.gmail.com", PORT, context=CONTEXT) as MAIL_SERVER:
+            try:
+                MAIL_SERVER.login(ROOT_EMAIL, UNICORN_ID)
+            except Exception as exc:
+                print(f'❌ Cannot log-in!')
+                print(f'Reason: {exc}')
+            else:
+                print(f'🔐 Successful log-in into -> {ROOT_EMAIL}')
+                print(f'📤 Ready to send alerts to -> {email_address}')
+            if(IN_SEND):
                 try:
-                    MAIL_SERVER.login(ROOT_EMAIL, UNICORN_ID)
+                    MAIL_SERVER.sendmail(
+                        ROOT_EMAIL, email_address, final_alert)
                 except Exception as exc:
-                    print(f'❌ Cannot log-in!')
+                    print(f'❌ Cannot send alert to {email_address}...')
                     print(f'Reason: {exc}')
                 else:
-                    print(f'🔐 Successful log-in into -> {ROOT_EMAIL}')
-                    print(f'📤 Ready to send alerts to -> {email_address}')
-                if(IN_SEND):
-                    try:
-                        MAIL_SERVER.sendmail(
-                            ROOT_EMAIL, email_address, message.as_string())
-                    except Exception as exc:
-                        print(f'❌ Cannot send alert to {email_address}...')
-                        print(f'Reason: {exc}')
-                    else:
-                        print(f'🚀 Sent alert to {email_address} ! ✅')
-                else:
-                    print('Internal alert system is paused...')
-                    print('Cannot send alerts at this time ------> #IN_SEND_VALUE:NULL')
-        else:
-            print('Not sending any alerts...')
+                    print(f'🚀 Sent alert to {email_address} ! ✅')
+            else:
+                print('Internal alert system is paused...')
+                print('Cannot send alerts at this time ------> #IN_SEND_VALUE:NULL')
+
+        # IN_SEND = True
+
+        # if(alert_state == True):
+        #     print('TEXT-based alert service started...')
+        #     if(email_address == ''):
+        #         print('Invalid e-mail address')
+        #         return
+
+        #     # generate the content of the alert e-mail
+        #     TEXT_MESSAGE = MIMEText(alert_content, "plain")
+        #     message.attach(TEXT_MESSAGE)
+
+        #     # Create a secure SSL context
+        #     CONTEXT = ssl.create_default_context()
+
+        #     with smtplib.SMTP_SSL("smtp.gmail.com", PORT, context=CONTEXT) as MAIL_SERVER:
+        #         try:
+        #             MAIL_SERVER.login(ROOT_EMAIL, UNICORN_ID)
+        #         except Exception as exc:
+        #             print(f'❌ Cannot log-in!')
+        #             print(f'Reason: {exc}')
+        #         else:
+        #             print(f'🔐 Successful log-in into -> {ROOT_EMAIL}')
+        #             print(f'📤 Ready to send alerts to -> {email_address}')
+        #         if(IN_SEND):
+        #             try:
+        #                 MAIL_SERVER.sendmail(
+        #                     ROOT_EMAIL, email_address, message.as_string())
+        #             except Exception as exc:
+        #                 print(f'❌ Cannot send alert to {email_address}...')
+        #                 print(f'Reason: {exc}')
+        #             else:
+        #                 print(f'🚀 Sent alert to {email_address} ! ✅')
+        #         else:
+        #             print('Internal alert system is paused...')
+        #             print('Cannot send alerts at this time ------> #IN_SEND_VALUE:NULL')
+        # else:
+        #     print('Not sending any alerts...')
 
 
 class Attachment:
@@ -311,11 +362,12 @@ class Reader():
                             alert = Alerter.Create_Alert(fail_stats)
 
                             # create attachment for the e-mail alert
+                            attach_filename = 'fail_stack.dat'
                             Attachment.Create_Attachment(
-                                f'{datetime.utcnow()} ----->  CPU_FAIL_STACK: {cpu_stack}\n{cpu_fail_value}', 'fail_stack.dat')
+                                f'{datetime.utcnow()} ----->  CPU_FAIL_STACK: {cpu_stack}\n{cpu_fail_value}', attach_filename)
 
                             # send email with attachement
-                            Alerter.SendAlert(alert, email[1])
+                            Alerter.SendAlert(alert, attach_filename, email[1])
                     else:
                         print(
                             f'CPU usage is normal ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
@@ -334,13 +386,14 @@ class Reader():
                             fail_stats = Alerter.Generate_Fail_Stats(
                                 email[0], RESOURCE_ISSUES["MEM"], mem_fail_value)
                             alert = Alerter.Create_Alert(fail_stats)
-                            
+
                             # create attachment for the e-mail alert
+                            attach_filename = 'fail_stack.dat'
                             Attachment.Create_Attachment(
-                                f'{datetime.utcnow()} ----->  MEM_FAIL_STACK: {mem_stack}\n{mem_fail_value}', 'fail_stack.dat')
-                            
-                            # send email with attachement
-                            Alerter.SendAlert(alert, email[1])
+                                f'{datetime.utcnow()} ----->  MEM_FAIL_STACK: {mem_stack}\n{mem_fail_value}', attach_filename)
+
+                            # send email with attachment
+                            Alerter.SendAlert(alert, attach_filename, email[1])
                     else:
                         print(
                             f'Memory usage is normal ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
@@ -361,6 +414,6 @@ class Reader():
 cpu_stack = []
 mem_stack = []
 machine_id = []
-Reader.Watch_Log_File(log_file_path, 100, 10, [70, 70])
+Reader.Watch_Log_File(log_file_path, 600, 10, [70, 70])
 
 # print(Message.Create_Message('RO', 'XX', 'YY'))
