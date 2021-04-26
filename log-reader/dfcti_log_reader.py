@@ -9,11 +9,11 @@ import time
 from datetime import datetime
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-import smtplib
-import ssl
-from email.mime.text import MIMEText
+import email, smtplib, ssl
+from email import encoders
+from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
-
+from email.mime.text import MIMEText
 
 # Set the path to the log file used for analysis
 log_file_path = '/var/log/dfcti_system_logs.log'
@@ -112,9 +112,9 @@ class Alerter:
 
 class Attachment:
     @classmethod
-    def Create_Attachment(data, file_path):
-        content = f'This is an attachment\n{data}\nPath to file: {file_path}'
-        return content
+    def Create_Attachment(self, data, file_path):
+        with open(file_path, 'w+') as attach:
+            attach.write(data + '\n')
 
 
 class Message:
@@ -304,11 +304,17 @@ class Reader():
                     if(cpu_analysis[0] == 1):
                         print(
                             f'CPU usage is above the threshold! ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds\nWill alert the DevOps team!!!')
-                        fail_value = f'AVG_CPU_USAGE for the past {cycle_time} seconds: {cpu_analysis[1]}%, which is above the threshold value {cpu_threshold}%.'
+                        cpu_fail_value = f'AVG_CPU_USAGE for the past {cycle_time} seconds: {cpu_analysis[1]}%, which is above the threshold value {cpu_threshold}%.'
                         for email in EMAIL_LIST:
                             fail_stats = Alerter.Generate_Fail_Stats(
-                                email[0], RESOURCE_ISSUES["CPU"], fail_value)
+                                email[0], RESOURCE_ISSUES["CPU"], cpu_fail_value)
                             alert = Alerter.Create_Alert(fail_stats)
+
+                            # create attachment for the e-mail alert
+                            Attachment.Create_Attachment(
+                                f'{datetime.utcnow()} ----->  CPU_FAIL_STACK: {cpu_stack}\n{cpu_fail_value}', 'fail_stack.dat')
+
+                            # send email with attachement
                             Alerter.SendAlert(alert, email[1])
                     else:
                         print(
@@ -323,11 +329,17 @@ class Reader():
                     if(mem_analysis[0] == 1):
                         print(
                             f'Memory usage is above the threshold! ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds\nWill alert the DevOps team!!!')
-                        fail_value = f'AVG_MEM_USAGE for the past {cycle_time} seconds: {mem_analysis[1]}%, which is above the threshold value {mem_threshold}%.'
+                        mem_fail_value = f'AVG_MEM_USAGE for the past {cycle_time} seconds: {mem_analysis[1]}%, which is above the threshold value {mem_threshold}%.'
                         for email in EMAIL_LIST:
                             fail_stats = Alerter.Generate_Fail_Stats(
-                                email[0], RESOURCE_ISSUES["MEM"], fail_value)
+                                email[0], RESOURCE_ISSUES["MEM"], mem_fail_value)
                             alert = Alerter.Create_Alert(fail_stats)
+                            
+                            # create attachment for the e-mail alert
+                            Attachment.Create_Attachment(
+                                f'{datetime.utcnow()} ----->  MEM_FAIL_STACK: {mem_stack}\n{mem_fail_value}', 'fail_stack.dat')
+                            
+                            # send email with attachement
                             Alerter.SendAlert(alert, email[1])
                     else:
                         print(
