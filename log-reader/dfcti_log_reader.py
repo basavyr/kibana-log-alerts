@@ -11,6 +11,7 @@ from datetime import datetime
 # import file watcher module
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+import watchdog.events as eventer
 
 
 # import modules for second e-mails
@@ -281,7 +282,10 @@ class Stats_Analyzer:
 class Modified_State_Handler(FileSystemEventHandler):
     def on_modified(self, event):
         event_path = event.src_path
+        # if(event_path)
         print(f'event: {event.src_path}')
+        print(f'event_type: {eventer.FileSystemEvent(event.src_path).is_directory}')
+        print(f'event_type: {eventer.FileModifiedEvent(event.src_path)}')
         # if(event_path == '/private' + log_file_path):
         # if(event_path == log_file_path):
         # print(f'The modified log_file path is: {event_path}')
@@ -495,24 +499,38 @@ machine_id = []
 
 # Reader.Watch_Log_File(log_file_path, 600, 60, [70, 70])
 
+# event_handler = Modified_State_Handler()
+# observer = Observer()
+# observer.schedule(event_handler, path=log_file_path, recursive=True)
+
+# count = 0
+# run = True
+# print(Create_LogFile_Path())
+# observer.start()
+# while(run):
+#     # try:
+#     # except RuntimeError as err:
+#     #     observer.stop()
+#     #     run = False
+#     # finally:
+#     count += 1
+#     time.sleep(1)
+#     if(count == 3):
+#         run = False
+# observer.stop()
+
 event_handler = Modified_State_Handler()
 observer = Observer()
-observer.schedule(event_handler, path=log_file_path, recursive=False)
-
+observer.schedule(event_handler, path=log_file_path, recursive=True)
+observer.start()
 count = 0
 run = True
-print(Create_LogFile_Path())
-observer.start()
-while(run):
-    # try:
-    # except RuntimeError as err:
-    #     observer.stop()
-    #     run = False
-    # finally:
-    count += 1
-    time.sleep(1)
-    if(count == 3):
-        run = False
-observer.stop()
-
-
+try:
+    while run:
+        time.sleep(1)
+        count += 1
+        if(count == 5):
+            run = False
+finally:
+    observer.stop()
+    observer.join()
