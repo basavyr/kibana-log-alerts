@@ -4,9 +4,11 @@
 import os
 import platform
 import numpy as np
-from numpy import random as rd
+from numpy.random import default_rng
 import time
 from datetime import datetime
+
+rd=default_rng()
 
 
 log_file_path = '/var/log/dfcti_system_logs.log'
