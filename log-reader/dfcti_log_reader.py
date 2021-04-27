@@ -266,34 +266,36 @@ class Stats_Analyzer:
 class Modified_State_Handler(FileSystemEventHandler):
     def on_modified(self, event):
         event_path = event.src_path
-        if(event_path == '/private' + log_file_path):
-            with open(log_file_path, 'r') as reader:
-                content = reader.readlines()
-                last_line = content[-1]
-                try:
-                    # must append only the value of the cpu or memory
-                    cpu_stack.append(Reader.get_cpu_usage(last_line))
-                except Exception as error:
-                    print(f'could not add CPU stats into the cpu stack')
-                    print(f'Reason -> {error}')
-                else:
-                    pass
-                try:
-                    # must append only the value of the cpu or memory
-                    mem_stack.append(Reader.get_mem_usage(last_line))
-                except Exception as error:
-                    print(f'could not add MEM stats into the cpu stack')
-                    print(f'Reason -> {error}')
-                else:
-                    pass
-                try:
-                    if(len(machine_id) == 0):
-                        machine_id.append(Reader.get_machine_id(last_line))
-                except Exception as error:
-                    print(f'could not get machine ID')
-                    print(f'Reason -> {error}')
-                else:
-                    pass
+        # if(event_path == '/private' + log_file_path):
+        if(event_path == log_file_path):
+            print(event_path)
+        #     with open(log_file_path, 'r') as reader:
+        #         content = reader.readlines()
+        #         last_line = content[-1]
+        #         try:
+        #             # must append only the value of the cpu or memory
+        #             cpu_stack.append(Reader.get_cpu_usage(last_line))
+        #         except Exception as error:
+        #             print(f'could not add CPU stats into the cpu stack')
+        #             print(f'Reason -> {error}')
+        #         else:
+        #             pass
+        #         try:
+        #             # must append only the value of the cpu or memory
+        #             mem_stack.append(Reader.get_mem_usage(last_line))
+        #         except Exception as error:
+        #             print(f'could not add MEM stats into the cpu stack')
+        #             print(f'Reason -> {error}')
+        #         else:
+        #             pass
+        #         try:
+        #             if(len(machine_id) == 0):
+        #                 machine_id.append(Reader.get_machine_id(last_line))
+        #         except Exception as error:
+        #             print(f'could not get machine ID')
+        #             print(f'Reason -> {error}')
+        #         else:
+        #             pass
 
 
 class Reader():
@@ -474,4 +476,14 @@ class Reader():
 cpu_stack = []
 mem_stack = []
 machine_id = []
-Reader.Watch_Log_File(log_file_path, 600, 60, [70, 70])
+
+# Reader.Watch_Log_File(log_file_path, 600, 60, [70, 70])
+
+event_handler = Modified_State_Handler()
+observer = Observer()
+observer.schedule(event_handler, path=log_file_path, recursive=False)
+
+observer.start()
+while(True):
+    time.sleep(1)
+observer.stop()

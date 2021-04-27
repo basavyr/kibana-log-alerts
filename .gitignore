@@ -4,5 +4,6 @@
 *cpu_usage.pdf
 *mem_usage.pdf
 *.lock
-*python-version
+*.python-version
 *machine_id
+e
