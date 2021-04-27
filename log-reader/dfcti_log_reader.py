@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
 
 
+# import system's related modules
 import os
 import platform
-import numpy as np
-from numpy import random as rd
 import time
 from datetime import datetime
+
+
+# import file watcher module
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+
+
+# import modules for second e-mails
 import email
 import smtplib
 import ssl
@@ -16,8 +21,18 @@ from email import encoders
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+
+
+# import plotting modules
 import matplotlib.pyplot as plt
 from matplotlib import rc
+
+
+# use the newly implemented default_rng
+import numpy as np
+from numpy.random import default_rng
+rd = default_rng()
+
 
 # Set the path to the log file used for analysis
 log_file_path = '/var/log/dfcti_system_logs.log'
@@ -31,6 +46,26 @@ RESOURCE_ISSUES = {
     "CPU": "🔥 HIGH CPU USAGE 🔥",
     "MEM": "🔥 HIGH (RAM) MEMORY USAGE 🔥"
 }
+
+
+def Get_Machine_ID(machine_id_file):
+    """searches for a machine_id file
+    If the file is not present, stops execution!
+    """
+    ID = ' '
+    try:
+        with open(machine_id_file, 'r') as id_reader:
+            ID = id_reader.read()
+    except Exception as error:
+        print('Cannot get the Machine-ID\nStopping execution')
+    else:
+        pass
+    if(ID == ' '):
+        return -1
+    return ID
+
+
+MACHINE_ID = Get_Machine_ID('machine_id')
 
 
 class Alerter:
@@ -478,8 +513,9 @@ class Reader():
 
 cpu_stack = []
 mem_stack = []
-machine_id = []
-Reader.Watch_Log_File(log_file_path, 90, 15, [70, 70])
+machine_id = MACHINE_ID
+print(machine_id)
+# Reader.Watch_Log_File(log_file_path, 90, 15, [70, 70])
 # Stats_Analyzer.Plot_Stack(datetime.utcnow(), 'xxx', [1, 2, 3, 4, 5], 60, 55,
 #                           'cpu_usage.pdf', 'CPU Usage')
 # Stats_Analyzer.Plot_Stack(datetime.utcnow(), 'xxx', [1, 2, 3, 4, 5], 60, 55,
