@@ -2,6 +2,9 @@
 
 ## Latest updates 
 
+* Modified the reader script to use a proper machine-ID
+* Thresholds are converted into float throughout the codebase
+* Uses only one e-mail address for computational speed
 * Add class functions for creating a machine-ID on any compute resource that is running the writer script
 * Add class function for getting the machine-ID from the specific file within the reader script
 * Add commands in the GitHub Actions for running the log writer in the background

@@ -51,7 +51,6 @@ jobs:
       
       - name: Run the python log-reader script
         run: |
-          ps aux | grep python
           cd log-reader
           pipenv run python dfcti_log_reader.py
 

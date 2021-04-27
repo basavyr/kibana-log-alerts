@@ -38,8 +38,9 @@ rd = default_rng()
 log_file_path = '/var/log/dfcti_system_logs.log'
 
 # The name and e-mail for each client that needs to be alerted
-EMAIL_LIST = [['ROBERT-MSFT', 'robert.poenaru@outlook.com'],
-              ['ROBERT-GOOGL', 'robert.poenaru@drd.unibuc.ro']]
+EMAIL_LIST = [['ROBERT-MSFT', 'robert.poenaru@outlook.com']]
+# EMAIL_LIST = [['ROBERT-MSFT', 'robert.poenaru@outlook.com'],
+#               ['ROBERT-GOOGL', 'robert.poenaru@drd.unibuc.ro']]
 
 # the list of potential issues which can occur during monitoring
 RESOURCE_ISSUES = {
