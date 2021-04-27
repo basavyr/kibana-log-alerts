@@ -9,7 +9,15 @@ import time
 from datetime import datetime
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-
+import email
+import smtplib
+import ssl
+from email import encoders
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+import matplotlib.pyplot as plt
+from matplotlib import rc
 
 # Set the path to the log file used for analysis
 log_file_path = '/var/log/dfcti_system_logs.log'
@@ -48,16 +56,139 @@ class Alerter:
         return alert_message
 
     @classmethod
-    def SendAlert(self, alert, email):
-        print(f'will send\n{alert}\nto {email}')
-        return f'will send\n{alert}\nto {email}'
+    def SendAlert(self, alert, attachment_files, email):
+        """ the files represent the actual stack in a .dat file + the plot file made with matplotlib via CreatePlot class method
+        """
+        Alerter.Send_Email(email, alert, attachment_files, True)
+
+    @classmethod
+    def Send_Email(self, email_address, alert_content, attachment_files, alert_state=False):
+        PORT = 465  # For SSL
+        ROOT_EMAIL = 'alerts.dfcti@gmail.com'
+
+        UNICORN_ID = 'v2a&tw@uGVWt7%LVjXFD'
+
+        message = MIMEMultipart()
+        message["From"] = ROOT_EMAIL
+        # https://stackoverflow.com/questions/38151440/can-anyone-tell-my-why-im-getting-the-error-attributeerror-list-object-has
+        message["To"] = email_address
+        message["Subject"] = f'{str(datetime.utcnow())[:19]} - Alert via DFCTI monitoring system'
+
+        # generating the e-mail body
+        message_body = alert_content
+
+        # Adding the body to the actual email
+        message.attach(MIMEText(message_body, "plain"))
+
+        # Open the dat file in binary mode
+        with open(attachment_files[0], "rb") as attachment:
+            # Add file as application/octet-stream
+            # Email client can usually download this automatically as attachment
+            part1 = MIMEBase("application", "octet-stream")
+            part1.set_payload(attachment.read())
+
+        # Open the plot file in binary mode
+        with open(attachment_files[1], "rb") as attachment:
+            # Add file as application/octet-stream
+            # Email client can usually download this automatically as attachment
+            part2 = MIMEBase("application", "octet-stream")
+            part2.set_payload(attachment.read())
+
+        # Encode file in ASCII characters to send by email
+        encoders.encode_base64(part1)
+        encoders.encode_base64(part2)
+
+        # Add header as key/value pair to attachment part
+        part1.add_header(
+            "Content-Disposition",
+            f"attachment; filename= {attachment_files[0]}",
+        )
+
+        # Add header as key/value pair to attachment part
+        part2.add_header(
+            "Content-Disposition",
+            f"attachment; filename= {attachment_files[1]}",
+        )
+
+        # Add attachment to message and convert message to string
+        message.attach(part1)
+        message.attach(part2)
+
+        final_alert = message.as_string()
+
+        IN_SEND = True
+        CONTEXT = ssl.create_default_context()
+        with smtplib.SMTP_SSL("smtp.gmail.com", PORT, context=CONTEXT) as MAIL_SERVER:
+            try:
+                MAIL_SERVER.login(ROOT_EMAIL, UNICORN_ID)
+            except Exception as exc:
+                print(f'❌ Cannot log-in!')
+                print(f'Reason: {exc}')
+            else:
+                print(f'🔐 Successful log-in into -> {ROOT_EMAIL}')
+                print(f'📤 Ready to send alerts to -> {email_address}')
+            if(IN_SEND):
+                try:
+                    MAIL_SERVER.sendmail(
+                        ROOT_EMAIL, email_address, final_alert)
+                except Exception as exc:
+                    print(f'❌ Cannot send alert to {email_address}...')
+                    print(f'Reason: {exc}')
+                else:
+                    print(f'🚀 Sent alert to {email_address} ! ✅')
+            else:
+                print('Internal alert system is paused...')
+                print('Cannot send alerts at this time ------> #IN_SEND_VALUE:NULL')
+
+        # IN_SEND = True
+
+        # if(alert_state == True):
+        #     print('TEXT-based alert service started...')
+        #     if(email_address == ''):
+        #         print('Invalid e-mail address')
+        #         return
+
+        #     # generate the content of the alert e-mail
+        #     TEXT_MESSAGE = MIMEText(alert_content, "plain")
+        #     message.attach(TEXT_MESSAGE)
+
+        #     # Create a secure SSL context
+        #     CONTEXT = ssl.create_default_context()
+
+        #     with smtplib.SMTP_SSL("smtp.gmail.com", PORT, context=CONTEXT) as MAIL_SERVER:
+        #         try:
+        #             MAIL_SERVER.login(ROOT_EMAIL, UNICORN_ID)
+        #         except Exception as exc:
+        #             print(f'❌ Cannot log-in!')
+        #             print(f'Reason: {exc}')
+        #         else:
+        #             print(f'🔐 Successful log-in into -> {ROOT_EMAIL}')
+        #             print(f'📤 Ready to send alerts to -> {email_address}')
+        #         if(IN_SEND):
+        #             try:
+        #                 MAIL_SERVER.sendmail(
+        #                     ROOT_EMAIL, email_address, message.as_string())
+        #             except Exception as exc:
+        #                 print(f'❌ Cannot send alert to {email_address}...')
+        #                 print(f'Reason: {exc}')
+        #             else:
+        #                 print(f'🚀 Sent alert to {email_address} ! ✅')
+        #         else:
+        #             print('Internal alert system is paused...')
+        #             print('Cannot send alerts at this time ------> #IN_SEND_VALUE:NULL')
+        # else:
+        #     print('Not sending any alerts...')
 
 
 class Attachment:
     @classmethod
-    def Create_Attachment(data, file_path):
-        content = f'This is an attachment\n{data}\nPath to file: {file_path}'
-        return content
+    def Create_Attachment(self, data, file_path):
+        """the incoming file_path contains the .dat file with the fail stack
+        second path is the plot
+        here, only the first file is required
+        """
+        with open(file_path[0], 'w+') as attach:
+            attach.write(data + '\n')
 
 
 class Message:
@@ -108,6 +239,35 @@ class Stats_Analyzer:
             return [1, mean_value]
         # print(f'✅ normal behavior: {mean_value}<{mem_threshold}')
         return [0, mean_value]
+
+    @classmethod
+    def Plot_Stack(self, time_stamp, machine_id, failed_stack, time, threshold, plot_stack_file, labels):
+        average = [np.mean(failed_stack) for _ in range(len(failed_stack))]
+        thresholds = [threshold for _ in range(len(failed_stack))]
+        if(average[0] >= thresholds[0]):
+            avg_color = '--r'
+        else:
+            avg_color = '--g'
+        # plt.rcParams.update({'font.size': 10})
+        # plt.rcParams['figure.dpi'] = 300
+
+        # rc('text', usetex=True)
+
+        plt.figure(figsize=(5, 3.5))
+        ax = plt.gca()
+        # ax.axes.xaxis.set_visible(False)
+        ax.axes.xaxis.set_ticks([])
+
+        plt.plot(failed_stack, '-ok', label=f'{labels}')
+        plt.plot(average, avg_color, label=f'Average Usage')
+        plt.plot(thresholds, '-b', label=f'Threshold')
+        plt.ylabel(f'%')
+        plt.xlabel(f'Last {time} seconds')
+        plt.legend(loc='best')
+        plt.title(
+            f'DFCTI Resource monitor\n@{time_stamp}\nMachine-ID:{machine_id}')
+        plt.savefig(plot_stack_file, bbox_inches='tight')
+        plt.close()
 
 
 class Modified_State_Handler(FileSystemEventHandler):
@@ -247,12 +407,25 @@ class Reader():
                     if(cpu_analysis[0] == 1):
                         print(
                             f'CPU usage is above the threshold! ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds\nWill alert the DevOps team!!!')
-                        fail_stack = f'AVG_CPU_USAGE for the past {cycle_time} seconds: {cpu_analysis[1]}%, which is above the threshold value {cpu_threshold}%.'
+                        cpu_fail_value = f'AVG_CPU_USAGE for the past {cycle_time} seconds: {cpu_analysis[1]}%, which is above the threshold value {cpu_threshold}%.'
                         for email in EMAIL_LIST:
                             fail_stats = Alerter.Generate_Fail_Stats(
-                                email[0], RESOURCE_ISSUES["CPU"], fail_stack)
+                                email[0], RESOURCE_ISSUES["CPU"], cpu_fail_value)
                             alert = Alerter.Create_Alert(fail_stats)
-                            Alerter.SendAlert(alert, email[1])
+
+                            # generate plot with cpu usage during the cycle time
+                            Stats_Analyzer.Plot_Stack(datetime.utcnow(
+                            ), 'xxx', cpu_stack, cycle_time, cpu_threshold, 'cpu_usage.pdf', 'CPU Usage')
+
+                            # create attachment for the e-mail alert
+                            attach_filenames = [
+                                'fail_stack.dat', 'cpu_usage.pdf']
+                            Attachment.Create_Attachment(
+                                f'{datetime.utcnow()} ----->  CPU_FAIL_STACK: {cpu_stack}\n{cpu_fail_value}', attach_filenames)
+
+                            # send email with attachement
+                            Alerter.SendAlert(
+                                alert, attach_filenames, email[1])
                     else:
                         print(
                             f'CPU usage is normal ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
@@ -266,12 +439,26 @@ class Reader():
                     if(mem_analysis[0] == 1):
                         print(
                             f'Memory usage is above the threshold! ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds\nWill alert the DevOps team!!!')
-                        fail_stack = f'AVG_MEM_USAGE for the past {cycle_time} seconds: {mem_analysis[1]}%, which is above the threshold value {mem_threshold}%.'
+                        mem_fail_value = f'AVG_MEM_USAGE for the past {cycle_time} seconds: {mem_analysis[1]}%, which is above the threshold value {mem_threshold}%.'
                         for email in EMAIL_LIST:
                             fail_stats = Alerter.Generate_Fail_Stats(
-                                email[0], RESOURCE_ISSUES["MEM"], fail_stack)
+                                email[0], RESOURCE_ISSUES["MEM"], mem_fail_value)
                             alert = Alerter.Create_Alert(fail_stats)
-                            Alerter.SendAlert(alert, email[1])
+
+                            # generate plot with cpu usage during the cycle time
+                            Stats_Analyzer.Plot_Stack(datetime.utcnow(
+                            ), 'xxx', mem_stack, cycle_time, mem_threshold, 'mem_usage.pdf', 'MEM Usage')
+
+                            # create attachment for the e-mail alert
+                            attach_filenames = [
+                                'fail_stack.dat', 'mem_usage.pdf']
+
+                            Attachment.Create_Attachment(
+                                f'{datetime.utcnow()} ----->  MEM_FAIL_STACK: {mem_stack}\n{mem_fail_value}', attach_filenames)
+
+                            # send email with attachment
+                            Alerter.SendAlert(
+                                alert, attach_filenames, email[1])
                     else:
                         print(
                             f'Memory usage is normal ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
@@ -292,6 +479,8 @@ class Reader():
 cpu_stack = []
 mem_stack = []
 machine_id = []
-Reader.Watch_Log_File(log_file_path, 100, 20, [70, 70])
-
-# print(Message.Create_Message('RO', 'XX', 'YY'))
+Reader.Watch_Log_File(log_file_path, 90, 15, [70, 70])
+# Stats_Analyzer.Plot_Stack(datetime.utcnow(), 'xxx', [1, 2, 3, 4, 5], 60, 55,
+#                           'cpu_usage.pdf', 'CPU Usage')
+# Stats_Analyzer.Plot_Stack(datetime.utcnow(), 'xxx', [1, 2, 3, 4, 5], 60, 55,
+#                           'mem_usage.pdf', 'Memory Usage')

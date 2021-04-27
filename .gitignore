@@ -1,1 +1,7 @@
 *.password
+*fail_stack.dat
+*nohup.out
+*cpu_usage.pdf
+*mem_usage.pdf
+*.lock
+*python-version
