@@ -40,7 +40,7 @@ jobs:
       
       - name: Install packages for log-writer script + give permission
         run: |
-          cd log-reader
+          cd log-writer
           pipenv install
           chmod +x dfcti_log_writer.py
 
