@@ -41,17 +41,23 @@ def Get_OS():
 
 
 def Create_LogFile_Path():
+    """
+    Generates a proper file path depending on the running operating system
+    Darwin appends a private folder before the entire initial path
+    """
     system_os = Get_OS()
     log_file_path = ''
     if(system_os == 'Darwin'):
-        log_file_path = 'This is macOS'
+        log_file_path = '/private/var/log/dfcti_system_logs.log'
     elif(system_os == 'Linux'):
-        log_file_path = 'This is Linux'
-    return log_file_path
+        log_file_path = '/var/log/dfcti_system_logs.log'
+    if(log_file_path!=''):
+        return log_file_path
+    return -1
 
 
 # Set the path to the log file used for analysis
-log_file_path = '/var/log/dfcti_system_logs.log'
+log_file_path = Create_LogFile_Path()
 
 # The name and e-mail for each client that needs to be alerted
 EMAIL_LIST = [['ROBERT-MSFT', 'robert.poenaru@outlook.com']]
@@ -282,10 +288,10 @@ class Stats_Analyzer:
 class Modified_State_Handler(FileSystemEventHandler):
     def on_modified(self, event):
         event_path = event.src_path
-        # if(event_path)
-        print(f'event: {event.src_path}')
-        print(f'event_type: {eventer.FileSystemEvent(event.src_path).is_directory}')
-        print(f'event_type: {eventer.FileModifiedEvent(event.src_path)}')
+        if(os.path.isfile(event_path)):
+            if(event_path==log_file_path):
+                print(f'OS: {Get_OS()}\nLog-File-Path: {event_path}')
+        
         # if(event_path == '/private' + log_file_path):
         # if(event_path == log_file_path):
         # print(f'The modified log_file path is: {event_path}')
@@ -521,7 +527,7 @@ machine_id = []
 
 event_handler = Modified_State_Handler()
 observer = Observer()
-observer.schedule(event_handler, path=log_file_path, recursive=True)
+observer.schedule(event_handler, path=log_file_path, recursive=False)
 observer.start()
 count = 0
 run = True
