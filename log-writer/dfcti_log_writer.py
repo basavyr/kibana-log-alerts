@@ -194,9 +194,4 @@ class Write_Logs:
 
 
 print(MachineID.Get_Machine_ID())
-print(MachineID.Get_Machine_ID())
-print(MachineID.Get_Machine_ID())
-print(MachineID.Get_Machine_ID())
-print(MachineID.Get_Machine_ID())
-print(MachineID.Get_Machine_ID())
 # Write_Logs.Write_Process(120, 1)

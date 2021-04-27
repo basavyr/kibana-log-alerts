@@ -32,24 +32,30 @@ jobs:
           sudo touch /var/log/dfcti_system_logs.log
           sudo chmod 777 /var/log/dfcti_system_logs.log
 
-      - name: Install packages for log-reader script
+      - name: Install packages for log-reader script + give permission
         run: |
           cd log-reader
           pipenv install
+          chmod +x dfcti_log_reader.py
+      
+      - name: Install packages for log-writer script + give permission
+        run: |
+          cd log-reader
+          pipenv install
+          chmod +x dfcti_log_writer.py
 
       - name: Start generating log lines in the background
         run: |
           ls -l log-reader/
           cd log-writer
-          pipenv install
-          chmod +x dfcti_log_writer.py
           pipenv run python dfcti_log_writer.py
+          ls -l
           ls -l ../log-reader/
       
-      # - name: Run the python log-reader script
-      #   run: |
-      #     cd log-reader
-      #     pipenv run python dfcti_log_reader.py
+      - name: Run the python log-reader script
+        run: |
+          cd log-reader
+          pipenv run python dfcti_log_reader.py
 
       - name: Create release | Deliver log-file
         uses: softprops/action-gh-release@v1
