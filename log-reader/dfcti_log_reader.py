@@ -234,9 +234,9 @@ class Stats_Analyzer:
 
     @classmethod
     def Plot_Stack(self, time_stamp, machine_id, failed_stack, time, threshold, plot_stack_file, labels):
-        average = [np.mean(failed_stack) for _ in range(len(failed_stack))]
-        thresholds = [threshold for _ in range(len(failed_stack))]
-        if(average[0] >= thresholds[0]):
+        averages = [np.mean(failed_stack) for _ in range(len(failed_stack))]
+        thresholds = [float(threshold) for _ in range(len(failed_stack))]
+        if(averages[0] >= thresholds[0]):
             avg_color = '--r'
         else:
             avg_color = '--g'
@@ -251,7 +251,7 @@ class Stats_Analyzer:
         ax.axes.xaxis.set_ticks([])
 
         plt.plot(failed_stack, '-ok', label=f'{labels}')
-        plt.plot(average, avg_color, label=f'Average Usage')
+        plt.plot(averages, avg_color, label=f'Average Usage')
         plt.plot(thresholds, '-b', label=f'Threshold')
         plt.ylabel(f'%')
         plt.xlabel(f'Last {time} seconds')
@@ -473,8 +473,4 @@ class Reader():
 cpu_stack = []
 mem_stack = []
 machine_id = []
-# Reader.Watch_Log_File(log_file_path, 90, 15, [70, 70])
-# Stats_Analyzer.Plot_Stack(datetime.utcnow(), 'xxx', [1, 2, 3, 4, 5], 60, 55,
-#                           'cpu_usage.pdf', 'CPU Usage')
-# Stats_Analyzer.Plot_Stack(datetime.utcnow(), 'xxx', [1, 2, 3, 4, 5], 60, 55,
-#                           'mem_usage.pdf', 'Memory Usage')
+Reader.Watch_Log_File(log_file_path, 600, 60, [70, 70])

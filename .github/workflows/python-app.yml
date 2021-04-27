@@ -44,15 +44,21 @@ jobs:
           pipenv install
           chmod +x dfcti_log_writer.py
 
+      - name: Check the log file before starting the writing procedure
+        run: cat /var/log/dfcti_system_logs.log
+
       - name: Start generating log lines in the background
         run: |
+          cat
           cd log-writer
-          nohup pipenv run python dfcti_log_writer.py &
+          pipenv run python dfcti_log_writer.py
+          cat /var/log/dfcti_system_logs.log
+          echo ps aux | grep python
       
-      - name: Run the python log-reader script
-        run: |
-          ps aux | grep python
-          pipenv run python dfcti_log_reader.py
+      # - name: Run the python log-reader script
+      #   run: |
+      #     cd log-reader
+      #     pipenv run python dfcti_log_reader.py
 
       - name: Create release | Deliver log-file
         uses: softprops/action-gh-release@v1
