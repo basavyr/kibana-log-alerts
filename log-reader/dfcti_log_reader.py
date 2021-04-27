@@ -267,8 +267,8 @@ class Modified_State_Handler(FileSystemEventHandler):
     def on_modified(self, event):
         event_path = event.src_path
         # if(event_path == '/private' + log_file_path):
-        if(event_path == log_file_path):
-            print(event_path)
+        # if(event_path == log_file_path):
+        print(event_path)
         #     with open(log_file_path, 'r') as reader:
         #         content = reader.readlines()
         #         last_line = content[-1]
@@ -479,11 +479,20 @@ machine_id = []
 
 # Reader.Watch_Log_File(log_file_path, 600, 60, [70, 70])
 
-event_handler = Modified_State_Handler()
-observer = Observer()
-observer.schedule(event_handler, path=log_file_path, recursive=False)
+# event_handler = Modified_State_Handler()
+# observer = Observer()
+# observer.schedule(event_handler, path=log_file_path, recursive=False)
 
-observer.start()
-while(True):
-    time.sleep(1)
-observer.stop()
+# observer.start()
+# while(True):
+#     time.sleep(1)
+# observer.stop()
+
+
+def Get_OS():
+    os_value = platform.system()
+    return f'{os_value}'
+
+
+my_os = Get_OS()
+print(my_os)
