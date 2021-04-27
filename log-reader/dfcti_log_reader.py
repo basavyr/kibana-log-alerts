@@ -34,6 +34,21 @@ from numpy.random import default_rng
 rd = default_rng()
 
 
+def Get_OS():
+    os_value = platform.system()
+    return f'{os_value}'
+
+
+def Create_LogFile_Path():
+    system_os = Get_OS()
+    log_file_path = ''
+    if(system_os == 'Darwin'):
+        log_file_path = 'This is macOS'
+    elif(system_os == 'Linux'):
+        log_file_path = 'This is Linux'
+    return log_file_path
+
+
 # Set the path to the log file used for analysis
 log_file_path = '/var/log/dfcti_system_logs.log'
 
@@ -268,7 +283,7 @@ class Modified_State_Handler(FileSystemEventHandler):
         event_path = event.src_path
         # if(event_path == '/private' + log_file_path):
         # if(event_path == log_file_path):
-        print(event_path)
+        print(f'The modified log_file path is: {event_path}')
         #     with open(log_file_path, 'r') as reader:
         #         content = reader.readlines()
         #         last_line = content[-1]
@@ -479,20 +494,23 @@ machine_id = []
 
 # Reader.Watch_Log_File(log_file_path, 600, 60, [70, 70])
 
-# event_handler = Modified_State_Handler()
-# observer = Observer()
-# observer.schedule(event_handler, path=log_file_path, recursive=False)
+event_handler = Modified_State_Handler()
+observer = Observer()
+observer.schedule(event_handler, path=log_file_path, recursive=False)
 
-# observer.start()
-# while(True):
-#     time.sleep(1)
-# observer.stop()
+count = 0
+run = True
+while(run):
+    try:
+        observer.start()
+    except RuntimeError as err:
+        observer.stop()
+        run = False
+    finally:
+        count += 1
+        time.sleep(1)
+        if(count == 3):
+            run = False
 
 
-def Get_OS():
-    os_value = platform.system()
-    return f'{os_value}'
-
-
-my_os = Get_OS()
-print(my_os)
+print(Create_LogFile_Path())
