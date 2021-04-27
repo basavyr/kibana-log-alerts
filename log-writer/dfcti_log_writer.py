@@ -14,10 +14,6 @@ rd = default_rng()
 
 log_file_path = '/var/log/dfcti_system_logs.log'
 
-# this must be generated on script execution
-# the current value is only for testing
-MACHINE_ID = '8273d378-9b1e-4281-a673-9421bde36c79'
-
 
 class MachineID:
     """
@@ -29,7 +25,7 @@ class MachineID:
 
     It is essential that the machine ID will remain unchanged on the machine.
     """
-    machine_id_path = "../log-reader/machine_id"
+    machine_id_path = "machine_id"
 
     @classmethod
     def Check_File_Exists(self, file_path):
@@ -88,6 +84,9 @@ class MachineID:
         with open(MachineID.machine_id_path) as idx:
             ID = idx.read()
         return ID
+
+
+MACHINE_ID = MachineID.Get_Machine_ID()
 
 
 class SystemLogs:
@@ -193,5 +192,4 @@ class Write_Logs:
             time.sleep(wait_time)
 
 
-print(MachineID.Get_Machine_ID())
-# Write_Logs.Write_Process(120, 1)
+Write_Logs.Write_Process(100, 1)

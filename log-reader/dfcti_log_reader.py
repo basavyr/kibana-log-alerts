@@ -65,9 +65,6 @@ def Get_Machine_ID(machine_id_file):
     return ID
 
 
-MACHINE_ID = Get_Machine_ID('machine_id')
-
-
 class Alerter:
 
     @classmethod
@@ -100,7 +97,6 @@ class Alerter:
     def Send_Email(self, email_address, alert_content, attachment_files, alert_state=False):
         PORT = 465  # For SSL
         ROOT_EMAIL = 'alerts.dfcti@gmail.com'
-
         UNICORN_ID = 'v2a&tw@uGVWt7%LVjXFD'
 
         message = MIMEMultipart()
@@ -174,45 +170,6 @@ class Alerter:
             else:
                 print('Internal alert system is paused...')
                 print('Cannot send alerts at this time ------> #IN_SEND_VALUE:NULL')
-
-        # IN_SEND = True
-
-        # if(alert_state == True):
-        #     print('TEXT-based alert service started...')
-        #     if(email_address == ''):
-        #         print('Invalid e-mail address')
-        #         return
-
-        #     # generate the content of the alert e-mail
-        #     TEXT_MESSAGE = MIMEText(alert_content, "plain")
-        #     message.attach(TEXT_MESSAGE)
-
-        #     # Create a secure SSL context
-        #     CONTEXT = ssl.create_default_context()
-
-        #     with smtplib.SMTP_SSL("smtp.gmail.com", PORT, context=CONTEXT) as MAIL_SERVER:
-        #         try:
-        #             MAIL_SERVER.login(ROOT_EMAIL, UNICORN_ID)
-        #         except Exception as exc:
-        #             print(f'❌ Cannot log-in!')
-        #             print(f'Reason: {exc}')
-        #         else:
-        #             print(f'🔐 Successful log-in into -> {ROOT_EMAIL}')
-        #             print(f'📤 Ready to send alerts to -> {email_address}')
-        #         if(IN_SEND):
-        #             try:
-        #                 MAIL_SERVER.sendmail(
-        #                     ROOT_EMAIL, email_address, message.as_string())
-        #             except Exception as exc:
-        #                 print(f'❌ Cannot send alert to {email_address}...')
-        #                 print(f'Reason: {exc}')
-        #             else:
-        #                 print(f'🚀 Sent alert to {email_address} ! ✅')
-        #         else:
-        #             print('Internal alert system is paused...')
-        #             print('Cannot send alerts at this time ------> #IN_SEND_VALUE:NULL')
-        # else:
-        #     print('Not sending any alerts...')
 
 
 class Attachment:
@@ -399,11 +356,13 @@ class Reader():
 
             time.sleep(1)
 
-            # count the stacks after updating it
+            # count the stacks after updating them
+            # stack update takes place after 1 second passes
             cpu_stack_length_1 = len(cpu_stack)
             mem_stack_length_1 = len(mem_stack)
 
-            # stop if no new entries are coming into the stored values
+            # stop if no new entries are coming into the stacks
+            # hangs up the ingest after 5 seconds
             if((cpu_stack_length_0 == cpu_stack_length_1) or (mem_stack_length_0 == mem_stack_length_1)):
                 count += 1
             else:
@@ -450,7 +409,7 @@ class Reader():
 
                             # generate plot with cpu usage during the cycle time
                             Stats_Analyzer.Plot_Stack(datetime.utcnow(
-                            ), 'xxx', cpu_stack, cycle_time, cpu_threshold, 'cpu_usage.pdf', 'CPU Usage')
+                            ), machine_id[0], cpu_stack, cycle_time, cpu_threshold, 'cpu_usage.pdf', 'CPU Usage')
 
                             # create attachment for the e-mail alert
                             attach_filenames = [
@@ -482,7 +441,7 @@ class Reader():
 
                             # generate plot with cpu usage during the cycle time
                             Stats_Analyzer.Plot_Stack(datetime.utcnow(
-                            ), 'xxx', mem_stack, cycle_time, mem_threshold, 'mem_usage.pdf', 'MEM Usage')
+                            ), machine_id[0], mem_stack, cycle_time, mem_threshold, 'mem_usage.pdf', 'MEM Usage')
 
                             # create attachment for the e-mail alert
                             attach_filenames = [
@@ -513,8 +472,7 @@ class Reader():
 
 cpu_stack = []
 mem_stack = []
-machine_id = MACHINE_ID
-print(machine_id)
+machine_id = []
 # Reader.Watch_Log_File(log_file_path, 90, 15, [70, 70])
 # Stats_Analyzer.Plot_Stack(datetime.utcnow(), 'xxx', [1, 2, 3, 4, 5], 60, 55,
 #                           'cpu_usage.pdf', 'CPU Usage')
