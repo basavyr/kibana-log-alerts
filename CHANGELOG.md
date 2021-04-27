@@ -2,6 +2,8 @@
 
 ## Latest updates 
 
+* Get the OS version of the running resource
+* Adapts the path of the output log-file for different platforms
 * Modified the reader script to use a proper machine-ID
 * Thresholds are converted into float throughout the codebase
 * Uses only one e-mail address for computational speed
