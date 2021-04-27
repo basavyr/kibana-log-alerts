@@ -281,9 +281,10 @@ class Stats_Analyzer:
 class Modified_State_Handler(FileSystemEventHandler):
     def on_modified(self, event):
         event_path = event.src_path
+        print(f'event: {event.src_path}')
         # if(event_path == '/private' + log_file_path):
         # if(event_path == log_file_path):
-        print(f'The modified log_file path is: {event_path}')
+        # print(f'The modified log_file path is: {event_path}')
         #     with open(log_file_path, 'r') as reader:
         #         content = reader.readlines()
         #         last_line = content[-1]
@@ -500,17 +501,18 @@ observer.schedule(event_handler, path=log_file_path, recursive=False)
 
 count = 0
 run = True
-while(run):
-    try:
-        observer.start()
-    except RuntimeError as err:
-        observer.stop()
-        run = False
-    finally:
-        count += 1
-        time.sleep(1)
-        if(count == 3):
-            run = False
-
-
 print(Create_LogFile_Path())
+observer.start()
+while(run):
+    # try:
+    # except RuntimeError as err:
+    #     observer.stop()
+    #     run = False
+    # finally:
+    count += 1
+    time.sleep(1)
+    if(count == 3):
+        run = False
+observer.stop()
+
+
