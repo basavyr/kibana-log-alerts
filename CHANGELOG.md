@@ -2,7 +2,8 @@
 
 ## Latest updates 
 
-
+* Add class functions for creating a machine-ID on any compute resource that is running the writer script
+* Add class function for getting the machine-ID from the specific file within the reader script
 * Add commands in the GitHub Actions for running the log writer in the background
 * Changed the structure of the `resource` folder
 * Added class for attachment

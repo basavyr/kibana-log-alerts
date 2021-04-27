@@ -7,8 +7,9 @@ import numpy as np
 from numpy.random import default_rng
 import time
 from datetime import datetime
+import uuid
 
-rd=default_rng()
+rd = default_rng()
 
 
 log_file_path = '/var/log/dfcti_system_logs.log'
@@ -28,14 +29,65 @@ class MachineID:
 
     It is essential that the machine ID will remain unchanged on the machine.
     """
+    machine_id_path = "../log-reader/machine_id"
+
+    @classmethod
+    def Check_File_Exists(self, file_path):
+        """
+        🔎 📄  Check if the file with machine id exists or not
+        """
+        try:
+            checker = os.path.isfile(file_path)
+        except FileNotFoundError as exc:
+            print(f'File_Exists_Error: ------> {exc}')
+            return -1
+        else:
+            return checker
+
+    @classmethod
+    def Check_Empty_File(self, file_path):
+        """
+        🔎 📄  Check if the file with machine id exists or not
+        """
+        if(MachineID.Check_File_Exists(file_path) == False):
+            return -1
+        elif(MachineID.Check_File_Exists(file_path) == True):
+            try:
+                size_check = os.stat(file_path).st_size
+            except Exception as exc:
+                print(f'Size_Check_Error: ----> {exc}')
+            else:
+                return size_check
 
     @classmethod
     def Generate_Machine_ID(self):
         """
         💻 Generate a machine ID for the current system.
         """
-        fail_safe = f'Will generate a machine ID once properly implemented\nUsing the {MACHINE_ID} temporarily'
-        print(fail_safe)
+        check_exists = MachineID.Check_File_Exists(MachineID.machine_id_path)
+        check_size = MachineID.Check_Empty_File(MachineID.machine_id_path)
+        if(check_exists == False):
+            # file does not exist
+            new_machine_id = uuid.uuid4()
+            with open(MachineID.machine_id_path, 'w+') as set_id:
+                set_id.write(f'{new_machine_id}')
+        else:
+            # check if file is empty
+            if(check_size != 0):
+                # keep old id
+                pass
+            else:
+                # will write an uuid to the file
+                new_machine_id = uuid.uuid4()
+                with open(MachineID.machine_id_path, 'w+') as set_id:
+                    set_id.write(f'{new_machine_id}')
+
+    @classmethod
+    def Get_Machine_ID(self):
+        MachineID.Generate_Machine_ID()
+        with open(MachineID.machine_id_path) as idx:
+            ID = idx.read()
+        return ID
 
 
 class SystemLogs:
@@ -43,7 +95,7 @@ class SystemLogs:
     For example, it can generate CPU usage, disk usage, memory (RAM) usage, and also network usage.
     The generated stats are usually percentages, representing how much of the total allocated resources of that particular machine are being used.
     """
-    @classmethod
+    @ classmethod
     def CPU(self, mean_cpu_usage, usage_spread):
         """Gives the current CPU usage
         This is based on a normal distribution, centered around `mean_cpu_usage`
@@ -60,7 +112,7 @@ class SystemLogs:
             instant_usage = abs(cpu_usage())
         return instant_usage
 
-    @classmethod
+    @ classmethod
     def MEM(self, mean_disk_usage, usage_spread):
         """Gives the current DISK usage
         This is based on a normal distribution, centered around `mean_disk_usage`
@@ -83,7 +135,7 @@ class Write_Logs:
     Writes logs that are collected from other internal classes within the script
     """
 
-    @classmethod
+    @ classmethod
     def Generate_Log_Line(self):
         """
         Will generate a log line with the required information that needs to be monitored
@@ -97,7 +149,7 @@ class Write_Logs:
         log_line = f'{datetime.utcnow()} CPU:{SystemLogs().CPU(CPU_MEAN, CPU_SPREAD)}% MEM:{SystemLogs().MEM(MEM_MEAN, MEM_SPREAD)}% MACHINE-ID:{MACHINE_ID}'
         return log_line
 
-    @classmethod
+    @ classmethod
     def Write_Log_Line(self, log_line, log_file):
         """
         Once a log line has been generated via the proper method, it writes that line into its corresponding log-file
@@ -111,7 +163,7 @@ class Write_Logs:
         else:
             pass
 
-    @classmethod
+    @ classmethod
     def Write_Process(self, execution_time_secs, wait_time):
         """Starts making log lines
         Each log line is generated after a certain period, given by the user via `wait_time`
@@ -141,5 +193,10 @@ class Write_Logs:
             time.sleep(wait_time)
 
 
-MachineID.Generate_Machine_ID()
-Write_Logs.Write_Process(120, 1)
+print(MachineID.Get_Machine_ID())
+print(MachineID.Get_Machine_ID())
+print(MachineID.Get_Machine_ID())
+print(MachineID.Get_Machine_ID())
+print(MachineID.Get_Machine_ID())
+print(MachineID.Get_Machine_ID())
+# Write_Logs.Write_Process(120, 1)
