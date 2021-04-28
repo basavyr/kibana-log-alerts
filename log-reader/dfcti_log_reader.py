@@ -312,6 +312,7 @@ class Modified_State_Handler(FileSystemEventHandler):
             if(event_path == LOG_FILE_PATH):
                 # print(f'OS: {Get_OS()}\nLog-File-Path: {event_path}')
                 # print(f'New log-event in -> {event_path}')
+
                 # easy two-liner for getting the last line of the log-file
                 with open(LOG_FILE_PATH, 'r') as reader:
                     last_line = list(reader)[-1]
@@ -522,7 +523,7 @@ machine_id = []
 
 # Reader.Watch_Log_File(log_file_path, 120, 40, [70, 70])
 
-timer = 10
+timer = 60
 cycle_time = 5
 cycle_count = 0
 cycle_start_time = time.time()
@@ -542,12 +543,15 @@ while(timer):
     if(len(cpu_stack) == cycle_time):
         print(f'Will do operations with:')
         print(f'cpu_stack-> {cpu_stack}')
+        extra_time = rd.choice([1, 2, 3, 4])
+        print(f'Extra time: {extra_time}')
+        time.sleep(extra_time)
         cpu_stack.clear()
-        time.sleep(rd.choice([1, 2, 3]))
 
     if(len(mem_stack) >= cycle_time):
-        mem_stack = Split_Stack(mem_stack, cycle_time)[0]
-        print(f'mem_stack-> {mem_stack}')
+        mem_stack_full = Split_Stack(mem_stack, cycle_time)
+        print(f'mem_stack-> {mem_stack_full[0]}')
+        print(f'throws-> {mem_stack_full[1]}')
         mem_stack.clear()
 
     timer -= 1
