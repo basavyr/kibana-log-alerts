@@ -518,14 +518,14 @@ cpu_stack = []
 mem_stack = []
 machine_id = []
 
-Reader.Watch_Log_File(LOG_FILE_PATH, 120, 10, [70, 70])
+Reader.Watch_Log_File(LOG_FILE_PATH, 270, 90, [70, 70])
 
 
 # test the asymmetric stack update
 execute = False
 if(execute):
-    timer = 120
-    cycle_time = 10
+    timer = 240
+    cycle_time = 120
     cycle_count = 0
 
     event_handler = Modified_State_Handler()
