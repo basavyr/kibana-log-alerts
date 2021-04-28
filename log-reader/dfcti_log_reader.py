@@ -68,8 +68,8 @@ def Split_Stack(stack, length):
     -> `[1,2,3]` is the first sub-array and `[4,5]` is the second sub-array
     """
     try:
-        sub_array_1 = stack[0:length]
-        sub_array_2 = stack[length:]
+        sub_array_1 = stack[len(stack) - length:]
+        sub_array_2 = stack[0:len(stack) - length]
     except Exception as exc:
         return -1
     else:
@@ -80,7 +80,7 @@ def Split_Stack(stack, length):
 LOG_FILE_PATH = Create_LogFile_Path()
 
 # The name and e-mail for each client that needs to be alerted
-EMAIL_LIST = [['ROBERT-MSFT', 'robert.poenaru@outlook.com']]
+EMAIL_LIST = [['Test Receive', 'alerts.dfcti.recv@gmail.com']]
 # EMAIL_LIST = [['ROBERT-MSFT', 'robert.poenaru@outlook.com'],
 #               ['ROBERT-GOOGL', 'robert.poenaru@drd.unibuc.ro']]
 
@@ -381,7 +381,6 @@ class Reader():
         observer.start()
 
         count = 0
-        cycle_count = 0
         watch_state = True
 
         # set the thresholds for each stat value from the log file
@@ -389,7 +388,7 @@ class Reader():
         mem_threshold = threshold[1]
 
         total_execution_time = time.time()
-        cycle_execution_time = time.time()
+        cycle_time_start = time.time()
         while(watch_state):
             # count the stacks before updating it
             cpu_stack_length_0 = len(cpu_stack)
@@ -414,154 +413,144 @@ class Reader():
                 count += 1
             else:
                 count = 0
-            if(count == 5):  # stop if the log stream hangs up
+
+            # stop after 10 seconds
+            if(count == 10):  # stop if the logging pipeline hangs up
                 print('No incoming logs...')
                 print('Stopping the watcher')
-                # print('CPU stack:')
-                # print(cpu_stack)
-                # print('Memory stack:')
-                # print(mem_stack)
-                # print('Machine ID')
-                # try:
-                #     print(machine_id[0])
-                # except IndexError as error:
-                #     print(machine_id)
-                # else:
-                #     pass
                 watch_state = False
                 return
 
-            # continue running the watcher in "batches" of time_window seconds
-            if(time.time() - cycle_execution_time >= cycle_time):
-                cycle_count += 1
-                print(
-                    f'{cycle_time} seconds have passed. Completed cycle {cycle_count}')
+            # analyze the current stacks for unusual behavior
+            # only analyze the stacks that are full in size
+            # a full-size stack means it has a proper number of events inside, based on the cycle-window-size and the refresh rate of the logger itself
+            if(time.time() - cycle_time_start >= cycle_time):
+                print(f'{cycle_time} seconds passed. Analyzing the stacks')
+                # if(len(cpu_stack) == cycle_time):
+                #     cpu_analysis = Stats_Analyzer.Analyze_CPU_Usage_Stack(
+                #         cpu_stack, cpu_threshold)
+                #     if(cpu_analysis[0] == 1):
+                #         print(
+                #             f'CPU usage is above the threshold! ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds\nWill alert the DevOps team!!!')
+                #         cpu_fail_value = f'AVG_CPU_USAGE for the past {cycle_time} seconds: {cpu_analysis[1]}%, which is above the threshold value {cpu_threshold}%.'
+                #         for email in EMAIL_LIST:
+                #             fail_stats = Alerter.Generate_Fail_Stats(
+                #                 email[0], RESOURCE_ISSUES["CPU"], cpu_fail_value)
+                #             alert = Alerter.Create_Alert(fail_stats)
 
-                # analyze the current stacks for unusual behavior
-                # only analyze the stacks that are full in size
-                # a full-size stack means it has a proper number of events inside, based on the cycle-window-size and the refresh rate of the logger itself
-                if(len(cpu_stack) == cycle_time):
-                    # print(
-                    #     f'Analyzing the CPU stats for the past {cycle_time} seconds')
-                    cpu_analysis = Stats_Analyzer.Analyze_CPU_Usage_Stack(
-                        cpu_stack, cpu_threshold)
-                    if(cpu_analysis[0] == 1):
-                        print(
-                            f'CPU usage is above the threshold! ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds\nWill alert the DevOps team!!!')
-                        cpu_fail_value = f'AVG_CPU_USAGE for the past {cycle_time} seconds: {cpu_analysis[1]}%, which is above the threshold value {cpu_threshold}%.'
-                        for email in EMAIL_LIST:
-                            fail_stats = Alerter.Generate_Fail_Stats(
-                                email[0], RESOURCE_ISSUES["CPU"], cpu_fail_value)
-                            alert = Alerter.Create_Alert(fail_stats)
+                #             # generate plot with cpu usage during the cycle time
+                #             Stats_Analyzer.Plot_Stack(datetime.utcnow(
+                #             ), machine_id[0], cpu_stack, cycle_time, cpu_threshold, 'cpu_usage.pdf', 'CPU Usage')
 
-                            # generate plot with cpu usage during the cycle time
-                            Stats_Analyzer.Plot_Stack(datetime.utcnow(
-                            ), machine_id[0], cpu_stack, cycle_time, cpu_threshold, 'cpu_usage.pdf', 'CPU Usage')
+                #             # create attachment for the e-mail alert
+                #             attach_filenames = [
+                #                 'fail_stack.dat', 'cpu_usage.pdf']
+                #             Attachment.Create_Attachment(
+                #                 f'{datetime.utcnow()} ----->  CPU_FAIL_STACK: {cpu_stack}\n{cpu_fail_value}', attach_filenames)
 
-                            # create attachment for the e-mail alert
-                            attach_filenames = [
-                                'fail_stack.dat', 'cpu_usage.pdf']
-                            Attachment.Create_Attachment(
-                                f'{datetime.utcnow()} ----->  CPU_FAIL_STACK: {cpu_stack}\n{cpu_fail_value}', attach_filenames)
+                #             # send email with attachment
+                #             Alerter.SendAlert(
+                #                 alert, attach_filenames, email[1])
+                #     else:
+                #         print(
+                #             f'CPU usage is normal ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
+                #         pass
+                #     # clear the initial stacks after analysis has been performed
+                #     cpu_stack.clear()
 
-                            # send email with attachement
-                            Alerter.SendAlert(
-                                alert, attach_filenames, email[1])
-                    else:
-                        print(
-                            f'CPU usage is normal ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
-                        pass
-                else:
-                    print(
-                        'Skipping analysis of this CPU usage stack.\nReason: Not enough data to perform analysis')
-                if(len(mem_stack) == cycle_time):
-                    mem_analysis = Stats_Analyzer.Analyze_MEM_Usage_Stack(
-                        mem_stack, mem_threshold)
-                    if(mem_analysis[0] == 1):
-                        print(
-                            f'Memory usage is above the threshold! ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds\nWill alert the DevOps team!!!')
-                        mem_fail_value = f'AVG_MEM_USAGE for the past {cycle_time} seconds: {mem_analysis[1]}%, which is above the threshold value {mem_threshold}%.'
-                        for email in EMAIL_LIST:
-                            fail_stats = Alerter.Generate_Fail_Stats(
-                                email[0], RESOURCE_ISSUES["MEM"], mem_fail_value)
-                            alert = Alerter.Create_Alert(fail_stats)
+                # if(len(mem_stack) >= cycle_time):
+                #     # make sure the memory stack only contains exactly `cycle_time` elements
+                #     adjusted_mem_stack = Split_Stack(mem_stack, cycle_time)[0]
+                #     mem_analysis = Stats_Analyzer.Analyze_MEM_Usage_Stack(
+                #         adjusted_mem_stack, mem_threshold)
+                #     if(mem_analysis[0] == 1):
+                #         print(
+                #             f'Memory usage is above the threshold! ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds\nWill alert the DevOps team!!!')
+                #         mem_fail_value = f'AVG_MEM_USAGE for the past {cycle_time} seconds: {mem_analysis[1]}%, which is above the threshold value {mem_threshold}%.'
+                #         for email in EMAIL_LIST:
+                #             fail_stats = Alerter.Generate_Fail_Stats(
+                #                 email[0], RESOURCE_ISSUES["MEM"], mem_fail_value)
+                #             alert = Alerter.Create_Alert(fail_stats)
 
-                            # generate plot with cpu usage during the cycle time
-                            Stats_Analyzer.Plot_Stack(datetime.utcnow(
-                            ), machine_id[0], mem_stack, cycle_time, mem_threshold, 'mem_usage.pdf', 'MEM Usage')
+                #             # generate plot with cpu usage during the cycle time
+                #             Stats_Analyzer.Plot_Stack(datetime.utcnow(
+                #             ), machine_id[0], adjusted_mem_stack, cycle_time, mem_threshold, 'mem_usage.pdf', 'MEM Usage')
 
-                            # create attachment for the e-mail alert
-                            attach_filenames = [
-                                'fail_stack.dat', 'mem_usage.pdf']
+                #             # create attachment for the e-mail alert
+                #             attach_filenames = [
+                #                 'fail_stack.dat', 'mem_usage.pdf']
 
-                            Attachment.Create_Attachment(
-                                f'{datetime.utcnow()} ----->  MEM_FAIL_STACK: {mem_stack}\n{mem_fail_value}', attach_filenames)
+                #             Attachment.Create_Attachment(
+                #                 f'{datetime.utcnow()} ----->  MEM_FAIL_STACK: {adjusted_mem_stack}\n{mem_fail_value}', attach_filenames)
 
-                            # send email with attachment
-                            Alerter.SendAlert(
-                                alert, attach_filenames, email[1])
-                    else:
-                        print(
-                            f'Memory usage is normal ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
-                        pass
-                else:
-                    print(
-                        'Skipping analysis of this memory usage stack.\nReason: Not enough data to perform analysis')
+                #             # send email with attachment
+                #             Alerter.SendAlert(
+                #                 alert, attach_filenames, email[1])
+                #     else:
+                #         print(
+                #             f'Memory usage is normal ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
+                #         pass
+                #     mem_stack.clear()
 
-                # clear the initial stacks after analysis has been performed
-                cpu_stack.clear()
-                mem_stack.clear()
-
-                # restart cycle
-                cycle_execution_time = time.time()
         observer.stop()
+        observer.join()
 
 
 cpu_stack = []
 mem_stack = []
 machine_id = []
 
-# Reader.Watch_Log_File(log_file_path, 120, 40, [70, 70])
-
-timer = 60
-cycle_time = 5
-cycle_count = 0
-cycle_start_time = time.time()
+# Reader.Watch_Log_File(LOG_FILE_PATH, 120, 5, [70, 70])
 
 
-event_handler = Modified_State_Handler()
-observer = Observer()
-observer.schedule(event_handler, path=LOG_FILE_PATH, recursive=False)
+# test the asymmetric stack update
+execute = True
+if(execute):
+    timer = 120
+    cycle_time = 10
+    cycle_count = 0
 
-observer.start()
-while(timer):
-    cycle_count += 1
+    event_handler = Modified_State_Handler()
+    observer = Observer()
+    observer.schedule(event_handler, path=LOG_FILE_PATH, recursive=False)
 
-    # time passes
-    time.sleep(1)
+    observer.start()
+    cycle_time_start = time.time()
+    while(timer):
+        cycle_count += 1
 
-    if(len(cpu_stack) == cycle_time):
-        print(f'Will do operations with:')
-        print(f'cpu_stack-> {cpu_stack}')
-        extra_time = rd.choice([1, 2, 3, 4])
-        print(f'Extra time: {extra_time}')
-        time.sleep(extra_time)
-        cpu_stack.clear()
+        # time passes
+        time.sleep(1)
+        if(time.time() - cycle_time_start >= cycle_time):
+            print(f'{cycle_time} seconds passed. Analyzing the stacks')
+            if(len(cpu_stack) >= cycle_time):
+                print(f'Full stack:{cpu_stack}')
+                cpu_stack_full = Split_Stack(cpu_stack, cycle_time)
+                # print(f'Extra time: {extra_time}')
+                print(f'Will do operations with:')
+                print(f'cpu_stack-> {cpu_stack_full[0]}')
+                print(f'throws-> {cpu_stack_full[1]}')
+                extra_time = rd.choice([1, 2, 3, 4, 5])
+                time.sleep(extra_time)
+                print(f'Pausing thread for {extra_time}')
+                cpu_stack.clear()
 
-    if(len(mem_stack) >= cycle_time):
-        mem_stack_full = Split_Stack(mem_stack, cycle_time)
-        print(f'mem_stack-> {mem_stack_full[0]}')
-        print(f'throws-> {mem_stack_full[1]}')
-        mem_stack.clear()
+            if(len(mem_stack) >= cycle_time):
+                print(f'Full stack:{mem_stack}')
+                mem_stack_full = Split_Stack(mem_stack, cycle_time)
+                print(f'mem_stack-> {mem_stack_full[0]}')
+                print(f'throws-> {mem_stack_full[1]}')
+                extra_time = rd.choice([4, 5, 6, 7, 8])
+                time.sleep(extra_time)
+                print(f'Pausing thread for {extra_time}')
+                mem_stack.clear()
+            cycle_time_start = time.time()
+        else:
+            pass
 
-    timer -= 1
-observer.stop()
-observer.join()
-print(f'Finished {cycle_count} watch cycles')
-# # update the stacks
-# if(time.time() - cycle_start_time >= cycle_time):
-#     cycle_start_time = time.time()
-#     print(len(cpu_stack))
-#     print(len(mem_stack))
-#     cpu_stack.clear()
-#     mem_stack.clear()
+        timer -= 1
+    observer.stop()
+    observer.join()
+    print(f'Finished {cycle_count} watch cycles')
+else:
+    pass
