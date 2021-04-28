@@ -51,13 +51,33 @@ def Create_LogFile_Path():
         log_file_path = '/private/var/log/dfcti_system_logs.log'
     elif(system_os == 'Linux'):
         log_file_path = '/var/log/dfcti_system_logs.log'
-    if(log_file_path!=''):
+    if(log_file_path != ''):
         return log_file_path
     return -1
 
 
+def Split_Stack(stack, length):
+    """
+    **Split a stack:**
+    This method takes as input an array and a fixed length and it splits the array into two sub-arrays
+    First sub-array has a size of length
+    Second sub-array contains the rest of the elements (extra bits)
+
+    Example: [1,2,3,4,5] as initial array
+    `length`=3
+    -> `[1,2,3]` is the first sub-array and `[4,5]` is the second sub-array
+    """
+    try:
+        sub_array_1 = stack[0:length]
+        sub_array_2 = stack[length:]
+    except Exception as exc:
+        return -1
+    else:
+        return [sub_array_1, sub_array_2]
+
+
 # Set the path to the log file used for analysis
-log_file_path = Create_LogFile_Path()
+LOG_FILE_PATH = Create_LogFile_Path()
 
 # The name and e-mail for each client that needs to be alerted
 EMAIL_LIST = [['ROBERT-MSFT', 'robert.poenaru@outlook.com']]
@@ -289,39 +309,36 @@ class Modified_State_Handler(FileSystemEventHandler):
     def on_modified(self, event):
         event_path = event.src_path
         if(os.path.isfile(event_path)):
-            if(event_path==log_file_path):
-                print(f'OS: {Get_OS()}\nLog-File-Path: {event_path}')
-        
-        # if(event_path == '/private' + log_file_path):
-        # if(event_path == log_file_path):
-        # print(f'The modified log_file path is: {event_path}')
-        #     with open(log_file_path, 'r') as reader:
-        #         content = reader.readlines()
-        #         last_line = content[-1]
-        #         try:
-        #             # must append only the value of the cpu or memory
-        #             cpu_stack.append(Reader.get_cpu_usage(last_line))
-        #         except Exception as error:
-        #             print(f'could not add CPU stats into the cpu stack')
-        #             print(f'Reason -> {error}')
-        #         else:
-        #             pass
-        #         try:
-        #             # must append only the value of the cpu or memory
-        #             mem_stack.append(Reader.get_mem_usage(last_line))
-        #         except Exception as error:
-        #             print(f'could not add MEM stats into the cpu stack')
-        #             print(f'Reason -> {error}')
-        #         else:
-        #             pass
-        #         try:
-        #             if(len(machine_id) == 0):
-        #                 machine_id.append(Reader.get_machine_id(last_line))
-        #         except Exception as error:
-        #             print(f'could not get machine ID')
-        #             print(f'Reason -> {error}')
-        #         else:
-        #             pass
+            if(event_path == LOG_FILE_PATH):
+                # print(f'OS: {Get_OS()}\nLog-File-Path: {event_path}')
+                # print(f'New log-event in -> {event_path}')
+                # easy two-liner for getting the last line of the log-file
+                with open(LOG_FILE_PATH, 'r') as reader:
+                    last_line = list(reader)[-1]
+                try:
+                    # must append only the value of the cpu or memory
+                    cpu_stack.append(Reader.get_cpu_usage(last_line))
+                except Exception as error:
+                    print(f'could not add CPU stats into the cpu stack')
+                    print(f'Reason -> {error}')
+                else:
+                    pass
+                try:
+                    # must append only the value of the cpu or memory
+                    mem_stack.append(Reader.get_mem_usage(last_line))
+                except Exception as error:
+                    print(f'could not add MEM stats into the cpu stack')
+                    print(f'Reason -> {error}')
+                else:
+                    pass
+                try:
+                    if(len(machine_id) == 0):
+                        machine_id.append(Reader.get_machine_id(last_line))
+                except Exception as error:
+                    print(f'could not get machine ID')
+                    print(f'Reason -> {error}')
+                else:
+                    pass
 
 
 class Reader():
@@ -421,7 +438,7 @@ class Reader():
 
                 # analyze the current stacks for unusual behavior
                 # only analyze the stacks that are full in size
-                # a full-size stack means a stack that has the proper number of events inside, based on the cycle-window-size and the refresh rate of the logger
+                # a full-size stack means it has a proper number of events inside, based on the cycle-window-size and the refresh rate of the logger itself
                 if(len(cpu_stack) == cycle_time):
                     # print(
                     #     f'Analyzing the CPU stats for the past {cycle_time} seconds')
@@ -503,40 +520,44 @@ cpu_stack = []
 mem_stack = []
 machine_id = []
 
-# Reader.Watch_Log_File(log_file_path, 600, 60, [70, 70])
+# Reader.Watch_Log_File(log_file_path, 120, 40, [70, 70])
 
-# event_handler = Modified_State_Handler()
-# observer = Observer()
-# observer.schedule(event_handler, path=log_file_path, recursive=True)
+timer = 10
+cycle_time = 5
+cycle_count = 0
+cycle_start_time = time.time()
 
-# count = 0
-# run = True
-# print(Create_LogFile_Path())
-# observer.start()
-# while(run):
-#     # try:
-#     # except RuntimeError as err:
-#     #     observer.stop()
-#     #     run = False
-#     # finally:
-#     count += 1
-#     time.sleep(1)
-#     if(count == 3):
-#         run = False
-# observer.stop()
 
 event_handler = Modified_State_Handler()
 observer = Observer()
-observer.schedule(event_handler, path=log_file_path, recursive=False)
+observer.schedule(event_handler, path=LOG_FILE_PATH, recursive=False)
+
 observer.start()
-count = 0
-run = True
-try:
-    while run:
-        time.sleep(1)
-        count += 1
-        if(count == 5):
-            run = False
-finally:
-    observer.stop()
-    observer.join()
+while(timer):
+    cycle_count += 1
+
+    # time passes
+    time.sleep(1)
+
+    if(len(cpu_stack) == cycle_time):
+        print(f'Will do operations with:')
+        print(f'cpu_stack-> {cpu_stack}')
+        cpu_stack.clear()
+        time.sleep(rd.choice([1, 2, 3]))
+
+    if(len(mem_stack) >= cycle_time):
+        mem_stack = Split_Stack(mem_stack, cycle_time)[0]
+        print(f'mem_stack-> {mem_stack}')
+        mem_stack.clear()
+
+    timer -= 1
+observer.stop()
+observer.join()
+print(f'Finished {cycle_count} watch cycles')
+# # update the stacks
+# if(time.time() - cycle_start_time >= cycle_time):
+#     cycle_start_time = time.time()
+#     print(len(cpu_stack))
+#     print(len(mem_stack))
+#     cpu_stack.clear()
+#     mem_stack.clear()

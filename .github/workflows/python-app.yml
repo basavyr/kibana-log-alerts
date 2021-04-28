@@ -16,7 +16,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
     
-
       - name: Set up Python 3.8.6
         uses: actions/setup-python@v2
         with:
@@ -44,13 +43,11 @@ jobs:
           pipenv install
           chmod +x dfcti_log_writer.py
 
-      - name: Start generating log lines in the background with log-writer
+      - name: Starts writing-[bg] and reading-[active] logs
         run: |
           cd log-writer
           nohup pipenv run python dfcti_log_writer.py &
-      
-      - name: Run the python log-reader script
-        run: |
+          cd ..
           cd log-reader
           pipenv run python dfcti_log_reader.py
 

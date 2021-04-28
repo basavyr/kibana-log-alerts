@@ -2,6 +2,7 @@
 
 ## Latest updates 
 
+* Get the last log event in a simpler way
 * Get the OS version of the running resource
 * Adapts the path of the output log-file for different platforms
 * Modified the reader script to use a proper machine-ID
