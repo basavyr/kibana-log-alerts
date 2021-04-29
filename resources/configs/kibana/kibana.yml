@@ -1,0 +1,23 @@
+# Kibana is served by a back end server. This setting specifies the port to use.
+server.port: 5601
+
+server.basePath: "/kibana"
+
+elasticsearch.username: "elastic"
+elasticsearch.password: "EmJSp1KxqrmuDpqQhnGf"
+
+elasticsearch.hosts: ["https://127.0.0.1:9200"]
+elasticsearch.ssl.certificateAuthorities: ["/etc/kibana/certs/ca/ca.crt"]
+elasticsearch.ssl.certificate: "/etc/kibana/certs/kibana.crt"
+elasticsearch.ssl.key: "/etc/kibana/certs/kibana.key"
+
+# Browser from/to Kibana
+server.ssl.enabled: true
+server.ssl.certificate: "/etc/kibana/certs/kibana.crt"
+server.ssl.key: "/etc/kibana/certs/kibana.key"
+
+#Settings:
+xpack.encryptedSavedObjects.encryptionKey: c2b575882e992339855d74f065f249f3
+xpack.reporting.encryptionKey: 51a27c817177ba4b16794a3dde624589
+xpack.security.encryptionKey: 71de89bfcd0f153d2f823cda02dda41b
+
