@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-
 # import system's related modules
 import os
 import platform
@@ -14,7 +13,7 @@ from watchdog.events import FileSystemEventHandler
 import watchdog.events as eventer
 
 
-# import modules for second e-mails
+# import modules for sending e-mails
 import email
 import smtplib
 import ssl

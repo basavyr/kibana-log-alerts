@@ -1,7 +1,9 @@
-# Alert System 
+## Alert System @`cloudifin`
 
-## Latest updates 
+### Latest updates 
 
+* Properly updates the stacks for each stat in particular based on the pre-configured `cycle_count`
+* The analysis of the stats is made continuously, with clearing the data stacks after each cycle period.
 * Get the last log event in a simpler way
 * Get the OS version of the running resource
 * Adapts the path of the output log-file for different platforms
