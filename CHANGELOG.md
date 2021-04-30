@@ -2,6 +2,8 @@
 
 ### Latest updates 
 
+* Properly configured the `grok` filter to organize the event fields in a consistent way
+* Add graph visualizations for the CPU usage inside Kibana.
 * Add pipeline for Logstash
 * Uses `grok` filter for the extraction of system stats from the event logs
 * Add command line arguments for the python **reading** and **writing** implementations
