@@ -4,6 +4,7 @@
 import os
 import platform
 import time
+import sys  # using it for getting command line arguments
 from datetime import datetime
 
 
@@ -517,14 +518,26 @@ cpu_stack = []
 mem_stack = []
 machine_id = []
 
-Reader.Watch_Log_File(LOG_FILE_PATH, 270, 90, [70, 70])
+# Reader.Watch_Log_File(LOG_FILE_PATH, 30, 5, [70, 70])
+
+# only select the arguments after the name of the script
+CLI_ARGS = sys.argv[1:]
+timer = int(CLI_ARGS[0])
+cycle_time = int(CLI_ARGS[1])
+
+if(timer <= cycle_time):
+    print(f'Invalid set of args: cycle time is larger than total execution time!')
+    execute = False
+else:
+    execute = True
 
 
 # test the asymmetric stack update
-execute = False
 if(execute):
-    timer = 240
-    cycle_time = 120
+    print(f'You have selected following settings:')
+    print(f'Total execution time of the script: {CLI_ARGS[0]} s')
+    print(
+        f'Each log analysis will be performed after a window of {CLI_ARGS[1]} s')
     cycle_count = 0
 
     event_handler = Modified_State_Handler()
@@ -568,6 +581,6 @@ if(execute):
         timer -= 1
     observer.stop()
     observer.join()
-    print(f'Finished {cycle_count} watch cycles')
+    print(f'Finished {int(cycle_count/cycle_time)} watch cycles')
 else:
     pass

@@ -163,7 +163,7 @@ class Write_Logs:
             pass
 
     @ classmethod
-    def Write_Process(self, execution_time_secs, wait_time):
+    def Write_Process(self, execution_time_secs, wait_time, silent_mode=True):
         """Starts making log lines
         Each log line is generated after a certain period, given by the user via `wait_time`
         After each line has been successfully generated, it is written in its corresponding log file.
@@ -176,13 +176,15 @@ class Write_Logs:
             if(time.time() - total_execution_time >= execution_time_secs):
                 print('Total executime time reached.\nStopping the writing process...')
                 break
-            print(f'Generating log line...')
+            if(silent_mode == False):
+                print(f'Generating log line...')
             try:
                 new_log_line = Write_Logs().Generate_Log_Line()
             except Exception as exc:
                 print(f'Could not generate log line\nReason: {exc}')
             else:
-                print(f'Writing log line at {log_file_path}')
+                if(silent_mode == False):
+                    print(f'Writing log line at {log_file_path}')
                 try:
                     Write_Logs().Write_Log_Line(new_log_line, log_file_path)
                 except Exception as exc:

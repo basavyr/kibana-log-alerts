@@ -7,3 +7,4 @@
 *.python-version
 *machine_id
 e
+.vscode/settings.json
