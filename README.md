@@ -17,10 +17,10 @@
 
 Log monitoring of multiple computing clusters is done through the [ELK stack](https://www.elastic.co/what-is/elk-stack). The logs ingested by Elasticsearch are mainly systems logs, network stats, and information related to different services running on the machines.
 
-A computing cluster is managed by a *central node* which collects all the individual logs, then finally sends them (via *Filebeat*) to a dedicated *ingest pipeline*. The pipeline consists in a running Logstash instance that is configured on a separate virtual machine. Elasticsearch stores the logs into documents that are finally analysed by the management team through Kibana.
+A computing cluster is managed by a *central node* which collects all the individual logs, then finally sends them (via *Filebeat*) to a dedicated *ingest pipeline*. The pipeline consists in a running Logstash instance that is configured on a separate virtual machine. The Logstash server is configured to receive inputs from *Beats*, parse the logs, then finally send them to the Elasticsearch server. Elasticsearch stores the logs into documents that are finally analysed by the management team through Kibana.
 
 Proper log analysis must be done in real-time, with uninterrupted monitoring, due to non-stop runtime of the actual compute resources. 
-Detection of any malfunction, unexpected or even suboptimal behavior must be identified almost immediately. In order to facilitate this, automated systems that are triggered when the mentioned issues might arise can be implemented within the log monitoring&analysis pipeline.
+Detection of any malfunction, unexpected or even suboptimal behavior must be identified almost immediately. In order to facilitate this, automated systems that are triggered when the mentioned issues might arise can be implemented within the log monitoring & analysis pipeline.
 
 As such, **an alert system** which triggers messages with corresponding issues needs to be implemented using available services/applications/packages.
 
@@ -58,3 +58,5 @@ import email, smtplib, ssl
 are used throughout the development process of the Python codebase. Preferred method of alerting inside the Python implementation is via e-mail. A list of pre-configured clients will be alerted if needed, based on the analysis of incoming logs over a certain amount of time, after they were compared to the set of parameters that are considered to be normal.
 
 ## Workflow Diagrams 📉
+
+![](./resources/docs/figs/alert_system_dfcti.png)*The Python approach for implementing an alert system.*
