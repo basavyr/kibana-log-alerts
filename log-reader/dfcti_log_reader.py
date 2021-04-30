@@ -520,14 +520,25 @@ machine_id = []
 
 # Reader.Watch_Log_File(LOG_FILE_PATH, 30, 5, [70, 70])
 
-# only select the arguments after the name of the script
-CLI_ARGS = sys.argv[1:]
-timer = int(CLI_ARGS[0])
-cycle_time = int(CLI_ARGS[1])
+# giving default (safe-mode) values for the total execution time in case no cli args are set by the user
+timer = 69
+cycle_time = 5
 
-if(timer <= cycle_time):
-    print(f'Invalid set of args: cycle time is larger than total execution time!')
-    execute = False
+try:
+    timer = int(sys.argv[1])
+except IndexError as err:
+    print('No argument given!\nDefaulting to the safe values')
+else:
+    try:
+        cycle_time = int(sys.argv[2])
+    except IndexError as err:
+        print('No cycle time given!\nDefaulting to the safe value')
+    else:
+        pass
+
+execute = False
+if(timer < cycle_time):
+    print('Cannot start the execution pipeline')
 else:
     execute = True
 
@@ -535,9 +546,9 @@ else:
 # test the asymmetric stack update
 if(execute):
     print(f'You have selected following settings:')
-    print(f'Total execution time of the script: {CLI_ARGS[0]} s')
+    print(f'Total execution time of the script: {timer} s')
     print(
-        f'Each log analysis will be performed after a window of {CLI_ARGS[1]} s')
+        f'Each log analysis will be performed after a window of {cycle_time} s')
     cycle_count = 0
 
     event_handler = Modified_State_Handler()
@@ -556,9 +567,9 @@ if(execute):
             if(len(cpu_stack) >= cycle_time):
                 print(f'Full stack:{cpu_stack}')
                 cpu_stack_full = Split_Stack(cpu_stack, cycle_time)
-                # print(f'Extra time: {extra_time}')
                 print(f'Will do operations with:')
                 print(f'cpu_stack-> {cpu_stack_full[0]}')
+                l1 = len(cpu_stack_full[0])
                 print(f'throws-> {cpu_stack_full[1]}')
                 extra_time = rd.choice([1, 2, 3, 4, 5])
                 time.sleep(extra_time)
@@ -568,13 +579,20 @@ if(execute):
             if(len(mem_stack) >= cycle_time):
                 print(f'Full stack:{mem_stack}')
                 mem_stack_full = Split_Stack(mem_stack, cycle_time)
+                l2 = len(mem_stack_full[0])
                 print(f'mem_stack-> {mem_stack_full[0]}')
                 print(f'throws-> {mem_stack_full[1]}')
                 extra_time = rd.choice([4, 5, 6, 7, 8])
                 time.sleep(extra_time)
                 print(f'Pausing thread for {extra_time}')
                 mem_stack.clear()
+
+            if(l1 == l2):
+                print('cycle PASSED the stack-append test')
+            else:
+                print('cycle FAILED the stack-append test')
             cycle_time_start = time.time()
+
         else:
             pass
 
