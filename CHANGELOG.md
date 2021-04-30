@@ -2,6 +2,8 @@
 
 ### Latest updates 
 
+* Add pipeline for Logstash
+* Uses `grok` filter for the extraction of system stats from the event logs
 * Add command line arguments for the python **reading** and **writing** implementations
 * Improved error handling
 * Properly updates the stacks for each stat in particular based on the pre-configured `cycle_count`
