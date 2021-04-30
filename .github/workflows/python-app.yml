@@ -35,26 +35,23 @@ jobs:
         run: |
           cd log-reader
           pipenv install
-          pipenv graph
           chmod +x dfcti_log_reader.py
       
       - name: Install packages for log-writer script + give permission
         run: |
           cd log-writer
-          pipenv graph
           pipenv install
-          pipenv graph
           chmod +x dfcti_log_writer.py
 
-      # - name: Starts writing-[bg] logs
-      #   run: |
-      #     cd log-writer
-      #     nohup pipenv run python dfcti_log_writer.py &
+      - name: Starts writing-[bg] logs
+        run: |
+          cd log-writer
+          nohup pipenv run python dfcti_log_writer.py 69 &
       
-      # - name: Starts reading-[active] logs
-      #   run: |
-      #     cd log-reader
-      #     pipenv run python dfcti_log_reader.py 60 4
+      - name: Starts reading-[active] logs
+        run: |
+          cd log-reader
+          pipenv run python dfcti_log_reader.py 69 5
 
       - name: Create release | Deliver log-file
         uses: softprops/action-gh-release@v1

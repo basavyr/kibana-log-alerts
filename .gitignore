@@ -1,3 +1,4 @@
+*.DS_Store
 *.password
 *fail_stack.dat
 *nohup.out
@@ -6,5 +7,4 @@
 *.lock
 *.python-version
 *machine_id
-e
 .vscode/settings.json

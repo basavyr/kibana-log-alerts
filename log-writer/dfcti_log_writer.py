@@ -3,6 +3,7 @@
 
 import os
 import platform
+import sys  # using it for getting command line arguments
 import numpy as np
 from numpy.random import default_rng
 import time
@@ -194,4 +195,19 @@ class Write_Logs:
             time.sleep(wait_time)
 
 
-Write_Logs.Write_Process(60, 1)
+total_execution_time = 69
+try:
+    total_execution_time = int(sys.argv[1])
+except IndexError as err:
+    print('No argument given!\nDefaulting to the safe value')
+else:
+    pass
+REFRESH_CYCLE = 1
+"""
+this value represents the frequency for updating the log-file with system information
+Example: 
+`REFRESH_CYCLE=1` means that the log writer will update the file ONCE each second
+
+"""
+
+Write_Logs.Write_Process(total_execution_time, REFRESH_CYCLE)

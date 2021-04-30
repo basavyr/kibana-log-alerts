@@ -2,6 +2,8 @@
 
 ### Latest updates 
 
+* Add command line arguments for the python **reading** and **writing** implementations
+* Improved error handling
 * Properly updates the stacks for each stat in particular based on the pre-configured `cycle_count`
 * The analysis of the stats is made continuously, with clearing the data stacks after each cycle period.
 * Get the last log event in a simpler way
