@@ -194,4 +194,4 @@ class Write_Logs:
             time.sleep(wait_time)
 
 
-Write_Logs.Write_Process(300, 1)
+Write_Logs.Write_Process(60, 1)
