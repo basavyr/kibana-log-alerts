@@ -34,7 +34,6 @@ jobs:
       - name: Install packages for log-reader script + give permission
         run: |
           cd log-reader
-          pipenv graph
           pipenv install
           pipenv graph
           chmod +x dfcti_log_reader.py
