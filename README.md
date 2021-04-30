@@ -62,3 +62,9 @@ are used throughout the development process of the Python codebase. Preferred me
 ## Workflow Diagrams 📉
 
 ![](./resources/docs/figs/alert_system_dfcti.png)*The Python approach for implementing an alert system.*
+
+### System Stats 
+
+The Kibana UI allows one to see the logs within any index that is stored on the Elasticsearch server in real-time. The ELK stack which is installed on the VM is properly configured such that the events of interest (i.e., resource stats) are parsed properly, in order for Kibana to be able to draw **Lenses** (e.g., visual graphs with the CPU usage, or memory and so on). Example with final UI for the monitoring of CPU usage for a particular machine can be seen in the figure below.
+
+![](./resources/docs/figs/kibana_ui_cpu_usage.png)*Kibana UI showing the CPU usage for a machine*.
