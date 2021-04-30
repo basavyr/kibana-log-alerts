@@ -24,6 +24,8 @@ Detection of any malfunction, unexpected or even suboptimal behavior must be ide
 
 As such, **an alert system** which triggers messages with corresponding issues needs to be implemented using available services/applications/packages.
 
+More details can be seen on [this Notion page](https://www.notion.so/robertphd/Secure-ELK-Stack-2e5aae33bd754ac0bd7974917ecdd0b0)📄 .
+
 ## Alert Implementation ⚠️
 
 Two possible ways of implementing the required workflow are available. These solutions are described below and both are implemented in the current project.
