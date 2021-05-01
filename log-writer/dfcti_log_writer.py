@@ -4,10 +4,14 @@
 import os
 import platform
 import sys  # using it for getting command line arguments
+import psutil  # used for getting stats related to the system resources
+
 import numpy as np
 from numpy.random import default_rng
+
 import time
 from datetime import datetime
+
 import uuid
 
 rd = default_rng()
@@ -24,19 +28,20 @@ class MachineID:
 
     If the file exists, it checks if it is empty or not. If the file is empty, a new machine ID will be generated and stored just ONCE. If the file is not empty, then the already stored machine ID will be used throughout the logging process.
 
-    It is essential that the machine ID will remain unchanged on the machine.
+    It is essential that the machine ID will remain unchanged on the machine!
     """
     machine_id_path = "machine_id"
 
     @classmethod
     def Check_File_Exists(self, file_path):
         """
-        🔎 📄  Check if the file with machine id exists or not
+        🔎 📄  Check if the file with machine id exists or not.
+        If the file does not exist, 
         """
         try:
             checker = os.path.isfile(file_path)
         except FileNotFoundError as exc:
-            print(f'File_Exists_Error: ------> {exc}')
+            print(f'File_Exists_Check_Error: ------> {exc}')
             return -1
         else:
             return checker
@@ -44,7 +49,9 @@ class MachineID:
     @classmethod
     def Check_Empty_File(self, file_path):
         """
-        🔎 📄  Check if the file with machine id exists or not
+        🔎 📄  Check if the file with machine id is empty.
+        This method is called only if the file itself exists in the first place.
+        If the file is empty, it generates a machine id.
         """
         if(MachineID.Check_File_Exists(file_path) == False):
             return -1
@@ -52,7 +59,7 @@ class MachineID:
             try:
                 size_check = os.stat(file_path).st_size
             except Exception as exc:
-                print(f'Size_Check_Error: ----> {exc}')
+                print(f'File_Size_Check_Error: ----> {exc}')
             else:
                 return size_check
 
@@ -60,6 +67,7 @@ class MachineID:
     def Generate_Machine_ID(self):
         """
         💻 Generate a machine ID for the current system.
+        Machine ID will not change during multiple runtimes of the logging scripts.
         """
         check_exists = MachineID.Check_File_Exists(MachineID.machine_id_path)
         check_size = MachineID.Check_Empty_File(MachineID.machine_id_path)
@@ -90,7 +98,7 @@ class MachineID:
 MACHINE_ID = MachineID.Get_Machine_ID()
 
 
-class SystemLogs:
+class Random_SystemLogs:
     """Generates any stats related to system logs.
     For example, it can generate CPU usage, disk usage, memory (RAM) usage, and also network usage.
     The generated stats are usually percentages, representing how much of the total allocated resources of that particular machine are being used.
@@ -130,6 +138,28 @@ class SystemLogs:
         return instant_usage
 
 
+class SystemLogs:
+    """Pulls the real system stats of the machine/compute resource on which the script is running
+    """
+    @classmethod
+    def Get_CPU_Usage(cls):
+        get_cpu_usage = lambda: psutil.cpu_percent()
+        return get_cpu_usage()
+
+    @classmethod
+    def Get_MEM_Usage(cls):
+        get_mem_usage = lambda: psutil.virtual_memory()[2]
+        return get_mem_usage()
+
+    @classmethod
+    def Get_Free_Memory(cls):
+        get_free_mem = lambda: psutil.virtual_memory()[1]
+        k_bytes = lambda x: x / 1024.0
+        m_bytes = lambda x: x / 1024.0 / 1024.0
+        g_bytes = lambda x: x / 1024.0 / 1024.0 / 1024.0
+        return g_bytes(get_free_mem())
+
+
 class Write_Logs:
     """
     Writes logs that are collected from other internal classes within the script
@@ -146,7 +176,7 @@ class Write_Logs:
         MEM_MEAN = 70
         MEM_SPREAD = 10
 
-        log_line = f'{datetime.utcnow()} CPU:{SystemLogs().CPU(CPU_MEAN, CPU_SPREAD)}% MEM:{SystemLogs().MEM(MEM_MEAN, MEM_SPREAD)}% MACHINE-ID:{MACHINE_ID}'
+        log_line = f'{datetime.utcnow()} CPU:{Random_SystemLogs.CPU(CPU_MEAN, CPU_SPREAD)}% MEM:{Random_SystemLogs.MEM(MEM_MEAN, MEM_SPREAD)}% MACHINE-ID:{MACHINE_ID}'
         return log_line
 
     @ classmethod
@@ -210,4 +240,8 @@ Example:
 
 """
 
-Write_Logs.Write_Process(total_execution_time, REFRESH_CYCLE)
+# Write_Logs.Write_Process(total_execution_time, REFRESH_CYCLE)
+
+print(SystemLogs.Get_CPU_Usage())
+print(SystemLogs.Get_MEM_Usage())
+print(SystemLogs.Get_Free_Memory())
