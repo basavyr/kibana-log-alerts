@@ -69,20 +69,23 @@ class MachineID:
         💻 Generate a machine ID for the current system.
         Machine ID will not change during multiple runtimes of the logging scripts.
         """
+        print('Checking for a Machine-ID...')
         check_exists = MachineID.Check_File_Exists(MachineID.machine_id_path)
         check_size = MachineID.Check_Empty_File(MachineID.machine_id_path)
         if(check_exists == False):
             # file does not exist
             new_machine_id = uuid.uuid4()
+            print(' => Creating a new Machine-ID and saving it to file...')
             with open(MachineID.machine_id_path, 'w+') as set_id:
                 set_id.write(f'{new_machine_id}')
         else:
             # check if file is empty
             if(check_size != 0):
                 # keep old id
-                pass
+                print('Machine ID already exists -> No new ID required')
             else:
                 # will write an uuid to the file
+                print('Generate new Machine ID and saving it to file...')
                 new_machine_id = uuid.uuid4()
                 with open(MachineID.machine_id_path, 'w+') as set_id:
                     set_id.write(f'{new_machine_id}')
@@ -141,6 +144,10 @@ class Random_SystemLogs:
 class SystemLogs:
     """Pulls the real system stats of the machine/compute resource on which the script is running
     """
+    k_bytes = lambda x: x / 1024.0
+    m_bytes = lambda x: x / 1024.0 / 1024.0
+    g_bytes = lambda x: x / 1024.0 / 1024.0 / 1024.0
+
     @classmethod
     def Get_CPU_Usage(cls):
         get_cpu_usage = lambda: psutil.cpu_percent()
@@ -154,21 +161,20 @@ class SystemLogs:
     @classmethod
     def Get_Free_Memory(cls):
         get_free_mem = lambda: psutil.virtual_memory()[1]
-        k_bytes = lambda x: x / 1024.0
-        m_bytes = lambda x: x / 1024.0 / 1024.0
-        g_bytes = lambda x: x / 1024.0 / 1024.0 / 1024.0
-        return g_bytes(get_free_mem())
+        return SystemLogs.g_bytes(get_free_mem())
 
 
 class Write_Logs:
     """
+    A set of random system stats which are normally distributed
     Writes logs that are collected from other internal classes within the script
     """
 
-    @ classmethod
-    def Generate_Log_Line(self):
+    @classmethod
+    def Generate_Random_Log_Line(cls):
         """
         Will generate a log line with the required information that needs to be monitored
+        The system information is randomly generated using a normal distribution
         """
 
         CPU_MEAN = 70
@@ -179,8 +185,16 @@ class Write_Logs:
         log_line = f'{datetime.utcnow()} CPU:{Random_SystemLogs.CPU(CPU_MEAN, CPU_SPREAD)}% MEM:{Random_SystemLogs.MEM(MEM_MEAN, MEM_SPREAD)}% MACHINE-ID:{MACHINE_ID}'
         return log_line
 
-    @ classmethod
-    def Write_Log_Line(self, log_line, log_file):
+    @classmethod
+    def Generate_System_Log_Line(cls):
+        """Generates a log line with the system stats
+        """
+
+        log_line = f'{datetime.utcnow()} CPU:{SystemLogs.Get_CPU_Usage()}% MEM:{SystemLogs.Get_MEM_Usage()}% MACHINE-ID:{MACHINE_ID}'
+        return log_line
+
+    @classmethod
+    def Write_Log_Line(cls, log_line, log_file):
         """
         Once a log line has been generated via the proper method, it writes that line into its corresponding log-file
         """
@@ -193,8 +207,8 @@ class Write_Logs:
         else:
             pass
 
-    @ classmethod
-    def Write_Process(self, execution_time_secs, wait_time, silent_mode=True):
+    @classmethod
+    def Write_Process(cls, execution_time_secs, wait_time, silent_mode=True):
         """Starts making log lines
         Each log line is generated after a certain period, given by the user via `wait_time`
         After each line has been successfully generated, it is written in its corresponding log file.
@@ -203,6 +217,7 @@ class Write_Logs:
         """
         writing_state = True
         total_execution_time = time.time()
+        count = 0
         while(writing_state):
             if(time.time() - total_execution_time >= execution_time_secs):
                 print('Total executime time reached.\nStopping the writing process...')
@@ -210,7 +225,8 @@ class Write_Logs:
             if(silent_mode == False):
                 print(f'Generating log line...')
             try:
-                new_log_line = Write_Logs().Generate_Log_Line()
+                # new_log_line = Write_Logs().Generate_Random_Log_Line() # Random
+                new_log_line = Write_Logs.Generate_System_Log_Line()
             except Exception as exc:
                 print(f'Could not generate log line\nReason: {exc}')
             else:
@@ -221,8 +237,10 @@ class Write_Logs:
                 except Exception as exc:
                     print(f'Could not write the log line\nReason: {exc}')
                 else:
-                    pass
-            time.sleep(wait_time)
+                    count += 1
+            time.sleep(int(wait_time))
+
+        return count
 
 
 total_execution_time = 69
@@ -232,16 +250,26 @@ except IndexError as err:
     print('No argument given!\nDefaulting to the safe value')
 else:
     pass
+
 REFRESH_CYCLE = 1
 """
 this value represents the frequency for updating the log-file with system information
 Example: 
 `REFRESH_CYCLE=1` means that the log writer will update the file ONCE each second
-
 """
 
-# Write_Logs.Write_Process(total_execution_time, REFRESH_CYCLE)
 
-print(SystemLogs.Get_CPU_Usage())
-print(SystemLogs.Get_MEM_Usage())
-print(SystemLogs.Get_Free_Memory())
+test_writer = True
+writer = False
+
+if(test_writer):
+    print('Starting to generate log lines...')
+    proc = Write_Logs.Write_Process(total_execution_time, REFRESH_CYCLE)
+    if(total_execution_time / REFRESH_CYCLE == proc):
+        print('PASSED the log writing test!')
+    print('Finished writing logs.')
+
+if(writer):
+    print('Starting to generate log lines...')
+    Write_Logs.Write_Process(total_execution_time, REFRESH_CYCLE)
+    print('Finished writing logs.')
