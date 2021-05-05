@@ -108,7 +108,9 @@ jobs:
       - name: test the docker functionality
         run: |
           docker ps
-          docker images | grep 20.04 | awk '{print $3}' | xargs docker run -td --name ubuntuOS ubuntu /bin/bash
+          docker images | grep -E '20.04' | awk '{print $3}' | xargs -I{} docker run -td --name ubuntuOS {} /bin/bash
           docker ps
           docker exec -it ubuntuOS ls -la
           docker exec -it ubuntuOS uname -a
+          docker ps | grep -E '(^|\s)ubuntuOS$' | awk '{print $1}' | xargs docker stop | xargs docker rm
+          docker ps -a
