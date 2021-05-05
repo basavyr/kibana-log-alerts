@@ -20,6 +20,8 @@ now = lambda: float(time.time())
 
 
 log_file_path = '/var/log/dfcti_system_logs.log'
+
+
 class MachineID:
     """
     Generate a machine ID for the current system.
@@ -99,6 +101,7 @@ class MachineID:
 
 
 MACHINE_ID = MachineID.Get_Machine_ID()
+
 
 class Random_SystemLogs:
     """Generates any stats related to system logs.
@@ -268,7 +271,7 @@ def Do_Write_Test(test_writer):
     else:
         pass
     if(test_writer):
-        
+
         proc = Write_Logs.Write_Process(
             total_execution_time, REFRESH_CYCLE, log_file_path)
 
