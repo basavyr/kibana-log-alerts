@@ -106,6 +106,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: test the docker functionality
-        script: |
+        run: |
           docker images
           docker ps -a
