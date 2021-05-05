@@ -20,8 +20,6 @@ now = lambda: float(time.time())
 
 
 log_file_path = '/var/log/dfcti_system_logs.log'
-
-
 class MachineID:
     """
     Generate a machine ID for the current system.
@@ -99,6 +97,8 @@ class MachineID:
             ID = idx.read()
         return ID
 
+
+MACHINE_ID = MachineID.Get_Machine_ID()
 
 class Random_SystemLogs:
     """Generates any stats related to system logs.
@@ -251,14 +251,6 @@ class Write_Logs:
         return count
 
 
-total_execution_time = 69
-try:
-    total_execution_time = int(sys.argv[1])
-except IndexError as err:
-    print('No argument given!\nDefaulting to the safe value')
-else:
-    pass
-
 REFRESH_CYCLE = 1
 """
 this value represents the frequency for updating the log-file with system information
@@ -267,15 +259,28 @@ Example:
 """
 
 
-test_writer = False
-writer = False
+def Do_Write_Test(test_writer):
+    total_execution_time = 69
+    try:
+        total_execution_time = int(sys.argv[1])
+    except IndexError as err:
+        print('No argument given!\nDefaulting to the safe value')
+    else:
+        pass
+    if(test_writer):
+        
+        proc = Write_Logs.Write_Process(
+            total_execution_time, REFRESH_CYCLE, log_file_path)
 
-if(test_writer):
-    MACHINE_ID = MachineID.Get_Machine_ID()
-    proc = Write_Logs.Write_Process(
-        total_execution_time, REFRESH_CYCLE, log_file_path)
 
-if(writer):
-    MACHINE_ID = MachineID.Get_Machine_ID()
-    proc = Write_Logs.Write_Process(
-        total_execution_time, REFRESH_CYCLE, log_file_path)
+def Do_Write(writer):
+    total_execution_time = 69
+    try:
+        total_execution_time = int(sys.argv[1])
+    except IndexError as err:
+        print('No argument given!\nDefaulting to the safe value')
+    else:
+        pass
+    if(writer):
+        proc = Write_Logs.Write_Process(
+            total_execution_time, REFRESH_CYCLE, log_file_path)

@@ -35,12 +35,6 @@ jobs:
         run: |
           sudo touch /var/log/dfcti_system_logs.log
           sudo chmod 777 /var/log/dfcti_system_logs.log
-
-      - name: Install packages for log-reader script + give permission
-        run: |
-          cd log-reader
-          pipenv install
-          chmod +x dfcti_log_reader.py
       
       - name: Install packages for log-writer script + give permission
         run: |
@@ -48,66 +42,71 @@ jobs:
           pipenv install
           chmod +x dfcti_log_writer.py
 
+      # - name: Install packages for log-reader script + give permission
+      #   run: |
+      #     cd log-reader
+      #     pipenv install
+      #     chmod +x dfcti_log_reader.py
+
       - name: Starts writing-[bg] logs
         run: |
           cd log-writer
-          nohup pipenv run python dfcti_log_writer.py 240 &
+          pipenv run python dfcti_log_writer.py 10
       
-      - name: Starts reading-[active] logs
-        run: |
-          cd log-reader
-          pipenv run python dfcti_log_reader.py 240 55
+      # - name: Starts reading-[active] logs
+      #   run: |
+      #     cd log-reader
+      #     pipenv run python dfcti_log_reader.py 240 55
 
-      - name: Create release | Deliver log-file
-        uses: softprops/action-gh-release@v1
-        id: create_release
-        if: startsWith(github.ref, 'refs/tags/')
-        with:
-          body_path: CHANGELOG.md
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Create release | Deliver log-file
+      #   uses: softprops/action-gh-release@v1
+      #   id: create_release
+      #   if: startsWith(github.ref, 'refs/tags/')
+      #   with:
+      #     body_path: CHANGELOG.md
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Get release `url`
-        id: get_release_url
-        uses: bruceadams/get-release@v1.2.2
-        env:
-          GITHUB_TOKEN: ${{ github.token }}      
+      # - name: Get release `url`
+      #   id: get_release_url
+      #   uses: bruceadams/get-release@v1.2.2
+      #   env:
+      #     GITHUB_TOKEN: ${{ github.token }}      
 
-      - name: Create py-log-writer package
-        run: |
-          sudo apt-get install zip gzip tar
-          zip -r py_log_writer.zip log-writer
+      # - name: Create py-log-writer package
+      #   run: |
+      #     sudo apt-get install zip gzip tar
+      #     zip -r py_log_writer.zip log-writer
       
-      - name: Create py-log-reader package
-        run: |
-          zip -r py_log_reader.zip log-reader
+      # - name: Create py-log-reader package
+      #   run: |
+      #     zip -r py_log_reader.zip log-reader
 
-      - name: Upload py-log-writer artifact
-        uses: actions/upload-release-asset@v1
-        env:
-           GITHUB_TOKEN: ${{ github.token }}
-        with:
-          asset_path: py_log_writer.zip
-          asset_name: py_log_writer.zip
-          asset_content_type: application/zip
-          upload_url: ${{ steps.get_release_url.outputs.upload_url }}
+      # - name: Upload py-log-writer artifact
+      #   uses: actions/upload-release-asset@v1
+      #   env:
+      #      GITHUB_TOKEN: ${{ github.token }}
+      #   with:
+      #     asset_path: py_log_writer.zip
+      #     asset_name: py_log_writer.zip
+      #     asset_content_type: application/zip
+      #     upload_url: ${{ steps.get_release_url.outputs.upload_url }}
       
-      - name: Upload py-log-reader artifact
-        uses: actions/upload-release-asset@v1
-        env:
-           GITHUB_TOKEN: ${{ github.token }}
-        with:
-          asset_path: py_log_reader.zip
-          asset_name: py_log_reader.zip
-          asset_content_type: application/zip
-          upload_url: ${{ steps.get_release_url.outputs.upload_url }}
+      # - name: Upload py-log-reader artifact
+      #   uses: actions/upload-release-asset@v1
+      #   env:
+      #      GITHUB_TOKEN: ${{ github.token }}
+      #   with:
+      #     asset_path: py_log_reader.zip
+      #     asset_name: py_log_reader.zip
+      #     asset_content_type: application/zip
+      #     upload_url: ${{ steps.get_release_url.outputs.upload_url }}
   
   docker-build:
     runs-on: ubuntu-latest
     steps:
-      - name: test the docker functionality
+      - name: Starting 
         run: |
-          docker ps -a
           docker images | grep -E '20.04' | awk '{print $3}' | xargs -I{} docker run -td --name ubuntuOS {} /bin/bash
           docker ps -a
           docker exec ubuntuOS ls -la
