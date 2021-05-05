@@ -46,12 +46,12 @@ jobs:
       - name: Starts writing-[bg] logs
         run: |
           cd log-writer
-          nohup pipenv run python dfcti_log_writer.py 240 &
+          pipenv run python dfcti_log_writer.py 240
       
-      - name: Starts reading-[active] logs
-        run: |
-          cd log-reader
-          pipenv run python dfcti_log_reader.py 240 50
+      # - name: Starts reading-[active] logs
+      #   run: |
+      #     cd log-reader
+      #     pipenv run python dfcti_log_reader.py 240 50
 
       - name: Create release | Deliver log-file
         uses: softprops/action-gh-release@v1
