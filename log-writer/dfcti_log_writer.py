@@ -250,6 +250,7 @@ class Write_Logs:
             print(f'{count} log events were registered while pulling system stats.')
         else:
             print(f'Writing process finished unsuccessfully')
+            count = -1
 
         return count
 
