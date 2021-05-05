@@ -100,9 +100,6 @@ class MachineID:
         return ID
 
 
-MACHINE_ID = MachineID.Get_Machine_ID()
-
-
 class Random_SystemLogs:
     """Generates any stats related to system logs.
     For example, it can generate CPU usage, disk usage, memory (RAM) usage, and also network usage.
@@ -270,13 +267,15 @@ Example:
 """
 
 
-test_writer = True
+test_writer = False
 writer = False
 
 if(test_writer):
+    MACHINE_ID = MachineID.Get_Machine_ID()
     proc = Write_Logs.Write_Process(
         total_execution_time, REFRESH_CYCLE, log_file_path)
 
 if(writer):
+    MACHINE_ID = MachineID.Get_Machine_ID()
     proc = Write_Logs.Write_Process(
         total_execution_time, REFRESH_CYCLE, log_file_path)
