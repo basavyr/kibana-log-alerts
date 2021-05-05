@@ -107,5 +107,8 @@ jobs:
     steps:
       - name: test the docker functionality
         run: |
-          docker images
-          docker ps -a
+          docker ps
+          docker images | grep 20.04 | awk '{print $3}' | xargs docker run -td --name ubuntuOS ubuntu /bin/bash
+          docker ps
+          docker exec -it ubuntuOS ls -la
+          docker exec -it ubuntuOS uname -a
