@@ -528,91 +528,92 @@ class Reader():
         observer.join()
 
 
-cpu_stack = []
-mem_stack = []
-machine_id = []
+def Do_Asymmetric_Test():
+    cpu_stack = []
+    mem_stack = []
+    machine_id = []
 
-# Reader.Watch_Log_File(LOG_FILE_PATH, 30, 5, [70, 70])
-
-# giving default (safe-mode) values for the total execution time in case no cli args are set by the user
-timer = 69
-cycle_time = 5
-
-try:
-    timer = int(sys.argv[1])
-except IndexError as err:
-    print('No argument given!\nDefaulting to the safe values')
-else:
+    # giving default (safe-mode) values for the total execution time in case no cli args are set by the user
+    timer = 69
+    cycle_time = 5
     try:
-        cycle_time = int(sys.argv[2])
+        timer = int(sys.argv[1])
     except IndexError as err:
-        print('No cycle time given!\nDefaulting to the safe value')
+        print('No argument given!\nDefaulting to the safe values')
     else:
-        pass
-
-execute = False
-if(timer < cycle_time):
-    print('Cannot start the execution pipeline')
-else:
-    execute = False
-
-
-# test the asymmetric stack update
-if(execute):
-    print(f'You have selected following settings:')
-    print(f'Total execution time of the script: {timer} s')
-    print(
-        f'Each log analysis will be performed after a window of {cycle_time} s')
-    cycle_count = 0
-
-    event_handler = Modified_State_Handler()
-    observer = Observer()
-    observer.schedule(event_handler, path=LOG_FILE_PATH, recursive=False)
-
-    observer.start()
-    cycle_time_start = time.time()
-    while(timer):
-        cycle_count += 1
-
-        # time passes
-        time.sleep(1)
-        if(time.time() - cycle_time_start >= cycle_time):
-            print(f'{cycle_time} seconds passed. Analyzing the stacks')
-            if(len(cpu_stack) >= cycle_time):
-                print(f'Full stack:{cpu_stack}')
-                cpu_stack_full = Split_Stack(cpu_stack, cycle_time)
-                print(f'Will do operations with:')
-                print(f'cpu_stack-> {cpu_stack_full[0]}')
-                l1 = len(cpu_stack_full[0])
-                print(f'throws-> {cpu_stack_full[1]}')
-                extra_time = rd.choice([1, 2, 3, 4, 5])
-                time.sleep(extra_time)
-                print(f'Pausing thread for {extra_time}')
-                cpu_stack.clear()
-
-            if(len(mem_stack) >= cycle_time):
-                print(f'Full stack:{mem_stack}')
-                mem_stack_full = Split_Stack(mem_stack, cycle_time)
-                l2 = len(mem_stack_full[0])
-                print(f'mem_stack-> {mem_stack_full[0]}')
-                print(f'throws-> {mem_stack_full[1]}')
-                extra_time = rd.choice([4, 5, 6, 7, 8])
-                time.sleep(extra_time)
-                print(f'Pausing thread for {extra_time}')
-                mem_stack.clear()
-
-            # if(l1 == l2):
-            #     print('cycle PASSED the stack-append test')
-            # else:
-            #     print('cycle FAILED the stack-append test')
-            cycle_time_start = time.time()
-
+        try:
+            cycle_time = int(sys.argv[2])
+        except IndexError as err:
+            print('No cycle time given!\nDefaulting to the safe value')
         else:
             pass
 
-        timer -= 1
-    observer.stop()
-    observer.join()
-    print(f'Finished {int(cycle_count/cycle_time)} watch cycles')
-else:
-    pass
+    # only continue if the arguments are properly given from the CLI
+    execute = False
+    if(timer < cycle_time):
+        print('Cannot start the execution pipeline')
+    else:
+        execute = True
+
+    # test the asymmetric stack update
+    if(execute):
+        print(f'You have selected following settings:')
+        print(f'Total execution time of the script: {timer} s')
+        print(
+            f'Each log analysis will be performed after a window of {cycle_time} s')
+        cycle_count = 0
+
+        event_handler = Modified_State_Handler()
+        observer = Observer()
+        observer.schedule(event_handler, path=LOG_FILE_PATH, recursive=False)
+
+        observer.start()
+        cycle_time_start = time.time()
+        while(timer):
+            cycle_count += 1
+
+            # time passes
+            time.sleep(1)
+            if(time.time() - cycle_time_start >= cycle_time):
+                print(f'{cycle_time} seconds passed. Analyzing the stacks')
+                if(len(cpu_stack) >= cycle_time):
+                    print(f'Full stack:{cpu_stack}')
+                    cpu_stack_full = Split_Stack(cpu_stack, cycle_time)
+                    print(f'Will do operations with:')
+                    print(f'cpu_stack-> {cpu_stack_full[0]}')
+                    l1 = len(cpu_stack_full[0])
+                    print(f'throws-> {cpu_stack_full[1]}')
+                    extra_time = rd.choice([1, 2, 3, 4, 5])
+                    time.sleep(extra_time)
+                    print(f'Pausing thread for {extra_time}')
+                    cpu_stack.clear()
+
+                if(len(mem_stack) >= cycle_time):
+                    print(f'Full stack:{mem_stack}')
+                    mem_stack_full = Split_Stack(mem_stack, cycle_time)
+                    l2 = len(mem_stack_full[0])
+                    print(f'mem_stack-> {mem_stack_full[0]}')
+                    print(f'throws-> {mem_stack_full[1]}')
+                    extra_time = rd.choice([4, 5, 6, 7, 8])
+                    time.sleep(extra_time)
+                    print(f'Pausing thread for {extra_time}')
+                    mem_stack.clear()
+
+                # if(l1 == l2):
+                #     print('cycle PASSED the stack-append test')
+                # else:
+                #     print('cycle FAILED the stack-append test')
+                cycle_time_start = time.time()
+
+            else:
+                pass
+
+            timer -= 1
+        observer.stop()
+        observer.join()
+        print(f'Finished {int(cycle_count/cycle_time)} watch cycles')
+    else:
+        pass
+
+if __name__=="__main__":
+    Do_Asymmetric_Test()
