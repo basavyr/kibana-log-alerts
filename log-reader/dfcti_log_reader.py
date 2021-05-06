@@ -34,12 +34,6 @@ import numpy as np
 from numpy.random import default_rng
 rd = default_rng()
 
-# define the stacks where each system stat will be stored
-# e.g. CPU stack, MEM stack, and Machine ID
-cpu_stack = []
-mem_stack = []
-machine_id = []
-
 
 def Get_OS():
     os_value = platform.system()
@@ -64,6 +58,13 @@ def Create_LogFile_Path():
 
 # Set the path to the log file used for analysis
 LOG_FILE_PATH = Create_LogFile_Path()
+print(Get_OS())
+
+# define the stacks where each system stat will be stored
+# e.g. CPU stack, MEM stack, and Machine ID
+cpu_stack = []
+mem_stack = []
+machine_id = []
 
 
 def Split_Stack(stack, length):
@@ -395,7 +396,6 @@ class Reader():
 
         observer = Observer()
         observer.schedule(event_handler, path=log_file_path, recursive=False)
-        observer.start()
 
         count = 0
         watch_state = True
@@ -409,6 +409,7 @@ class Reader():
         else:
             pass
 
+        observer.start()
         total_execution_time = time.time()
         cycle_time_start = time.time()
         while(watch_state):
@@ -532,15 +533,11 @@ class Reader():
 
                 cycle_time_start = time.time()
 
-        observer.stop()
-        observer.join()
+        # observer.stop()
+        # observer.join()
 
 
 def Do_Asymmetric_Test():
-    cpu_stack = []
-    mem_stack = []
-    machine_id = []
-
     # giving default (safe-mode) values for the total execution time in case no cli args are set by the user
     timer = 69
     cycle_time = 5
@@ -555,11 +552,13 @@ def Do_Asymmetric_Test():
             print('No cycle time given!\nDefaulting to the safe value')
         else:
             pass
+    print(LOG_FILE_PATH)
 
     # only continue if the arguments are properly given from the CLI
     execute = False
     if(timer < cycle_time):
         print('Cannot start the execution pipeline')
+        return
     else:
         execute = True
 
@@ -578,10 +577,14 @@ def Do_Asymmetric_Test():
         observer.start()
         cycle_time_start = time.time()
         while(timer):
+
             cycle_count += 1
 
+            print(cpu_stack, mem_stack)
             # time passes
             time.sleep(1)
+
+            print(cpu_stack, mem_stack)
             if(time.time() - cycle_time_start >= cycle_time):
                 print(f'{cycle_time} seconds passed. Analyzing the stacks')
                 if(len(cpu_stack) >= cycle_time):
@@ -625,10 +628,13 @@ def Do_Asymmetric_Test():
 
 
 def Read_Pipeline():
-    Reader().Watch_Log_File(LOG_FILE_PATH, 10,
-                            5, [70, 70])
+    Reader.Watch_Log_File(LOG_FILE_PATH, 20,
+                          5, [70, 70])
 
 
 if __name__ == "__main__":
-    # Do_Asymmetric_Test()
-    Read_Pipeline()
+    with open('/private/var/log/dfcti_system_logs.log', 'r+') as logger:
+        text = logger.readlines()
+        print(len(text))
+    Do_Asymmetric_Test()
+    # Read_Pipeline()
