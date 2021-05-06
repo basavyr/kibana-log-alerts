@@ -540,7 +540,7 @@ execute = False
 if(timer < cycle_time):
     print('Cannot start the execution pipeline')
 else:
-    execute = True
+    execute = False
 
 
 # test the asymmetric stack update
@@ -587,10 +587,10 @@ if(execute):
                 print(f'Pausing thread for {extra_time}')
                 mem_stack.clear()
 
-            if(l1 == l2):
-                print('cycle PASSED the stack-append test')
-            else:
-                print('cycle FAILED the stack-append test')
+            # if(l1 == l2):
+            #     print('cycle PASSED the stack-append test')
+            # else:
+            #     print('cycle FAILED the stack-append test')
             cycle_time_start = time.time()
 
         else:

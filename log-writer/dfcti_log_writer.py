@@ -288,3 +288,9 @@ def Do_Write(writer):
     if(writer):
         proc = Write_Logs.Write_Process(
             total_execution_time, REFRESH_CYCLE, log_file_path)
+
+
+TEST = 0
+
+if(TEST == 0):
+    Do_Write(True)
