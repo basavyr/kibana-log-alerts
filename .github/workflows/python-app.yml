@@ -111,8 +111,8 @@ jobs:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
     - name: Starting 
-        run: |
-          docker pull basavyr/pyenv-ubuntu
-          docker images
-          docker ps -a
+      run: |
+        docker pull basavyr/pyenv-ubuntu
+        docker images
+        docker ps -a
         

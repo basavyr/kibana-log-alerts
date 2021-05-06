@@ -2,6 +2,9 @@
 
 ### Latest updates 
 
+* Improved pipeline for docker
+* Add unit tests for writing logs
+* Add unit tests for reading logs
 * Properly configured the `grok` filter to organize the event fields in a consistent way
 * Add graph visualizations for the CPU usage inside Kibana.
 * Add pipeline for Logstash
