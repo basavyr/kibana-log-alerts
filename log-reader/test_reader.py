@@ -14,6 +14,7 @@ class Test(unittest.TestCase):
     alerter = logreader.Alerter()
     message = logreader.Message()
     reader = logreader.Reader()
+    analyzer = logreader.Stats_Analyzer()
 
     def test_Create_LogFile_Path(self):
         """Testing the creation of log file paths
@@ -62,6 +63,28 @@ class Test(unittest.TestCase):
         self.assertNotEqual(yy_proc, -1)
         self.assertEqual(yy_proc, 1)
         print('finished testing the creation of attachments\n')
+
+    def test_Analyze_CPU_Usage_Stack(self):
+        print('starting testing the cpu stack\n')
+        for _ in range(self.n_iterations):
+            cpu_stack = rd.integers(50, 80, 100)
+            threshold = rd.integers(60, 70, 1)
+            yy_data = self.analyzer.Analyze_CPU_Usage_Stack(
+                cpu_stack, threshold)
+            self.assertIsNotNone(yy_data)
+            self.assertEqual(len(yy_data), 2)
+        print('finished testing the cpu stack\n')
+
+    def test_Analyze_MEM_Usage_Stack(self):
+        print('starting testing the memory stack\n')
+        for _ in range(self.n_iterations):
+            mem_stack = rd.integers(50, 80, 100)
+            threshold = rd.integers(60, 70, 1)
+            yy_data = self.analyzer.Analyze_CPU_Usage_Stack(
+                mem_stack, threshold)
+            self.assertIsNotNone(yy_data)
+            self.assertEqual(len(yy_data), 2)
+        print('finished testing the memory stack\n')
 
 
 if __name__ == '__main__':
