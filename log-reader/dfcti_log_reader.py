@@ -34,6 +34,12 @@ import numpy as np
 from numpy.random import default_rng
 rd = default_rng()
 
+# define the stacks where each system stat will be stored
+# e.g. CPU stack, MEM stack, and Machine ID
+cpu_stack = []
+mem_stack = []
+machine_id = []
+
 
 def Get_OS():
     os_value = platform.system()
@@ -56,6 +62,10 @@ def Create_LogFile_Path():
     return -1
 
 
+# Set the path to the log file used for analysis
+LOG_FILE_PATH = Create_LogFile_Path()
+
+
 def Split_Stack(stack, length):
     """
     **Split a stack:**
@@ -75,9 +85,6 @@ def Split_Stack(stack, length):
     else:
         return [sub_array_1, sub_array_2]
 
-
-# Set the path to the log file used for analysis
-LOG_FILE_PATH = Create_LogFile_Path()
 
 # The name and e-mail for each client that needs to be alerted
 EMAIL_LIST = [['Test Receive', 'alerts.dfcti.recv@gmail.com']]
@@ -319,8 +326,8 @@ class Modified_State_Handler(FileSystemEventHandler):
         event_path = event.src_path
         if(os.path.isfile(event_path)):
             if(event_path == LOG_FILE_PATH):
-                # print(f'OS: {Get_OS()}\nLog-File-Path: {event_path}')
-                # print(f'New log-event in -> {event_path}')
+                print(f'OS: {Get_OS()}\nLog-File-Path: {event_path}')
+                print(f'New log-event in -> {event_path}')
 
                 # easy two-liner for getting the last line of the log-file
                 with open(LOG_FILE_PATH, 'r') as reader:
@@ -371,7 +378,7 @@ class Reader():
         log_line[log_line.find('MACHINE-ID:') + len('MACHINE-ID:'):])
 
     @classmethod
-    def Watch_Log_File(self, log_file_path, execution_time, cycle_time, threshold):
+    def Watch_Log_File(cls, log_file_path, execution_time, cycle_time, threshold):
         """Watches a log file for new events.
 
         With each new event inside the log-file, the data is parsed, and CPU + MEM stats are extracted, each into its own data stack
@@ -615,5 +622,12 @@ def Do_Asymmetric_Test():
     else:
         pass
 
-if __name__=="__main__":
-    Do_Asymmetric_Test()
+
+def Read_Pipeline():
+    Reader().Watch_Log_File(LOG_FILE_PATH, 10,
+                            5, [70, 70])
+
+
+if __name__ == "__main__":
+    # Do_Asymmetric_Test()
+    Read_Pipeline()
