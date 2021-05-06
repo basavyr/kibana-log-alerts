@@ -110,9 +110,19 @@ jobs:
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - name: Checkout
+      uses: actions/checkout@v2
     - name: Starting 
       run: |
-        docker pull basavyr/pyenv-ubuntu
-        docker images
+        cd log-reader
+        docker pull python:latest
+        docker images | grep python | awk '{print $3}' | xargs -I{} docker run -td --name pypy {} /bin/bash
         docker ps -a
+        docker cp dfcti_log_reader.py pypy:.
+        docker exec pypy python -m pip install --upgrade pip
+        docker exec pypy pip install matplotlib numpy watchdog
+        docker exec pypy pip install matplotlib numpy watchdog
+        docker exec pypy python dfcti_log_reader.py
+
+        
         
