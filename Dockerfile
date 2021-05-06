@@ -18,11 +18,21 @@ RUN set -ex \
     && pyenv rehash
 
 COPY /scripts/reader_entrypoint.sh .
+COPY /scripts/writer_entrypoint.sh .
+COPY /scripts/tests_entrypoint.sh .
+COPY /scripts/pipeline_entrypoint.sh .
 
 COPY log-reader/dfcti_log_reader.py /exec/reader/
 COPY log-reader/test_reader.py /exec/reader/
-COPY log/reader/Pipfile /exec/reader/
+COPY log-reader/Pipfile /exec/reader/
 
-RUN chmod +x entrypoint.sh
+COPY log-writer/dfcti_log_writer.py /exec/writer/
+COPY log-writer/test_writer.py /exec/writer/
+COPY log-writer/Pipfile /exec/writer/
+
+RUN chmod +x pipeline_entrypoint.sh
+RUN chmod +x tests_entrypoint.sh
+RUN chmod +x reader_entrypoint.sh
+RUN chmod +x writer_entrypoint.sh
 
 CMD ["./reader_entrypoint.sh"]
