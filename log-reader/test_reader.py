@@ -55,7 +55,7 @@ class Test(unittest.TestCase):
 
     def test_Create_Attachment(self):
         print('testing the creation of attachments\n')
-        paths = ['1', '2']
+        paths = ['1.test', '2.test']
         yy_proc = logreader.Attachment().Create_Attachment(
             ['Some data', 'Some more data'], paths)
         self.assertIsNotNone(yy_proc)
