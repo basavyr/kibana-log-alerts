@@ -105,19 +105,17 @@ jobs:
   docker-test-logging-pipeline:
     runs-on: ubuntu-latest
     steps:
-    - name: login
+    - name: Log-in to Docker Hub
       uses: docker/login-action@v1
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
     - name: Checkout
       uses: actions/checkout@v2
-    - name: Starting 
+    - name: Unit tests for log-reader and log-writer 
       run: |
         docker pull basavyr/ubuntu:latest
         docker build . -t pypy
         docker run pypy
-        sudo docker cp pypy:/var/log/dfcti_system_logs.log /var/log/dfcti_system_logs.log
-
-        
-        
+        docker images
+        docker ps -a
