@@ -223,7 +223,16 @@ class Attachment:
         here, only the first file is required
         """
         with open(file_path[0], 'w+') as attach:
-            attach.write(data + '\n')
+            try:
+                # attach.write(str(data) + '\n')
+                # use str format for a better compatibility with different data formats
+                attach.write(str(data) + '\n')
+            except Exception as error:
+                print(
+                    f'Could not write data at -> {file_path[0]}\nReason: {error}')
+                return -1
+            else:
+                return 1
 
 
 class Message:
@@ -384,8 +393,13 @@ class Reader():
         watch_state = True
 
         # set the thresholds for each stat value from the log file
-        cpu_threshold = threshold[0]
-        mem_threshold = threshold[1]
+        try:
+            cpu_threshold = threshold[0]
+            mem_threshold = threshold[1]
+        except Exception as error:
+            print(f'The threshold values are incompatible with the current log format.')
+        else:
+            pass
 
         total_execution_time = time.time()
         cycle_time_start = time.time()

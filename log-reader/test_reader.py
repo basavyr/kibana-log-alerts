@@ -12,6 +12,8 @@ class Test(unittest.TestCase):
     n_iterations = 25
     test_data = []
     alerter = logreader.Alerter()
+    message = logreader.Message()
+    reader = logreader.Reader()
 
     def test_Create_LogFile_Path(self):
         """Testing the creation of log file paths
@@ -50,6 +52,16 @@ class Test(unittest.TestCase):
             self.assertNotEqual(len(yy_data), 1)
             self.assertNotEqual(len(yy_data), 2)
         print('Finished testing the alert creation the logs\n')
+
+    def test_Create_Attachment(self):
+        print('testing the creation of attachments\n')
+        paths = ['1', '2']
+        yy_proc = logreader.Attachment().Create_Attachment(
+            ['Some data', 'Some more data'], paths)
+        self.assertIsNotNone(yy_proc)
+        self.assertNotEqual(yy_proc, -1)
+        self.assertEqual(yy_proc, 1)
+        print('finished testing the creation of attachments\n')
 
 
 if __name__ == '__main__':
