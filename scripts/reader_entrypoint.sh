@@ -1,5 +1,6 @@
 #!/bin/bash
-cd exec/
+echo 'Testing the reader implementation'
+cd exec/reader/
 touch /var/log/dfcti_system_logs.log
 chmod +x /var/log/dfcti_system_logs.log
 pyenv virtualenv systems
