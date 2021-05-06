@@ -97,10 +97,10 @@ class MachineID:
         MachineID.Generate_Machine_ID()
         with open(MachineID.machine_id_path) as idx:
             ID = idx.read()
-        return ID
-
-
-MACHINE_ID = MachineID.Get_Machine_ID()
+        if(ID == '' or ID == ' '):
+            return -1
+        else:
+            return ID
 
 
 class Random_SystemLogs:
@@ -173,7 +173,7 @@ class Write_Logs:
     """
 
     @classmethod
-    def Generate_Random_Log_Line(cls):
+    def Generate_Random_Log_Line(cls, machine_id):
         """
         Will generate a log line with the required information that needs to be monitored
         The system information is randomly generated using a normal distribution
@@ -184,15 +184,15 @@ class Write_Logs:
         MEM_MEAN = 70
         MEM_SPREAD = 10
 
-        log_line = f'{datetime.utcnow()} CPU:{Random_SystemLogs.CPU(CPU_MEAN, CPU_SPREAD)}% MEM:{Random_SystemLogs.MEM(MEM_MEAN, MEM_SPREAD)}% MACHINE-ID:{MACHINE_ID}'
+        log_line = f'{datetime.utcnow()} CPU:{Random_SystemLogs.CPU(CPU_MEAN, CPU_SPREAD)}% MEM:{Random_SystemLogs.MEM(MEM_MEAN, MEM_SPREAD)}% MACHINE-ID:{machine_id}'
         return log_line
 
     @classmethod
-    def Generate_System_Log_Line(cls):
+    def Generate_System_Log_Line(cls, machine_id):
         """Generates a log line with the system stats
         """
         try:
-            log_line = f'{datetime.utcnow()} CPU:{SystemLogs.Get_CPU_Usage()}% MEM:{SystemLogs.Get_MEM_Usage()}% MACHINE-ID:{MACHINE_ID}'
+            log_line = f'{datetime.utcnow()} CPU:{SystemLogs.Get_CPU_Usage()}% MEM:{SystemLogs.Get_MEM_Usage()}% MACHINE-ID:{machine_id}'
         except Exception as exc:
             print(
                 f'There was an issue while trying to pull system stats:\nReason: {exc}')
@@ -215,7 +215,7 @@ class Write_Logs:
             return 1
 
     @classmethod
-    def Write_Process(cls, total_execution_time, wait_time, log_file_path):
+    def Write_Process(cls, total_execution_time, wait_time, log_file_path, machine_id):
         """Starts making log lines
         Each log line is generated after a certain period, given by the user via `wait_time`
         After each line has been successfully generated, it is written in its corresponding log file.
@@ -231,7 +231,8 @@ class Write_Logs:
         with tqdm.tqdm(total=total_execution_time) as pbar:
             while(now() - start_time <= total_execution_time):
                 try:
-                    new_log_line = Write_Logs.Generate_System_Log_Line()
+                    new_log_line = Write_Logs.Generate_System_Log_Line(
+                        machine_id)
                 except Exception as exc:
                     print(f'Could not generate log line\nReason: {exc}')
                 else:
@@ -263,7 +264,7 @@ Example:
 """
 
 
-def Do_Write_Test(test_writer):
+def Do_Write_Test(machine_id):
     total_execution_time = 69
     try:
         total_execution_time = int(sys.argv[1])
@@ -271,13 +272,11 @@ def Do_Write_Test(test_writer):
         print('No argument given!\nDefaulting to the safe value')
     else:
         pass
-    if(test_writer):
-
-        proc = Write_Logs.Write_Process(
-            total_execution_time, REFRESH_CYCLE, log_file_path)
+    proc = Write_Logs.Write_Process(
+        total_execution_time, REFRESH_CYCLE, log_file_path, machine_id)
 
 
-def Do_Write(writer):
+def Do_Write(machine_id):
     total_execution_time = 69
     try:
         total_execution_time = int(sys.argv[1])
@@ -285,12 +284,10 @@ def Do_Write(writer):
         print('No argument given!\nDefaulting to the safe value')
     else:
         pass
-    if(writer):
-        proc = Write_Logs.Write_Process(
-            total_execution_time, REFRESH_CYCLE, log_file_path)
+    proc = Write_Logs.Write_Process(
+        total_execution_time, REFRESH_CYCLE, log_file_path, machine_id)
 
 
-TEST = 0
-
-if(TEST == 0):
-    Do_Write(True)
+if __name__ == '__main__':
+    MACHINE_ID = MachineID.Get_Machine_ID()
+    Do_Write(MACHINE_ID)

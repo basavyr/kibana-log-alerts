@@ -10,12 +10,16 @@ class Test(unittest.TestCase):
     log_file_path = logwriter.log_file_path
     logs = []
     REFRESH_CYCLE = logwriter.REFRESH_CYCLE
+    machine_id = logwriter.MachineID.Get_Machine_ID()
+    machine_id_length = len(machine_id)
 
     def test_Machine_ID(self):
         print(f'Starting the test for MACHINE_ID generation\n')
-        machine_id_length = len(logwriter.MACHINE_ID)
-        self.assertNotEqual(machine_id_length, 0)
-        print(f'Finsihed the test for MACHINE_ID generation\n')
+
+        self.assertNotEqual(self.machine_id_length, 0)
+        self.assertNotEqual(self.machine_id, '')
+        self.assertNotEqual(self.machine_id, ' ')
+        print(f'Finished the test for MACHINE_ID generation\n')
 
     def test_Generate_System_Log_Line(self):
         print(f'Starting the test for generating system stats')
@@ -41,7 +45,7 @@ class Test(unittest.TestCase):
         log_lines = []
 
         for idx in range(n_iterations):
-            line = self.writer.Generate_System_Log_Line()
+            line = self.writer.Generate_System_Log_Line(self.machine_id)
             self.assertIsNotNone(line)
             log_lines.append(line)
             self.assertGreaterEqual(len(log_lines), 0)
@@ -57,7 +61,7 @@ class Test(unittest.TestCase):
         for idx in range(n_tests):
             print(f'SUBTEST -----> {idx+1}/{n_tests}')
             wp = self.writer.Write_Process(
-                10, self.REFRESH_CYCLE, self.log_file_path)
+                10, self.REFRESH_CYCLE, self.log_file_path, self.machine_id)
             self.assertIsNot(wp, -1)
 
         print(f'Finished  the test for the Write Process')

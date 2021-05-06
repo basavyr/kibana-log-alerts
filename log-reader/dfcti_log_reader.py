@@ -324,6 +324,7 @@ class Stats_Analyzer:
 class Modified_State_Handler(FileSystemEventHandler):
     def on_modified(self, event):
         event_path = event.src_path
+        print(event_path)
         if(os.path.isfile(event_path)):
             if(event_path == LOG_FILE_PATH):
                 print(f'OS: {Get_OS()}\nLog-File-Path: {event_path}')
