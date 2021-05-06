@@ -102,7 +102,7 @@ jobs:
       #     asset_content_type: application/zip
       #     upload_url: ${{ steps.get_release_url.outputs.upload_url }}
   
-  docker-build:
+  docker-test-logging-pipeline:
     runs-on: ubuntu-latest
     steps:
     - name: login
@@ -117,6 +117,7 @@ jobs:
         docker pull basavyr/ubuntu:latest
         docker build . -t pypy
         docker run pypy
+        sudo docker cp pypy:/var/log/dfcti_system_logs.log /var/log/dfcti_system_logs.log
 
         
         
