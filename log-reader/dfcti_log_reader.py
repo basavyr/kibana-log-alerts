@@ -558,9 +558,12 @@ class Reader():
             # set the debug mode for testing purposes
             DEBUG_MODE = True
 
+            # amount of time the watcher should wait between two consecutive log events within the pipeline
+            WAIT_TIME = 1
+
             # amount of time before disconnecting the process from the system
             # if no new log events are arriving
-            process_dispatch_time = 600
+            process_dispatch_time = 10
             # count how many events passed without ingesting a new log line
             no_log_events_counter = 0
 
@@ -581,15 +584,46 @@ class Reader():
                 return -1
 
             # prepare the observer
+            if(DEBUG_MODE):
+                print(f'Preparing the log file observer...')
             file_event_handler = Modified_State_Handler()
             observer = Observer()
             observer.schedule(file_event_handler,
                               path=log_file_path, recursive=False)
 
+            cycler = time.time()
             while(True):
                 try:
-                    if(DEBUG_MODE):
-                        print(f'Preparing the log file observer...')
+                    cpu_stack_size_0 = len(cpu_stack)
+                    mem_stack_size_0 = len(mem_stack)
+
+                    # watcher must  wait for a potential new event in the stack
+                    time.sleep(WAIT_TIME)
+
+                    cpu_stack_size_1 = len(cpu_stack)
+                    mem_stack_size_1 = len(mem_stack)
+
+                    if((cpu_stack_size_0 == cpu_stack_size_1) or (mem_stack_size_0 == mem_stack_size_1)):
+                        if(DEBUG_MODE):
+                            print(
+                                'No new event detected within the wait time period')
+                        no_log_events_counter += 1
+                        cpu_stack.clear()
+                        mem_stack.clear()
+                    else:
+                        no_log_events_counter = 0
+
+                    if(no_log_events_counter == process_dispatch_time):
+                        if(DEBUG_MODE):
+                            print(
+                                f'The log file has not been updated for the past {process_dispatch_time} seconds. Stopping the watcher...')
+                        break
+
+                    if(time.time() - cycler >= cycle_time):
+                        if(DEBUG_MODE):
+                            print(
+                                f'A complete cycle_time has passed ({cycle_time} seconds).\nAnalyzing the stacks')
+                        cycler = time.time()
 
                 except KeyboardInterrupt:
                     print('Process was stopped from the keyboard')
@@ -692,7 +726,7 @@ def Read_Pipeline():
 
 
 def Read_Process(log_file_path):
-    cycle_time = 60
+    cycle_time = 5
 
     # thresholds are implemented as a dictionary, for easier manipulation
     thresholds = {"cpu": 40,
