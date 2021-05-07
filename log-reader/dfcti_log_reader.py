@@ -61,6 +61,8 @@ LOG_FILE_PATH = Create_LogFile_Path()
 
 # define the stacks where each system stat will be stored
 # e.g. CPU stack, MEM stack, and Machine ID
+# in the current implementation, the stacks are global variables
+# they are updated by the `on_modified` method from the FileSystem Event Handler of the watchdog module
 cpu_stack = []
 mem_stack = []
 machine_id = []
@@ -340,40 +342,42 @@ class Stats_Analyzer:
 
 
 class Modified_State_Handler(FileSystemEventHandler):
+    def __init__(self, log_file_path):
+        self.log_file_path = log_file_path
+
     def on_modified(self, event):
         event_path = event.src_path
-        if(os.path.isfile(event_path)):
-            if(event_path == LOG_FILE_PATH):
-                # print(f'OS: {Get_OS()}\nLog-File-Path: {event_path}')
-                # print(f'New log-event in -> {event_path}')
-
-                # easy two-liner for getting the last line of the log-file
-                with open(LOG_FILE_PATH, 'r') as reader:
-                    last_line = list(reader)[-1]
-                try:
-                    # must append only the value of the cpu or memory
-                    cpu_stack.append(Reader.get_cpu_usage(last_line))
-                except Exception as error:
-                    print(f'could not add CPU stats into the cpu stack')
-                    print(f'Reason -> {error}')
-                else:
-                    pass
-                try:
-                    # must append only the value of the cpu or memory
-                    mem_stack.append(Reader.get_mem_usage(last_line))
-                except Exception as error:
-                    print(f'could not add MEM stats into the cpu stack')
-                    print(f'Reason -> {error}')
-                else:
-                    pass
-                try:
-                    if(len(machine_id) == 0):
-                        machine_id.append(Reader.get_machine_id(last_line))
-                except Exception as error:
-                    print(f'could not get machine ID')
-                    print(f'Reason -> {error}')
-                else:
-                    pass
+        # check if the event was triggered by a file
+        if(os.path.isfile(event_path) and event_path == self.log_file_path):
+            # print(f'OS: {Get_OS()}\nLog-File-Path: {event_path}')
+            # print(f'New log-event in -> {event_path}')
+            # easy two-liner for getting the last line of the log-file
+            with open(self.log_file_path, 'r+') as reader:
+                last_line = list(reader)[-1]
+            try:
+                # must append only the value of the cpu or memory
+                cpu_stack.append(Reader.get_cpu_usage(last_line))
+            except Exception as error:
+                print(f'could not add CPU stats into the cpu stack')
+                print(f'Reason -> {error}')
+            else:
+                pass
+            try:
+                # must append only the value of the cpu or memory
+                mem_stack.append(Reader.get_mem_usage(last_line))
+            except Exception as error:
+                print(f'could not add MEM stats into the cpu stack')
+                print(f'Reason -> {error}')
+            else:
+                pass
+            try:
+                if(len(machine_id) == 0):
+                    machine_id.append(Reader.get_machine_id(last_line))
+            except Exception as error:
+                print(f'could not get machine ID')
+                print(f'Reason -> {error}')
+            else:
+                pass
 
 
 class Reader():
@@ -409,7 +413,7 @@ class Reader():
         The entire process stops after `execution_time` has been reached.
         """
 
-        event_handler = Modified_State_Handler()
+        event_handler = Modified_State_Handler(LOG_FILE_PATH)
 
         observer = Observer()
         observer.schedule(event_handler, path=log_file_path, recursive=False)
@@ -611,7 +615,7 @@ class Reader():
             if(DEBUG_MODE):
                 print(
                     f'Preparing the file system event handler and the log file observer...')
-            file_event_handler = Modified_State_Handler()
+            file_event_handler = Modified_State_Handler(log_file_path)
             observer = Observer()
             observer.schedule(file_event_handler,
                               path=log_file_path, recursive=False)
@@ -636,7 +640,7 @@ class Reader():
 
                         print(cpu_stack)
                         # watcher must  wait for a potential new event in the stack
-                        time.sleep(WAIT_TIME)
+                        time.sleep(1)
                         print(cpu_stack)
 
                         cpu_stack_size_1 = len(cpu_stack)
@@ -702,15 +706,16 @@ class Reader():
                             cpu_stack.clear()
                             mem_stack.clear()
                             cycler = time.time()
-
                     except KeyboardInterrupt:
                         print('Process was stopped from the keyboard!')
+                        observer.stop()
+                        observer.join()
                         break
                 print(
                     f'Process stopped completely... [⏱ Duration: {round(time.time()-total_execution_time,3)}]')
 
 
-def Do_Asymmetric_Test():
+def Do_Asymmetric_Test(log_file_path):
     # giving default (safe-mode) values for the total execution time in case no cli args are set by the user
     timer = 69
     cycle_time = 5
@@ -742,9 +747,9 @@ def Do_Asymmetric_Test():
             f'Each log analysis will be performed after a window of {cycle_time} s')
         cycle_count = 0
 
-        event_handler = Modified_State_Handler()
+        event_handler = Modified_State_Handler(log_file_path)
         observer = Observer()
-        observer.schedule(event_handler, path=LOG_FILE_PATH, recursive=False)
+        observer.schedule(event_handler, path=log_file_path, recursive=False)
 
         observer.start()
         cycle_time_start = time.time()
@@ -799,22 +804,22 @@ def Do_Asymmetric_Test():
         pass
 
 
-def Read_Pipeline():
-    Reader.Watch_Log_File(LOG_FILE_PATH, 50,
+def Read_Pipeline(log_file_path):
+    Reader.Watch_Log_File(log_file_path, 50,
                           20, [70, 70])
 
 
-def Read_Process(log_file_path):
+def Read_Process(log_file_path=LOG_FILE_PATH):
     cycle_time = 30
 
     # thresholds are implemented as a dictionary, for easier manipulation
     thresholds = {"cpu": 40,
                   "mem": 50}
 
-    Reader().Watch_Process(log_file_path, cycle_time, thresholds)
+    Reader.Watch_Process(log_file_path, cycle_time, thresholds)
 
 
 if __name__ == "__main__":
-    # Do_Asymmetric_Test()
-    # Read_Pipeline()
+    # Do_Asymmetric_Test(LOG_FILE_PATH)
+    # Read_Pipeline(LOG_FILE_PATH)
     Read_Process(LOG_FILE_PATH)
