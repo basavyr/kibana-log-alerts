@@ -390,10 +390,14 @@ class Reader():
 
         The entire process stops after `execution_time` has been reached.
         """
+
         event_handler = Modified_State_Handler()
 
         observer = Observer()
         observer.schedule(event_handler, path=log_file_path, recursive=False)
+
+        # how many seconds with no incoming logs in order for the watcher to stop automatically
+        safety_count_dispatcher = 10
 
         count = 0
         watch_state = True
@@ -407,6 +411,9 @@ class Reader():
         else:
             pass
 
+        print(f'Starting the watcher...')
+        print(
+            f'[Info:] The watcher will stop after {safety_count_dispatcher} seconds if no incoming events are detected.')
         observer.start()
         total_execution_time = time.time()
         cycle_time_start = time.time()
@@ -417,7 +424,8 @@ class Reader():
 
             # stop if the total execution time has passed
             if(time.time() - total_execution_time >= execution_time):
-                print(f'Finished watching the log file')
+                print(
+                    f'Finished watching the log file located at -> {log_file_path}...')
                 watch_state = False
                 return
 
@@ -429,16 +437,15 @@ class Reader():
             mem_stack_length_1 = len(mem_stack)
 
             # stop if no new entries are coming into the stacks
-            # hangs up the ingest after 5 seconds
             if((cpu_stack_length_0 == cpu_stack_length_1) or (mem_stack_length_0 == mem_stack_length_1)):
                 count += 1
             else:
                 count = 0
 
-            # stop after 10 seconds
-            if(count == 10):  # stop if the logging pipeline hangs up
-                print('No incoming logs...')
-                print('Stopping the watcher')
+            # stop after `safety_count_dispatcher` seconds
+            if(count == safety_count_dispatcher):  # stop if the logging pipeline hangs up
+                print('No incoming logs!')
+                print('Stopping the watcher...')
                 watch_state = False
                 return
 
@@ -458,7 +465,7 @@ class Reader():
                         adjusted_cpu_stack, cpu_threshold)
                     if(cpu_analysis[0] == 1):
                         print(
-                            f'CPU usage is above the threshold! ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds\nWill alert the DevOps team!!!')
+                            f'[Alert:] CPU usage is above the threshold! ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds\nWill alert the DevOps team!!!')
                         cpu_fail_value = f'AVG_CPU_USAGE for the past {cycle_time} seconds: {cpu_analysis[1]}%, which is above the threshold value {cpu_threshold}%.'
                         for email in EMAIL_LIST:
                             fail_stats = Alerter.Generate_Fail_Stats(
@@ -484,7 +491,7 @@ class Reader():
                                 alert, attach_filenames, email[1])
                     else:
                         print(
-                            f'CPU usage is normal ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
+                            f'[Info:] CPU usage is normal ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
                         pass
                     # clear the stacks after analysis has been performed
                     cpu_stack.clear()
@@ -498,7 +505,7 @@ class Reader():
                         adjusted_mem_stack, mem_threshold)
                     if(mem_analysis[0] == 1):
                         print(
-                            f'Memory usage is above the threshold! ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds\nWill alert the DevOps team!!!')
+                            f'[Alert:] Memory usage is above the threshold! ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds\nWill alert the DevOps team!!!')
                         mem_fail_value = f'AVG_MEM_USAGE for the past {cycle_time} seconds: {mem_analysis[1]}%, which is above the threshold value {mem_threshold}%.'
                         for email in EMAIL_LIST:
                             fail_stats = Alerter.Generate_Fail_Stats(
@@ -524,15 +531,22 @@ class Reader():
                                 alert, attach_filenames, email[1])
                     else:
                         print(
-                            f'Memory usage is normal ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
+                            f'[Info:] Memory usage is normal ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
                         pass
                     # clear the stacks after analysis has been performed
                     mem_stack.clear()
 
                 cycle_time_start = time.time()
 
-        # observer.stop()
-        # observer.join()
+        observer.stop()
+        observer.join()
+
+    @classmethod
+    def Watch_Process(cls, log_file_path, cycle_time, thresholds):
+        """
+        Docs 📚
+        """
+        return -1
 
 
 def Do_Asymmetric_Test():
@@ -626,7 +640,11 @@ def Do_Asymmetric_Test():
 
 def Read_Pipeline():
     Reader.Watch_Log_File(LOG_FILE_PATH, 50,
-                          20, [70, 35])
+                          20, [70, 45])
+
+
+def Read_Process(log_file_path):
+    Reader().Watch_Process(log_file_path, cycle_time, thresholds)
 
 
 if __name__ == "__main__":
