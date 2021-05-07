@@ -642,7 +642,7 @@ class Reader():
 
                         print(cpu_stack)
                         # watcher must  wait for a potential new event in the stack
-                        time.sleep(1)
+                        time.sleep(2)
                         print(cpu_stack)
 
                         cpu_stack_size_1 = len(cpu_stack)
