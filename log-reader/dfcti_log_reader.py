@@ -559,7 +559,7 @@ class Reader():
             DEBUG_MODE = True
 
             # amount of time the watcher should wait between two consecutive log events within the pipeline
-            WAIT_TIME = 2
+            WAIT_TIME = 3
 
             # amount of time before disconnecting the process from the system
             # if no new log events are arriving
@@ -608,9 +608,10 @@ class Reader():
                 try:
                     cpu_stack_size_0 = len(cpu_stack)
                     mem_stack_size_0 = len(mem_stack)
-
+                    print(cpu_stack)
                     # watcher must  wait for a potential new event in the stack
                     time.sleep(WAIT_TIME)
+                    print(cpu_stack)
 
                     cpu_stack_size_1 = len(cpu_stack)
                     mem_stack_size_1 = len(mem_stack)
@@ -639,7 +640,7 @@ class Reader():
                     if(time.time() - cycler >= cycle_time and no_log_events_counter == 0):
                         if(DEBUG_MODE):
                             print(
-                                f'A complete cycle_time has passed ({cycle_time} seconds).\nAnalyzing the stacks')
+                                f'A complete cycle_time has passed ({cycle_time/WAIT_TIME} seconds).\nAnalyzing the stacks')
                         print(f'{cpu_stack} -> {len(cpu_stack)}')
                         print(f'{mem_stack} -> {len(mem_stack)}')
                         # the stacks must be cleared after the analysis is done
