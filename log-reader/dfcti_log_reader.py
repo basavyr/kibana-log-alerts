@@ -344,13 +344,15 @@ class Stats_Analyzer:
 class Modified_State_Handler(FileSystemEventHandler):
     def __init__(self, log_file_path):
         self.log_file_path = log_file_path
+        print(self.log_file_path)
 
     def on_modified(self, event):
         event_path = event.src_path
+        print(event_path)
         # check if the event was triggered by a file
         if(os.path.isfile(event_path) and event_path == self.log_file_path):
-            # print(f'OS: {Get_OS()}\nLog-File-Path: {event_path}')
-            # print(f'New log-event in -> {event_path}')
+            print(f'OS: {Get_OS()}\nLog-File-Path: {event_path}')
+            print(f'New log-event in -> {event_path}')
             # easy two-liner for getting the last line of the log-file
             with open(self.log_file_path, 'r+') as reader:
                 last_line = list(reader)[-1]
