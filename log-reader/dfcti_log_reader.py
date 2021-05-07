@@ -563,7 +563,7 @@ class Reader():
 
             # amount of time before disconnecting the process from the system
             # if no new log events are arriving
-            process_dispatch_time = 10
+            process_dispatch_time = 20
             # count how many events passed without ingesting a new log line
             no_log_events_counter = 0
 
@@ -608,8 +608,12 @@ class Reader():
                             print(
                                 'No new event detected within the wait time period')
                         no_log_events_counter += 1
-                        cpu_stack.clear()
-                        mem_stack.clear()
+                        # if no events are detected for more than half of the cycle_time, clear the stacks
+                        if(no_log_events_counter >= int(cycle_time / 2)):
+                            print(
+                                'No incoming logs for more than half of the cycle time! Will clear the system info stacks...')
+                            cpu_stack.clear()
+                            mem_stack.clear()
                     else:
                         no_log_events_counter = 0
 
@@ -619,7 +623,7 @@ class Reader():
                                 f'The log file has not been updated for the past {process_dispatch_time} seconds. Stopping the watcher...')
                         break
 
-                    if(time.time() - cycler >= cycle_time):
+                    if(time.time() - cycler >= cycle_time and no_log_events_counter==0):
                         if(DEBUG_MODE):
                             print(
                                 f'A complete cycle_time has passed ({cycle_time} seconds).\nAnalyzing the stacks')
@@ -726,7 +730,7 @@ def Read_Pipeline():
 
 
 def Read_Process(log_file_path):
-    cycle_time = 5
+    cycle_time = 10
 
     # thresholds are implemented as a dictionary, for easier manipulation
     thresholds = {"cpu": 40,
