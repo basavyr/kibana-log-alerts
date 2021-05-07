@@ -623,17 +623,16 @@ class Reader():
             cycler = time.time()
 
             # use the progress bar in *unknown mode*
-            with alive_bar(spinner='dots') as bar:
-                bar.text('⚙️ Analyzing incoming events 🥺')
+            with alive_bar(length=9,title='⚙️ Analyzing incoming events 🥺',spinner='dots_reverse') as bar:
                 while(True):
                     try:
                         cpu_stack_size_0 = len(cpu_stack)
                         mem_stack_size_0 = len(mem_stack)
 
-                        # print(cpu_stack)
+                        print(cpu_stack)
                         # watcher must  wait for a potential new event in the stack
                         time.sleep(WAIT_TIME)
-                        # print(cpu_stack)
+                        print(cpu_stack)
 
                         cpu_stack_size_1 = len(cpu_stack)
                         mem_stack_size_1 = len(mem_stack)
