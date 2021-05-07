@@ -2,11 +2,11 @@ name: Main
 
 on:
   push:
-    tags:        
-      - v*           
-  pull_request:
-    branches:
-      - main
+  #   tags:        
+  #     - v*           
+  # pull_request:
+  #   branches:
+  #     - main
 
 env:
   imageName: img_system_logs
@@ -112,10 +112,8 @@ jobs:
         password: ${{ secrets.DOCKERHUB_TOKEN }}
     - name: Checkout
       uses: actions/checkout@v2
-    - name: Unit tests for log-reader and log-writer 
+    - name: Unit tests for log-reader 
       run: |
         docker pull basavyr/ubuntu:latest
         docker build . -t pypy
         docker run pypy
-        docker images
-        docker ps -a

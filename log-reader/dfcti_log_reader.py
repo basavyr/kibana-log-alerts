@@ -559,7 +559,7 @@ class Reader():
             DEBUG_MODE = True
 
             # amount of time the watcher should wait between two consecutive log events within the pipeline
-            WAIT_TIME = 1
+            WAIT_TIME = 2
 
             # amount of time before disconnecting the process from the system
             # if no new log events are arriving
@@ -583,15 +583,27 @@ class Reader():
                         f'The log file at {log_file_path} is not a valid path!')
                 return -1
 
+            # setting up the thresholds
+            cpu_threshold = thresholds["cpu"]
+            mem_threshold = thresholds["mem"]
+
             # prepare the observer
+            time.sleep(1)
             if(DEBUG_MODE):
-                print(f'Preparing the log file observer...')
+                print(
+                    f'Preparing the file system event handler and the log file observer...')
             file_event_handler = Modified_State_Handler()
             observer = Observer()
             observer.schedule(file_event_handler,
                               path=log_file_path, recursive=False)
 
+            # start the observer
+            time.sleep(1)
+            if(DEBUG_MODE):
+                print(f'Starting the log file observer...')
+            observer.start()
             cycler = time.time()
+
             while(True):
                 try:
                     cpu_stack_size_0 = len(cpu_stack)
@@ -623,10 +635,20 @@ class Reader():
                                 f'The log file has not been updated for the past {process_dispatch_time} seconds. Stopping the watcher...')
                         break
 
-                    if(time.time() - cycler >= cycle_time and no_log_events_counter==0):
+                    # only perform analysis on the stacks if the events arrived properly, without any interruptions
+                    if(time.time() - cycler >= cycle_time and no_log_events_counter == 0):
                         if(DEBUG_MODE):
                             print(
                                 f'A complete cycle_time has passed ({cycle_time} seconds).\nAnalyzing the stacks')
+                        print(f'{cpu_stack} -> {len(cpu_stack)}')
+                        print(f'{mem_stack} -> {len(mem_stack)}')
+                        # the stacks must be cleared after the analysis is done
+
+                        if(DEBUG_MODE):
+                            print(
+                                f'Analysis of the current cycle is complete. Clearing the stacks...')
+                        cpu_stack.clear()
+                        mem_stack.clear()
                         cycler = time.time()
 
                 except KeyboardInterrupt:
