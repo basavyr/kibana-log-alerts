@@ -626,6 +626,7 @@ class Reader():
                 try:
                     cpu_stack_size_0 = len(cpu_stack)
                     mem_stack_size_0 = len(mem_stack)
+
                     print(cpu_stack)
                     # watcher must  wait for a potential new event in the stack
                     time.sleep(WAIT_TIME)
@@ -639,7 +640,7 @@ class Reader():
                             print(
                                 'No new event detected within the wait time period')
                         no_log_events_counter += 1
-                        # if no events are detected for more than half of the cycle_time, clear the stacks
+                        # if no events are detected for more than 25% of the cycle_time, clear the stacks
                         if(no_log_events_counter >= int(cycle_time / 4)):
                             print(
                                 'No incoming logs for more than half of the cycle time! Will clear the system info stacks...')
@@ -659,8 +660,33 @@ class Reader():
                         if(DEBUG_MODE):
                             print(
                                 f'A complete cycle_time has passed ({cycle_time} seconds).\nAnalyzing the stacks')
-                        print(f'{cpu_stack} -> {len(cpu_stack)}')
-                        print(f'{mem_stack} -> {len(mem_stack)}')
+                            print(f'{cpu_stack} -> {len(cpu_stack)}')
+                            print(f'{mem_stack} -> {len(mem_stack)}')
+
+                        cpu_analysis = Stats_Analyzer.Analyze_CPU_Usage_Stack(
+                            cpu_stack, cpu_threshold)
+                        mem_analysis = Stats_Analyzer.Analyze_MEM_Usage_Stack(
+                            mem_stack, mem_threshold)
+
+                        if(cpu_analysis[0] == 1):
+                            print(f'Will raise alert for the CPU')
+                            # TODO Must implement the alert procedure for the CPU usage
+                        else:
+                            print(
+                                f'[Info:] CPU usage is normal ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
+                            pass
+
+                        if(mem_analysis[0] == 1):
+                            print(f'Will raise alert for the MEM')
+                            # TODO Must implement the alert procedure for the MEM usage
+                        else:
+                            print(
+                                f'[Info:] Memory usage is normal ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
+                            pass
+
+                        print(f'CPU analysis yields -> {cpu_analysis}')
+                        print(f'MEM analysis yields -> {mem_analysis}')
+
                         # the stacks must be cleared after the analysis is done
                         if(DEBUG_MODE):
                             print(
@@ -766,11 +792,11 @@ def Do_Asymmetric_Test():
 
 def Read_Pipeline():
     Reader.Watch_Log_File(LOG_FILE_PATH, 50,
-                          20, [70, 45])
+                          20, [70, 70])
 
 
 def Read_Process(log_file_path):
-    cycle_time = 60
+    cycle_time = 10
 
     # thresholds are implemented as a dictionary, for easier manipulation
     thresholds = {"cpu": 40,
