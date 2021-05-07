@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+
+# use fancy progress bar for animation
+from alive_progress import alive_bar
+
 # import system's related modules
 import os
 import platform
@@ -7,12 +11,10 @@ import time
 import sys  # using it for getting command line arguments
 from datetime import datetime
 
-
 # import file watcher module
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import watchdog.events as eventer
-
 
 # import modules for sending e-mails
 import email
@@ -23,11 +25,9 @@ from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-
 # import plotting modules
 import matplotlib.pyplot as plt
 from matplotlib import rc
-
 
 # use the newly implemented default_rng
 import numpy as np
@@ -574,7 +574,7 @@ class Reader():
         # This will be executed only if the pipeline is directly executed from the command line
         if __name__ == "__main__":
             # set the debug mode for testing purposes
-            DEBUG_MODE = True
+            DEBUG_MODE = False
 
             # amount of time the watcher should wait between two consecutive log events within the pipeline
             WAIT_TIME = 1
@@ -622,83 +622,87 @@ class Reader():
             observer.start()
             cycler = time.time()
 
-            while(True):
-                try:
-                    cpu_stack_size_0 = len(cpu_stack)
-                    mem_stack_size_0 = len(mem_stack)
+            # use the progress bar in *unknown mode*
+            with alive_bar(spinner='dots') as bar:
+                bar.text('⚙️ Analyzing incoming events 🥺')
+                while(True):
+                    try:
+                        cpu_stack_size_0 = len(cpu_stack)
+                        mem_stack_size_0 = len(mem_stack)
 
-                    print(cpu_stack)
-                    # watcher must  wait for a potential new event in the stack
-                    time.sleep(WAIT_TIME)
-                    print(cpu_stack)
+                        # print(cpu_stack)
+                        # watcher must  wait for a potential new event in the stack
+                        time.sleep(WAIT_TIME)
+                        # print(cpu_stack)
 
-                    cpu_stack_size_1 = len(cpu_stack)
-                    mem_stack_size_1 = len(mem_stack)
+                        cpu_stack_size_1 = len(cpu_stack)
+                        mem_stack_size_1 = len(mem_stack)
 
-                    if((cpu_stack_size_0 == cpu_stack_size_1) or (mem_stack_size_0 == mem_stack_size_1)):
-                        if(DEBUG_MODE):
-                            print(
-                                'No new event detected within the wait time period')
-                        no_log_events_counter += 1
-                        # if no events are detected for more than 25% of the cycle_time, clear the stacks
-                        if(no_log_events_counter >= int(cycle_time / 4)):
-                            print(
-                                'No incoming logs for more than half of the cycle time! Will clear the system info stacks...')
+                        if((cpu_stack_size_0 == cpu_stack_size_1) or (mem_stack_size_0 == mem_stack_size_1)):
+                            if(DEBUG_MODE):
+                                print(
+                                    'No new event detected within the wait time period')
+                            no_log_events_counter += 1
+                            # if no events are detected for more than 25% of the cycle_time, clear the stacks
+                            if(no_log_events_counter >= int(cycle_time / 4)):
+                                if(DEBUG_MODE):
+                                    print(
+                                        'No incoming logs for more than half of the cycle time! Will clear the system info stacks...')
+                                cpu_stack.clear()
+                                mem_stack.clear()
+                        else:
+                            no_log_events_counter = 0
+
+                        if(no_log_events_counter == process_dispatch_time):
+                            if(DEBUG_MODE):
+                                print(
+                                    f'The log file has not been updated for the past {process_dispatch_time} seconds. Stopping the watcher...')
+                            break
+
+                        # only perform analysis on the stacks if the events arrived properly, without any interruptions
+                        if(time.time() - cycler >= cycle_time and no_log_events_counter == 0 and Stats_Analyzer.Valid_Stacks([cpu_stack, mem_stack], cycle_time) == 1):
+                            if(DEBUG_MODE):
+                                print(
+                                    f'A complete cycle_time has passed ({cycle_time} seconds).\nAnalyzing the stacks')
+                                print(f'{cpu_stack} -> {len(cpu_stack)}')
+                                print(f'{mem_stack} -> {len(mem_stack)}')
+
+                            cpu_analysis = Stats_Analyzer.Analyze_CPU_Usage_Stack(
+                                cpu_stack, cpu_threshold)
+                            mem_analysis = Stats_Analyzer.Analyze_MEM_Usage_Stack(
+                                mem_stack, mem_threshold)
+
+                            if(cpu_analysis[0] == 1):
+                                print(f'Will raise alert for the CPU')
+                                # TODO Must implement the alert procedure for the CPU usage
+                            else:
+                                print(
+                                    f'[Info:] CPU usage is normal ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
+                                pass
+
+                            if(mem_analysis[0] == 1):
+                                print(f'Will raise alert for the MEM')
+                                # TODO Must implement the alert procedure for the MEM usage
+                            else:
+                                print(
+                                    f'[Info:] Memory usage is normal ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
+                                pass
+
+                            print(f'CPU analysis yields -> {cpu_analysis}')
+                            print(f'MEM analysis yields -> {mem_analysis}')
+
+                            # the stacks must be cleared after the analysis is done
+                            if(DEBUG_MODE):
+                                print(
+                                    f'Analysis of the current cycle is complete. Clearing the stacks...')
                             cpu_stack.clear()
                             mem_stack.clear()
-                    else:
-                        no_log_events_counter = 0
+                            cycler = time.time()
 
-                    if(no_log_events_counter == process_dispatch_time):
-                        if(DEBUG_MODE):
-                            print(
-                                f'The log file has not been updated for the past {process_dispatch_time} seconds. Stopping the watcher...')
+                    except KeyboardInterrupt:
+                        print('Process was stopped from the keyboard!')
                         break
-
-                    # only perform analysis on the stacks if the events arrived properly, without any interruptions
-                    if(time.time() - cycler >= cycle_time and no_log_events_counter == 0 and Stats_Analyzer.Valid_Stacks([cpu_stack, mem_stack], cycle_time) == 1):
-                        if(DEBUG_MODE):
-                            print(
-                                f'A complete cycle_time has passed ({cycle_time} seconds).\nAnalyzing the stacks')
-                            print(f'{cpu_stack} -> {len(cpu_stack)}')
-                            print(f'{mem_stack} -> {len(mem_stack)}')
-
-                        cpu_analysis = Stats_Analyzer.Analyze_CPU_Usage_Stack(
-                            cpu_stack, cpu_threshold)
-                        mem_analysis = Stats_Analyzer.Analyze_MEM_Usage_Stack(
-                            mem_stack, mem_threshold)
-
-                        if(cpu_analysis[0] == 1):
-                            print(f'Will raise alert for the CPU')
-                            # TODO Must implement the alert procedure for the CPU usage
-                        else:
-                            print(
-                                f'[Info:] CPU usage is normal ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
-                            pass
-
-                        if(mem_analysis[0] == 1):
-                            print(f'Will raise alert for the MEM')
-                            # TODO Must implement the alert procedure for the MEM usage
-                        else:
-                            print(
-                                f'[Info:] Memory usage is normal ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
-                            pass
-
-                        print(f'CPU analysis yields -> {cpu_analysis}')
-                        print(f'MEM analysis yields -> {mem_analysis}')
-
-                        # the stacks must be cleared after the analysis is done
-                        if(DEBUG_MODE):
-                            print(
-                                f'Analysis of the current cycle is complete. Clearing the stacks...')
-                        cpu_stack.clear()
-                        mem_stack.clear()
-                        cycler = time.time()
-
-                except KeyboardInterrupt:
-                    print('Process was stopped from the keyboard')
-                    break
-            print('escaped')
+                print('Process stopped completely...')
 
 
 def Do_Asymmetric_Test():
