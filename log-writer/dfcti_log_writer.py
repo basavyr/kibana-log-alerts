@@ -310,7 +310,7 @@ def Do_Write(machine_id, log_file_path):
 
 if __name__ == '__main__':
     MACHINE_ID = MachineID.Get_Machine_ID()
-    # try:
-    #     Do_Write(MACHINE_ID, log_file_path)
-    # except KeyboardInterrupt:
-    #     print(f'Finished executing the writing process -> Keyboard Interrupt')
+    try:
+        Do_Write(MACHINE_ID, log_file_path)
+    except KeyboardInterrupt:
+        print(f'Finished executing the writing process -> Keyboard Interrupt')
