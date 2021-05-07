@@ -544,9 +544,18 @@ class Reader():
     @classmethod
     def Watch_Process(cls, log_file_path, cycle_time, thresholds):
         """
-        Docs 📚
+        ➡️ Start the watching process if the script is directly executed from the command line.
+        
+        ⚙️ The watch process will run indefinitely, with a pre-defined `cycle_time` 🔄 .
+        
+        The `cycle_time` variable is responsible for analyzing the system stats after that exact amount of time has passed.
+        
+        📉 With each cycle, the stats are analyzed, then based on their behavior, alerts are raised or not 🚦. After a cycle has finished, the system stats are cleared from memory, and the process repeats.
         """
-        return -1
+
+        """this will be executed only if the pipeline is directly executed from the command line"""
+        if __name__=="__main__":
+            print('will do stuff')
 
 
 def Do_Asymmetric_Test():
