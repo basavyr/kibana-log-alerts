@@ -581,7 +581,7 @@ class Reader():
         # This will be executed only if the pipeline is directly executed from the command line
         if __name__ == "__main__":
             # set the debug mode for testing purposes
-            DEBUG_MODE = False
+            DEBUG_MODE = True
 
             # amount of time the watcher should wait between two consecutive log events within the pipeline
             WAIT_TIME = 1
@@ -817,7 +817,7 @@ def Read_Pipeline(log_file_path):
 
 
 def Read_Process(log_file_path=LOG_FILE_PATH):
-    cycle_time = 10
+    cycle_time = 60
 
     # thresholds are implemented as a dictionary, for easier manipulation
     thresholds = {"cpu": 40,
