@@ -264,7 +264,25 @@ class Stats_Analyzer:
     """
 
     @classmethod
-    def Analyze_CPU_Usage_Stack(self, cpu_usage_stack, cpu_threshold):
+    def Valid_Stacks(cls, system_stacks, valid_size):
+        """Determines if the system stacks are valid or not
+
+        Validity condition is given by the size of the stacks. Namely, if the size of a stack is less than a pre-defined size, the stacks are considered as invalid.
+        """
+
+        validity_counter = 0
+
+        lengths = [len(stack) for stack in system_stacks]
+        for length in lengths:
+            if(length == valid_size):
+                validity_counter += 1
+
+        if(validity_counter == len(system_stacks)):
+            return 1
+        return 0
+
+    @classmethod
+    def Analyze_CPU_Usage_Stack(cls, cpu_usage_stack, cpu_threshold):
         """Interpret a stack with CPU usages.
         Raises unusual behavior based on the average value of the stack.
         The average is predefined by the user as a `threshold`
@@ -278,7 +296,7 @@ class Stats_Analyzer:
         return [0, mean_value]
 
     @classmethod
-    def Analyze_MEM_Usage_Stack(self, mem_usage_stack, mem_threshold):
+    def Analyze_MEM_Usage_Stack(cls, mem_usage_stack, mem_threshold):
         """Interpret a stack with MEM usages.
         Raises unusual behavior based on the average value of the stack.
         The average is predefined by the user as a `threshold`
@@ -292,7 +310,7 @@ class Stats_Analyzer:
         return [0, mean_value]
 
     @classmethod
-    def Plot_Stack(self, time_stamp, machine_id, failed_stack, time, threshold, plot_stack_file, labels):
+    def Plot_Stack(cls, time_stamp, machine_id, failed_stack, time, threshold, plot_stack_file, labels):
         averages = [np.mean(failed_stack) for _ in range(len(failed_stack))]
         thresholds = [float(threshold) for _ in range(len(failed_stack))]
         if(averages[0] >= thresholds[0]):
@@ -559,7 +577,7 @@ class Reader():
             DEBUG_MODE = True
 
             # amount of time the watcher should wait between two consecutive log events within the pipeline
-            WAIT_TIME = 3
+            WAIT_TIME = 1
 
             # amount of time before disconnecting the process from the system
             # if no new log events are arriving
@@ -622,7 +640,7 @@ class Reader():
                                 'No new event detected within the wait time period')
                         no_log_events_counter += 1
                         # if no events are detected for more than half of the cycle_time, clear the stacks
-                        if(no_log_events_counter >= int(cycle_time / 2)):
+                        if(no_log_events_counter >= int(cycle_time / 4)):
                             print(
                                 'No incoming logs for more than half of the cycle time! Will clear the system info stacks...')
                             cpu_stack.clear()
@@ -637,14 +655,13 @@ class Reader():
                         break
 
                     # only perform analysis on the stacks if the events arrived properly, without any interruptions
-                    if(time.time() - cycler >= cycle_time and no_log_events_counter == 0):
+                    if(time.time() - cycler >= cycle_time and no_log_events_counter == 0 and Stats_Analyzer.Valid_Stacks([cpu_stack, mem_stack], cycle_time) == 1):
                         if(DEBUG_MODE):
                             print(
-                                f'A complete cycle_time has passed ({cycle_time/WAIT_TIME} seconds).\nAnalyzing the stacks')
+                                f'A complete cycle_time has passed ({cycle_time} seconds).\nAnalyzing the stacks')
                         print(f'{cpu_stack} -> {len(cpu_stack)}')
                         print(f'{mem_stack} -> {len(mem_stack)}')
                         # the stacks must be cleared after the analysis is done
-
                         if(DEBUG_MODE):
                             print(
                                 f'Analysis of the current cycle is complete. Clearing the stacks...')
@@ -753,7 +770,7 @@ def Read_Pipeline():
 
 
 def Read_Process(log_file_path):
-    cycle_time = 10
+    cycle_time = 60
 
     # thresholds are implemented as a dictionary, for easier manipulation
     thresholds = {"cpu": 40,
