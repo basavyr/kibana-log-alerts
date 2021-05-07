@@ -58,7 +58,6 @@ def Create_LogFile_Path():
 
 # Set the path to the log file used for analysis
 LOG_FILE_PATH = Create_LogFile_Path()
-print(Get_OS())
 
 # define the stacks where each system stat will be stored
 # e.g. CPU stack, MEM stack, and Machine ID
@@ -325,11 +324,10 @@ class Stats_Analyzer:
 class Modified_State_Handler(FileSystemEventHandler):
     def on_modified(self, event):
         event_path = event.src_path
-        print(event_path)
         if(os.path.isfile(event_path)):
             if(event_path == LOG_FILE_PATH):
-                print(f'OS: {Get_OS()}\nLog-File-Path: {event_path}')
-                print(f'New log-event in -> {event_path}')
+                # print(f'OS: {Get_OS()}\nLog-File-Path: {event_path}')
+                # print(f'New log-event in -> {event_path}')
 
                 # easy two-liner for getting the last line of the log-file
                 with open(LOG_FILE_PATH, 'r') as reader:
@@ -552,7 +550,6 @@ def Do_Asymmetric_Test():
             print('No cycle time given!\nDefaulting to the safe value')
         else:
             pass
-    print(LOG_FILE_PATH)
 
     # only continue if the arguments are properly given from the CLI
     execute = False
@@ -628,13 +625,10 @@ def Do_Asymmetric_Test():
 
 
 def Read_Pipeline():
-    Reader.Watch_Log_File(LOG_FILE_PATH, 20,
-                          5, [70, 70])
+    Reader.Watch_Log_File(LOG_FILE_PATH, 50,
+                          20, [70, 35])
 
 
 if __name__ == "__main__":
-    with open('/private/var/log/dfcti_system_logs.log', 'r+') as logger:
-        text = logger.readlines()
-        print(len(text))
-    Do_Asymmetric_Test()
-    # Read_Pipeline()
+    # Do_Asymmetric_Test()
+    Read_Pipeline()
