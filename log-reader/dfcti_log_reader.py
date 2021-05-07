@@ -574,14 +574,15 @@ class Reader():
         # This will be executed only if the pipeline is directly executed from the command line
         if __name__ == "__main__":
             # set the debug mode for testing purposes
-            DEBUG_MODE = False
+            DEBUG_MODE = True
 
             # amount of time the watcher should wait between two consecutive log events within the pipeline
             WAIT_TIME = 1
 
             # amount of time before disconnecting the process from the system
             # if no new log events are arriving
-            process_dispatch_time = 20
+            # set to half (50%) of the total cycle time
+            process_dispatch_time = int(cycle_time / 2)
             # count how many events passed without ingesting a new log line
             no_log_events_counter = 0
 
@@ -619,11 +620,15 @@ class Reader():
             time.sleep(1)
             if(DEBUG_MODE):
                 print(f'Starting the log file observer...')
+            if(DEBUG_MODE):
+                print(
+                    f'The reader process will refresh its cycle each {cycle_time} seconds...')
             observer.start()
+            total_execution_time = time.time()
             cycler = time.time()
 
             # use the progress bar in *unknown mode*
-            with alive_bar(length=9,title='⚙️ Analyzing incoming events 🥺',spinner='dots_reverse') as bar:
+            with alive_bar(length=9, title='⚙️ Analyzing incoming events 🥺', spinner='dots_reverse') as bar:
                 while(True):
                     try:
                         cpu_stack_size_0 = len(cpu_stack)
@@ -646,7 +651,7 @@ class Reader():
                             if(no_log_events_counter >= int(cycle_time / 4)):
                                 if(DEBUG_MODE):
                                     print(
-                                        'No incoming logs for more than half of the cycle time! Will clear the system info stacks...')
+                                        'No incoming logs for more than a quarter of the current cycle time! Will clear the system info stacks...')
                                 cpu_stack.clear()
                                 mem_stack.clear()
                         else:
@@ -701,7 +706,8 @@ class Reader():
                     except KeyboardInterrupt:
                         print('Process was stopped from the keyboard!')
                         break
-                print('Process stopped completely...')
+                print(
+                    f'Process stopped completely... [⏱ Duration: {round(time.time()-total_execution_time,3)}]')
 
 
 def Do_Asymmetric_Test():
@@ -799,7 +805,7 @@ def Read_Pipeline():
 
 
 def Read_Process(log_file_path):
-    cycle_time = 10
+    cycle_time = 30
 
     # thresholds are implemented as a dictionary, for easier manipulation
     thresholds = {"cpu": 40,
