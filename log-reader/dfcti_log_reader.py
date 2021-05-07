@@ -561,28 +561,35 @@ class Reader():
             # amount of time before disconnecting the process from the system
             # if no new log events are arriving
             process_dispatch_time = 600
+            # count how many events passed without ingesting a new log line
+            no_log_events_counter = 0
 
             if(DEBUG_MODE):
                 print(f'Debug mode is ON. Will show output within the console...')
 
-            # wait 1 second before starting the pipeline
-            time.sleep(1)
+            # stop executing the process if the thresholds do not have the proper format
+            if(len(thresholds) != 2):
+                if(DEBUG_MODE):
+                    print(
+                        f'The thresholds are incompatible with the current log file format!\nRequired format: [CPU,MEM]\nCurrent Format: {thresholds}')
+                return -1
+
+            if(os.path.isfile(log_file_path) == False):
+                if(DEBUG_MODE):
+                    print(
+                        f'The log file at {log_file_path} is not a valid path!')
+                return -1
+
+            # prepare the observer
+            file_event_handler = Modified_State_Handler()
+            observer = Observer()
+            observer.schedule(file_event_handler,
+                              path=log_file_path, recursive=False)
 
             while(True):
                 try:
                     if(DEBUG_MODE):
                         print(f'Preparing the log file observer...')
-
-                    file_event_handler = Modified_State_Handler()
-                    observer = Observer()
-                    observer.schedule(file_event_handler,
-                                      path=log_file_path, recursive=False)
-
-                    if(len(thresholds) != 2):
-                        if(DEBUG_MODE):
-                            print(
-                                f'The thresholds are incompatible with the current log file format\nRequired format: [CPU,MEM]\nCurrent Format: {thresholds}')
-                        break
 
                 except KeyboardInterrupt:
                     print('Process was stopped from the keyboard')
@@ -689,7 +696,6 @@ def Read_Process(log_file_path):
 
     # thresholds are implemented as a dictionary, for easier manipulation
     thresholds = {"cpu": 40,
-                  "cpu2": 40,
                   "mem": 50}
 
     Reader().Watch_Process(log_file_path, cycle_time, thresholds)
