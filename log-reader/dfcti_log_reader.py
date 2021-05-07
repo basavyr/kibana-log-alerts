@@ -553,9 +553,41 @@ class Reader():
         📉 With each cycle, the stats are analyzed, then based on their behavior, alerts are raised or not 🚦. After a cycle has finished, the system stats are cleared from memory, and the process repeats.
         """
 
-        """this will be executed only if the pipeline is directly executed from the command line"""
+        # This will be executed only if the pipeline is directly executed from the command line
         if __name__ == "__main__":
-            print(f'will do stuff\n{thresholds["cpu"]}\n{thresholds["mem"]}')
+            # set the debug mode for testing purposes
+            DEBUG_MODE = True
+
+            # amount of time before disconnecting the process from the system
+            # if no new log events are arriving
+            process_dispatch_time = 600
+
+            if(DEBUG_MODE):
+                print(f'Debug mode is ON. Will show output within the console...')
+
+            # wait 1 second before starting the pipeline
+            time.sleep(1)
+
+            while(True):
+                try:
+                    if(DEBUG_MODE):
+                        print(f'Preparing the log file observer...')
+
+                    file_event_handler = Modified_State_Handler()
+                    observer = Observer()
+                    observer.schedule(file_event_handler,
+                                      path=log_file_path, recursive=False)
+
+                    if(len(thresholds) != 2):
+                        if(DEBUG_MODE):
+                            print(
+                                f'The thresholds are incompatible with the current log file format\nRequired format: [CPU,MEM]\nCurrent Format: {thresholds}')
+                        break
+
+                except KeyboardInterrupt:
+                    print('Process was stopped from the keyboard')
+                    break
+            print('escaped')
 
 
 def Do_Asymmetric_Test():
@@ -654,9 +686,12 @@ def Read_Pipeline():
 
 def Read_Process(log_file_path):
     cycle_time = 60
+
     # thresholds are implemented as a dictionary, for easier manipulation
     thresholds = {"cpu": 40,
+                  "cpu2": 40,
                   "mem": 50}
+
     Reader().Watch_Process(log_file_path, cycle_time, thresholds)
 
 
