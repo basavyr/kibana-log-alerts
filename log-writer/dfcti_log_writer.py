@@ -297,6 +297,7 @@ def Do_Write_Test(machine_id, log_file_path):
 
 def Do_Write(machine_id, log_file_path):
     total_execution_time = 69
+    # initialize the class instance with its corresponding instance variable
     process = Write_Logs(log_file_path)
     try:
         total_execution_time = int(sys.argv[1])

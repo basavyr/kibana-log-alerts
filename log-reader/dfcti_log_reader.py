@@ -49,6 +49,7 @@ def Create_LogFile_Path():
     log_file_path = ''
     if(system_os == 'Darwin'):
         log_file_path = '/private/var/log/dfcti_system_logs.log'
+        # log_file_path = '/var/log/dfcti_system_logs.log'
     elif(system_os == 'Linux'):
         log_file_path = '/var/log/dfcti_system_logs.log'
     if(log_file_path != ''):
@@ -276,7 +277,7 @@ class Stats_Analyzer:
 
         lengths = [len(stack) for stack in system_stacks]
         for length in lengths:
-            if(length == valid_size):
+            if(length >= valid_size):
                 validity_counter += 1
 
         if(validity_counter == len(system_stacks)):
@@ -344,17 +345,17 @@ class Stats_Analyzer:
 class Modified_State_Handler(FileSystemEventHandler):
     def __init__(self, log_file_path):
         self.log_file_path = log_file_path
-        print(self.log_file_path)
 
     def on_modified(self, event):
         event_path = event.src_path
-        print(event_path)
         # check if the event was triggered by a file
+        # print(f'OS: {Get_OS()}\nLog-File-Path: {event_path}')
+        # print(f'New log-event in -> {event_path}')
         if(os.path.isfile(event_path) and event_path == self.log_file_path):
-            print(f'OS: {Get_OS()}\nLog-File-Path: {event_path}')
-            print(f'New log-event in -> {event_path}')
+            # print(f'OS: {Get_OS()}\nLog-File-Path: {event_path}')
+            # print(f'New log-event in -> {event_path}')
             # easy two-liner for getting the last line of the log-file
-            with open(self.log_file_path, 'r+') as reader:
+            with open(self.log_file_path, 'r') as reader:
                 last_line = list(reader)[-1]
             try:
                 # must append only the value of the cpu or memory
@@ -580,7 +581,7 @@ class Reader():
         # This will be executed only if the pipeline is directly executed from the command line
         if __name__ == "__main__":
             # set the debug mode for testing purposes
-            DEBUG_MODE = True
+            DEBUG_MODE = False
 
             # amount of time the watcher should wait between two consecutive log events within the pipeline
             WAIT_TIME = 1
@@ -620,7 +621,7 @@ class Reader():
             file_event_handler = Modified_State_Handler(log_file_path)
             observer = Observer()
             observer.schedule(file_event_handler,
-                              path=log_file_path, recursive=False)
+                              path=log_file_path, recursive=True)
 
             # start the observer
             time.sleep(1)
@@ -640,10 +641,12 @@ class Reader():
                         cpu_stack_size_0 = len(cpu_stack)
                         mem_stack_size_0 = len(mem_stack)
 
-                        print(cpu_stack)
+                        if(DEBUG_MODE):
+                            print(cpu_stack)
                         # watcher must  wait for a potential new event in the stack
-                        time.sleep(2)
-                        print(cpu_stack)
+                        time.sleep(WAIT_TIME)
+                        if(DEBUG_MODE):
+                            print(cpu_stack)
 
                         cpu_stack_size_1 = len(cpu_stack)
                         mem_stack_size_1 = len(mem_stack)
@@ -664,9 +667,9 @@ class Reader():
                             no_log_events_counter = 0
 
                         if(no_log_events_counter == process_dispatch_time):
-                            if(DEBUG_MODE):
-                                print(
-                                    f'The log file has not been updated for the past {process_dispatch_time} seconds. Stopping the watcher...')
+                            # if(DEBUG_MODE):
+                            print(
+                                f'The log file has not been updated for the past {process_dispatch_time} seconds. Stopping the watcher...')
                             break
 
                         # only perform analysis on the stacks if the events arrived properly, without any interruptions
@@ -707,6 +710,7 @@ class Reader():
                                     f'Analysis of the current cycle is complete. Clearing the stacks...')
                             cpu_stack.clear()
                             mem_stack.clear()
+                            bar()
                             cycler = time.time()
                     except KeyboardInterrupt:
                         print('Process was stopped from the keyboard!')
@@ -715,6 +719,7 @@ class Reader():
                         break
                 print(
                     f'Process stopped completely... [⏱ Duration: {round(time.time()-total_execution_time,3)}]')
+                # the join method must be called outside the while loop
 
 
 def Do_Asymmetric_Test(log_file_path):
@@ -812,7 +817,7 @@ def Read_Pipeline(log_file_path):
 
 
 def Read_Process(log_file_path=LOG_FILE_PATH):
-    cycle_time = 30
+    cycle_time = 10
 
     # thresholds are implemented as a dictionary, for easier manipulation
     thresholds = {"cpu": 40,
