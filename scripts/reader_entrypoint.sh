@@ -2,7 +2,7 @@
 echo 'Testing the reader implementation'
 cd exec/reader/
 touch /var/log/dfcti_system_logs.log
-chmod +x /var/log/dfcti_system_logs.log
+chmod 777 /var/log/dfcti_system_logs.log
 echo 'Setting up the virtual evironment on the machine'
 pyenv virtualenv systems
 pyenv local systems

@@ -172,6 +172,10 @@ class Write_Logs:
     Writes logs that are collected from other internal classes within the script
     """
 
+    # the class must take as argument the path to the log file
+    def __init__(self, log_file_path):
+        self.log_file_path = log_file_path
+
     @classmethod
     def Generate_Random_Log_Line(cls, machine_id):
         """
@@ -200,16 +204,16 @@ class Write_Logs:
             return log_line
 
     @classmethod
-    def Write_Log_Line(cls, log_line, log_file):
+    def Write_Log_Line(cls, log_line, log_file_path):
         """
         Once a log line has been generated via the proper method, it writes that line into its corresponding log-file
         """
         try:
-            with open(log_file, 'a+') as logger:
+            with open(log_file_path, 'a+') as logger:
                 logger.write(log_line + '\n')
         except Exception as error:
             print(
-                f'There was a problem while trying write logs at -> {log_file}\nReason: {error}')
+                f'There was a problem while trying write logs at -> {log_file_path}\nReason: {error}')
             return 0
         else:
             return 1
@@ -264,7 +268,7 @@ Example:
 """
 
 
-def Do_Write_Test(machine_id):
+def Do_Write_Test(machine_id, log_file_path):
     total_execution_time = 69
     try:
         total_execution_time = int(sys.argv[1])
@@ -276,18 +280,22 @@ def Do_Write_Test(machine_id):
         total_execution_time, REFRESH_CYCLE, log_file_path, machine_id)
 
 
-def Do_Write(machine_id):
+def Do_Write(machine_id, log_file_path):
     total_execution_time = 69
+    process = Write_Logs(log_file_path)
     try:
         total_execution_time = int(sys.argv[1])
     except IndexError as err:
         print('No argument given!\nDefaulting to the safe value')
     else:
         pass
-    proc = Write_Logs.Write_Process(
+    process.Write_Process(
         total_execution_time, REFRESH_CYCLE, log_file_path, machine_id)
 
 
 if __name__ == '__main__':
     MACHINE_ID = MachineID.Get_Machine_ID()
-    Do_Write(MACHINE_ID)
+    try:
+        Do_Write(MACHINE_ID, log_file_path)
+    except KeyboardInterrupt:
+        print(f'Finished executing the writing process -> Keyboard Interrupt')
