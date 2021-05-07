@@ -4,12 +4,13 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-alive-progress="*"
 watchdog = "*"
 autopep8 ="*"
 psutil = "*"
 numpy = "==1.18.5"
 matplotlib = "==3.3.3"
+tdqm = "*"
+alive-progress="*"
 
 [dev-packages]
 

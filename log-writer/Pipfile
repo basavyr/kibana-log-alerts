@@ -7,10 +7,10 @@ name = "pypi"
 watchdog = "*"
 autopep8 ="*"
 psutil = "*"
-tdqm = "*"
 numpy = "==1.18.5"
 matplotlib = "==3.3.3"
-tqdm = "*"
+tdqm = "*"
+alive-progress="*"
 
 [dev-packages]
 
