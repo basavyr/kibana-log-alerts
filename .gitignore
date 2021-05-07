@@ -8,3 +8,4 @@
 *.python-version
 *machine_id
 .vscode/settings.json
+log-reader/1.test

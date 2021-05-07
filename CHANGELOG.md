@@ -2,6 +2,12 @@
 
 ### Latest updates 
 
+* Debug mode for the reader has been improved, and it is more consistent with the `watchdog` *event handler*.
+* Improved the writer log by adding `__name__`, such that certain methods are not executed within the unit tests
+* Improved the reader log by adding `__name__`, such that certain methods are not executed within the unit tests
+* Improved pipeline for docker
+* Add unit tests for writing logs
+* Add unit tests for reading logs
 * Properly configured the `grok` filter to organize the event fields in a consistent way
 * Add graph visualizations for the CPU usage inside Kibana.
 * Add pipeline for Logstash

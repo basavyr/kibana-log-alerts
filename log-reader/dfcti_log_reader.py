@@ -56,6 +56,16 @@ def Create_LogFile_Path():
     return -1
 
 
+# Set the path to the log file used for analysis
+LOG_FILE_PATH = Create_LogFile_Path()
+
+# define the stacks where each system stat will be stored
+# e.g. CPU stack, MEM stack, and Machine ID
+cpu_stack = []
+mem_stack = []
+machine_id = []
+
+
 def Split_Stack(stack, length):
     """
     **Split a stack:**
@@ -75,9 +85,6 @@ def Split_Stack(stack, length):
     else:
         return [sub_array_1, sub_array_2]
 
-
-# Set the path to the log file used for analysis
-LOG_FILE_PATH = Create_LogFile_Path()
 
 # The name and e-mail for each client that needs to be alerted
 EMAIL_LIST = [['Test Receive', 'alerts.dfcti.recv@gmail.com']]
@@ -223,7 +230,16 @@ class Attachment:
         here, only the first file is required
         """
         with open(file_path[0], 'w+') as attach:
-            attach.write(data + '\n')
+            try:
+                # attach.write(str(data) + '\n')
+                # use str format for a better compatibility with different data formats
+                attach.write(str(data) + '\n')
+            except Exception as error:
+                print(
+                    f'Could not write data at -> {file_path[0]}\nReason: {error}')
+                return -1
+            else:
+                return 1
 
 
 class Message:
@@ -362,7 +378,7 @@ class Reader():
         log_line[log_line.find('MACHINE-ID:') + len('MACHINE-ID:'):])
 
     @classmethod
-    def Watch_Log_File(self, log_file_path, execution_time, cycle_time, threshold):
+    def Watch_Log_File(cls, log_file_path, execution_time, cycle_time, threshold):
         """Watches a log file for new events.
 
         With each new event inside the log-file, the data is parsed, and CPU + MEM stats are extracted, each into its own data stack
@@ -374,19 +390,31 @@ class Reader():
 
         The entire process stops after `execution_time` has been reached.
         """
+
         event_handler = Modified_State_Handler()
 
         observer = Observer()
         observer.schedule(event_handler, path=log_file_path, recursive=False)
-        observer.start()
+
+        # how many seconds with no incoming logs in order for the watcher to stop automatically
+        safety_count_dispatcher = 10
 
         count = 0
         watch_state = True
 
         # set the thresholds for each stat value from the log file
-        cpu_threshold = threshold[0]
-        mem_threshold = threshold[1]
+        try:
+            cpu_threshold = threshold[0]
+            mem_threshold = threshold[1]
+        except Exception as error:
+            print(f'The threshold values are incompatible with the current log format.')
+        else:
+            pass
 
+        print(f'Starting the watcher...')
+        print(
+            f'[Info:] The watcher will stop after {safety_count_dispatcher} seconds if no incoming events are detected.')
+        observer.start()
         total_execution_time = time.time()
         cycle_time_start = time.time()
         while(watch_state):
@@ -396,7 +424,8 @@ class Reader():
 
             # stop if the total execution time has passed
             if(time.time() - total_execution_time >= execution_time):
-                print(f'Finished watching the log file')
+                print(
+                    f'Finished watching the log file located at -> {log_file_path}...')
                 watch_state = False
                 return
 
@@ -408,16 +437,15 @@ class Reader():
             mem_stack_length_1 = len(mem_stack)
 
             # stop if no new entries are coming into the stacks
-            # hangs up the ingest after 5 seconds
             if((cpu_stack_length_0 == cpu_stack_length_1) or (mem_stack_length_0 == mem_stack_length_1)):
                 count += 1
             else:
                 count = 0
 
-            # stop after 10 seconds
-            if(count == 10):  # stop if the logging pipeline hangs up
-                print('No incoming logs...')
-                print('Stopping the watcher')
+            # stop after `safety_count_dispatcher` seconds
+            if(count == safety_count_dispatcher):  # stop if the logging pipeline hangs up
+                print('No incoming logs!')
+                print('Stopping the watcher...')
                 watch_state = False
                 return
 
@@ -437,7 +465,7 @@ class Reader():
                         adjusted_cpu_stack, cpu_threshold)
                     if(cpu_analysis[0] == 1):
                         print(
-                            f'CPU usage is above the threshold! ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds\nWill alert the DevOps team!!!')
+                            f'[Alert:] CPU usage is above the threshold! ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds\nWill alert the DevOps team!!!')
                         cpu_fail_value = f'AVG_CPU_USAGE for the past {cycle_time} seconds: {cpu_analysis[1]}%, which is above the threshold value {cpu_threshold}%.'
                         for email in EMAIL_LIST:
                             fail_stats = Alerter.Generate_Fail_Stats(
@@ -463,7 +491,7 @@ class Reader():
                                 alert, attach_filenames, email[1])
                     else:
                         print(
-                            f'CPU usage is normal ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
+                            f'[Info:] CPU usage is normal ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
                         pass
                     # clear the stacks after analysis has been performed
                     cpu_stack.clear()
@@ -477,7 +505,7 @@ class Reader():
                         adjusted_mem_stack, mem_threshold)
                     if(mem_analysis[0] == 1):
                         print(
-                            f'Memory usage is above the threshold! ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds\nWill alert the DevOps team!!!')
+                            f'[Alert:] Memory usage is above the threshold! ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds\nWill alert the DevOps team!!!')
                         mem_fail_value = f'AVG_MEM_USAGE for the past {cycle_time} seconds: {mem_analysis[1]}%, which is above the threshold value {mem_threshold}%.'
                         for email in EMAIL_LIST:
                             fail_stats = Alerter.Generate_Fail_Stats(
@@ -503,7 +531,7 @@ class Reader():
                                 alert, attach_filenames, email[1])
                     else:
                         print(
-                            f'Memory usage is normal ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
+                            f'[Info:] Memory usage is normal ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
                         pass
                     # clear the stacks after analysis has been performed
                     mem_stack.clear()
@@ -513,92 +541,112 @@ class Reader():
         observer.stop()
         observer.join()
 
+    @classmethod
+    def Watch_Process(cls, log_file_path, cycle_time, thresholds):
+        """
+        Docs 📚
+        """
+        return -1
 
-cpu_stack = []
-mem_stack = []
-machine_id = []
 
-# Reader.Watch_Log_File(LOG_FILE_PATH, 30, 5, [70, 70])
-
-# giving default (safe-mode) values for the total execution time in case no cli args are set by the user
-timer = 69
-cycle_time = 5
-
-try:
-    timer = int(sys.argv[1])
-except IndexError as err:
-    print('No argument given!\nDefaulting to the safe values')
-else:
+def Do_Asymmetric_Test():
+    # giving default (safe-mode) values for the total execution time in case no cli args are set by the user
+    timer = 69
+    cycle_time = 5
     try:
-        cycle_time = int(sys.argv[2])
+        timer = int(sys.argv[1])
     except IndexError as err:
-        print('No cycle time given!\nDefaulting to the safe value')
+        print('No argument given!\nDefaulting to the safe values')
     else:
-        pass
-
-execute = False
-if(timer < cycle_time):
-    print('Cannot start the execution pipeline')
-else:
-    execute = False
-
-
-# test the asymmetric stack update
-if(execute):
-    print(f'You have selected following settings:')
-    print(f'Total execution time of the script: {timer} s')
-    print(
-        f'Each log analysis will be performed after a window of {cycle_time} s')
-    cycle_count = 0
-
-    event_handler = Modified_State_Handler()
-    observer = Observer()
-    observer.schedule(event_handler, path=LOG_FILE_PATH, recursive=False)
-
-    observer.start()
-    cycle_time_start = time.time()
-    while(timer):
-        cycle_count += 1
-
-        # time passes
-        time.sleep(1)
-        if(time.time() - cycle_time_start >= cycle_time):
-            print(f'{cycle_time} seconds passed. Analyzing the stacks')
-            if(len(cpu_stack) >= cycle_time):
-                print(f'Full stack:{cpu_stack}')
-                cpu_stack_full = Split_Stack(cpu_stack, cycle_time)
-                print(f'Will do operations with:')
-                print(f'cpu_stack-> {cpu_stack_full[0]}')
-                l1 = len(cpu_stack_full[0])
-                print(f'throws-> {cpu_stack_full[1]}')
-                extra_time = rd.choice([1, 2, 3, 4, 5])
-                time.sleep(extra_time)
-                print(f'Pausing thread for {extra_time}')
-                cpu_stack.clear()
-
-            if(len(mem_stack) >= cycle_time):
-                print(f'Full stack:{mem_stack}')
-                mem_stack_full = Split_Stack(mem_stack, cycle_time)
-                l2 = len(mem_stack_full[0])
-                print(f'mem_stack-> {mem_stack_full[0]}')
-                print(f'throws-> {mem_stack_full[1]}')
-                extra_time = rd.choice([4, 5, 6, 7, 8])
-                time.sleep(extra_time)
-                print(f'Pausing thread for {extra_time}')
-                mem_stack.clear()
-
-            # if(l1 == l2):
-            #     print('cycle PASSED the stack-append test')
-            # else:
-            #     print('cycle FAILED the stack-append test')
-            cycle_time_start = time.time()
-
+        try:
+            cycle_time = int(sys.argv[2])
+        except IndexError as err:
+            print('No cycle time given!\nDefaulting to the safe value')
         else:
             pass
 
-        timer -= 1
-    observer.stop()
-    observer.join()
-    print(f'Finished {int(cycle_count/cycle_time)} watch cycles')
-else:
-    pass
+    # only continue if the arguments are properly given from the CLI
+    execute = False
+    if(timer < cycle_time):
+        print('Cannot start the execution pipeline')
+        return
+    else:
+        execute = True
+
+    # test the asymmetric stack update
+    if(execute):
+        print(f'You have selected following settings:')
+        print(f'Total execution time of the script: {timer} s')
+        print(
+            f'Each log analysis will be performed after a window of {cycle_time} s')
+        cycle_count = 0
+
+        event_handler = Modified_State_Handler()
+        observer = Observer()
+        observer.schedule(event_handler, path=LOG_FILE_PATH, recursive=False)
+
+        observer.start()
+        cycle_time_start = time.time()
+        while(timer):
+
+            cycle_count += 1
+
+            print(cpu_stack, mem_stack)
+            # time passes
+            time.sleep(1)
+
+            print(cpu_stack, mem_stack)
+            if(time.time() - cycle_time_start >= cycle_time):
+                print(f'{cycle_time} seconds passed. Analyzing the stacks')
+                if(len(cpu_stack) >= cycle_time):
+                    print(f'Full stack:{cpu_stack}')
+                    cpu_stack_full = Split_Stack(cpu_stack, cycle_time)
+                    print(f'Will do operations with:')
+                    print(f'cpu_stack-> {cpu_stack_full[0]}')
+                    l1 = len(cpu_stack_full[0])
+                    print(f'throws-> {cpu_stack_full[1]}')
+                    extra_time = rd.choice([1, 2, 3, 4, 5])
+                    time.sleep(extra_time)
+                    print(f'Pausing thread for {extra_time}')
+                    cpu_stack.clear()
+
+                if(len(mem_stack) >= cycle_time):
+                    print(f'Full stack:{mem_stack}')
+                    mem_stack_full = Split_Stack(mem_stack, cycle_time)
+                    l2 = len(mem_stack_full[0])
+                    print(f'mem_stack-> {mem_stack_full[0]}')
+                    print(f'throws-> {mem_stack_full[1]}')
+                    extra_time = rd.choice([4, 5, 6, 7, 8])
+                    time.sleep(extra_time)
+                    print(f'Pausing thread for {extra_time}')
+                    mem_stack.clear()
+
+                # if(l1 == l2):
+                #     print('cycle PASSED the stack-append test')
+                # else:
+                #     print('cycle FAILED the stack-append test')
+                cycle_time_start = time.time()
+
+            else:
+                pass
+
+            timer -= 1
+        observer.stop()
+        observer.join()
+        print(f'Finished {int(cycle_count/cycle_time)} watch cycles')
+    else:
+        pass
+
+
+def Read_Pipeline():
+    Reader.Watch_Log_File(LOG_FILE_PATH, 50,
+                          20, [70, 45])
+
+
+def Read_Process(log_file_path):
+    Reader().Watch_Process(log_file_path, cycle_time, thresholds)
+
+
+if __name__ == "__main__":
+    # Do_Asymmetric_Test()
+    Read_Pipeline()

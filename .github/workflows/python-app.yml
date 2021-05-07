@@ -14,44 +14,44 @@ env:
 
 
 jobs:
-  write-read-logs:
-    runs-on: ubuntu-latest
-    steps:
+  # write-read-logs:
+    # runs-on: ubuntu-latest
+    # steps:
 
-      - name: Checkout
-        uses: actions/checkout@v2
+    #   - name: Checkout
+    #     uses: actions/checkout@v2
     
-      - name: Set up Python 3.8.6
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.8.6
+    #   - name: Set up Python 3.8.6
+    #     uses: actions/setup-python@v2
+    #     with:
+    #       python-version: 3.8.6
 
-      - name: Install pipenv for Python
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install pipenv
+    #   - name: Install pipenv for Python
+    #     run: |
+    #       python -m pip install --upgrade pip
+    #       python -m pip install pipenv
 
-      - name: Create log-file in /var/log
-        run: |
-          sudo touch /var/log/dfcti_system_logs.log
-          sudo chmod 777 /var/log/dfcti_system_logs.log
+    #   - name: Create log-file in /var/log
+    #     run: |
+    #       sudo touch /var/log/dfcti_system_logs.log
+    #       sudo chmod 777 /var/log/dfcti_system_logs.log
       
-      - name: Install packages for log-writer script + give permission
-        run: |
-          cd log-writer
-          pipenv install
-          chmod +x dfcti_log_writer.py
+    #   - name: Install packages for log-writer script + give permission
+    #     run: |
+    #       cd log-writer
+    #       pipenv install
+    #       chmod +x dfcti_log_writer.py
 
-      # - name: Install packages for log-reader script + give permission
-      #   run: |
-      #     cd log-reader
-      #     pipenv install
-      #     chmod +x dfcti_log_reader.py
+    #   # - name: Install packages for log-reader script + give permission
+    #   #   run: |
+    #   #     cd log-reader
+    #   #     pipenv install
+    #   #     chmod +x dfcti_log_reader.py
 
-      - name: Starts writing-[bg] logs
-        run: |
-          cd log-writer
-          pipenv run python dfcti_log_writer.py 10
+    #   - name: Starts writing-[bg] logs
+    #     run: |
+    #       cd log-writer
+    #       pipenv run python dfcti_log_writer.py 10
       
       # - name: Starts reading-[active] logs
       #   run: |
@@ -102,14 +102,20 @@ jobs:
       #     asset_content_type: application/zip
       #     upload_url: ${{ steps.get_release_url.outputs.upload_url }}
   
-  docker-build:
+  docker-test-logging-pipeline:
     runs-on: ubuntu-latest
     steps:
-      - name: Starting 
-        run: |
-          docker images | grep -E '20.04' | awk '{print $3}' | xargs -I{} docker run -td --name ubuntuOS {} /bin/bash
-          docker ps -a
-          docker exec ubuntuOS ls -la
-          docker exec ubuntuOS uname -a
-          docker ps | grep -E '(^|\s)ubuntuOS$' | awk '{print $1}' | xargs docker stop | xargs docker rm
-          docker ps -a
+    - name: Log-in to Docker Hub
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Unit tests for log-reader and log-writer 
+      run: |
+        docker pull basavyr/ubuntu:latest
+        docker build . -t pypy
+        docker run pypy
+        docker images
+        docker ps -a

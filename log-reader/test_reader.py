@@ -11,11 +11,16 @@ rd = default_rng()
 class Test(unittest.TestCase):
     n_iterations = 25
     test_data = []
+    alerter = logreader.Alerter()
+    message = logreader.Message()
+    reader = logreader.Reader()
+    analyzer = logreader.Stats_Analyzer()
 
     def test_Create_LogFile_Path(self):
         """Testing the creation of log file paths
         Depends on the actual operating system.
         """
+        print('Started the log path creation test\n')
         for _ in range(self.n_iterations):
             yy_path = logreader.Create_LogFile_Path()
             self.assertIsNotNone(yy_path)
@@ -27,6 +32,7 @@ class Test(unittest.TestCase):
     def test_Split_Stack(self):
         """Checks how the stack is split in two sub-stacks
         """
+        print('started test for splitting the logs\n')
         for _ in range(self.n_iterations):
             initial_stack = rd.integers(1, 10, 20)
             length = rd.integers(1, 9)
@@ -35,6 +41,50 @@ class Test(unittest.TestCase):
             self.assertEqual(len(yy_data[0]) +
                              len(yy_data[1]), len(initial_stack))
         print('Finished splitting the logs\n')
+
+    def test_Create_Alert(self):
+        print('Started testing the alert creation the logs\n')
+        fail_stats = 'stats'
+        fake_stats = ['Name', 'An issue', fail_stats]
+        for _ in range(self.n_iterations):
+            yy_data = self.alerter.Create_Alert(fake_stats)
+            self.assertIsNotNone(yy_data)
+            self.assertNotEqual(len(yy_data), 0)
+            self.assertNotEqual(len(yy_data), 1)
+            self.assertNotEqual(len(yy_data), 2)
+        print('Finished testing the alert creation the logs\n')
+
+    def test_Create_Attachment(self):
+        print('testing the creation of attachments\n')
+        paths = ['1.test', '2.test']
+        yy_proc = logreader.Attachment().Create_Attachment(
+            ['Some data', 'Some more data'], paths)
+        self.assertIsNotNone(yy_proc)
+        self.assertNotEqual(yy_proc, -1)
+        self.assertEqual(yy_proc, 1)
+        print('finished testing the creation of attachments\n')
+
+    def test_Analyze_CPU_Usage_Stack(self):
+        print('starting testing the cpu stack\n')
+        for _ in range(self.n_iterations):
+            cpu_stack = rd.integers(50, 80, 100)
+            threshold = rd.integers(60, 70, 1)
+            yy_data = self.analyzer.Analyze_CPU_Usage_Stack(
+                cpu_stack, threshold)
+            self.assertIsNotNone(yy_data)
+            self.assertEqual(len(yy_data), 2)
+        print('finished testing the cpu stack\n')
+
+    def test_Analyze_MEM_Usage_Stack(self):
+        print('starting testing the memory stack\n')
+        for _ in range(self.n_iterations):
+            mem_stack = rd.integers(50, 80, 100)
+            threshold = rd.integers(60, 70, 1)
+            yy_data = self.analyzer.Analyze_CPU_Usage_Stack(
+                mem_stack, threshold)
+            self.assertIsNotNone(yy_data)
+            self.assertEqual(len(yy_data), 2)
+        print('finished testing the memory stack\n')
 
 
 if __name__ == '__main__':
