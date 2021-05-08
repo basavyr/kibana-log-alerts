@@ -153,10 +153,10 @@ class Alerter:
         1. A `.dat` file in which the stack that raised the alert is shown.
         2. A graphical representation (plot) with the system stats over the last `cycle_time` seconds.
         """
-        Alerter.Send_Email(email, alert, attachment_files, True)
+        Alerter.Send_Email(email, alert, attachment_files)
 
     @classmethod
-    def Send_Email(self, email_address, alert_content, attachment_files, alert_state=False):
+    def Send_Email(self, email_address, alert_content, attachment_files):
         """
         Uses the `smtp` module and `ssl` in order to create a text message, and then send it via e-mail.
 
@@ -214,29 +214,28 @@ class Alerter:
 
         final_alert = message.as_string()
 
-        IN_SEND = True
+        # create a context using `ssl`
         CONTEXT = ssl.create_default_context()
-        with smtplib.SMTP_SSL("smtp.gmail.com", PORT, context=CONTEXT) as MAIL_SERVER:
+
+        with smtplib.SMTP_SSL("smtp.gmail.com", PORT, context=CONTEXT) as mail_server:
+            # log-in stage
             try:
-                MAIL_SERVER.login(ROOT_EMAIL, UNICORN_ID)
+                mail_server.login(ROOT_EMAIL, UNICORN_ID)
             except Exception as exc:
                 print(f'❌ Cannot log-in!')
                 print(f'Reason: {exc}')
             else:
                 print(f'🔐 Successful log-in into -> {ROOT_EMAIL}')
                 print(f'📤 Ready to send alerts to -> {email_address}')
-            if(IN_SEND):
-                try:
-                    MAIL_SERVER.sendmail(
-                        ROOT_EMAIL, email_address, final_alert)
-                except Exception as exc:
-                    print(f'❌ Cannot send alert to {email_address}...')
-                    print(f'Reason: {exc}')
-                else:
-                    print(f'🚀 Sent alert to {email_address} ! ✅')
+            # sending stage
+            try:
+                mail_server.sendmail(
+                    ROOT_EMAIL, email_address, final_alert)
+            except Exception as exc:
+                print(f'❌ Cannot send alert to {email_address}...')
+                print(f'Reason: {exc}')
             else:
-                print('Internal alert system is paused...')
-                print('Cannot send alerts at this time ------> #IN_SEND_VALUE:NULL')
+                print(f'🚀 Sent alert to {email_address} ! ✅')
 
 
 class Attachment:
