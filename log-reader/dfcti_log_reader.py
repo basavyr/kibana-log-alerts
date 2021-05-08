@@ -243,7 +243,7 @@ class Alerter:
 class Attachment:
     @classmethod
     def Create_DataFile_Attachment(cls, stack_data, attachment_files):
-        """Writes 
+        """Writes the stack data which raised an alert to an output file, which will be used as an attachment within the email.
         """
         with open(attachment_files[0], 'w+') as attachment:
             try:
@@ -277,8 +277,15 @@ class Message:
 class Stats_Analyzer:
     """Analyze a given stack (array) of system stats (e.g., CPU, MEM) and checks whether the values represent an unusual behavior or not
     """
-    stack_details = lambda threshold, cycle_time, stack_type, stack_issue: {
-        "threshold": threshold, "cycle_time": cycle_time, "stack_type": stack_type, "stack_issue": stack_issue}
+
+    @classmethod
+    def Create_Stack_Details(cls, threshold, cycle_time, stack_type, stack_issue):
+        """Creates a dictionary-list from the stack which raised unusual behavior. 
+        The threshold, cycle_time, the stack type and also the type of issues are all returned in this list.
+        """
+        stack_details = lambda threshold, cycle_time, stack_type, stack_issue: {
+            "threshold": threshold, "cycle_time": cycle_time, "stack_type": stack_type, "stack_issue": stack_issue}
+        return stack_details(threshold, cycle_time, stack_type, stack_issue)
 
     @classmethod
     def Valid_Stacks(cls, system_stacks, valid_size):
@@ -340,7 +347,7 @@ class Stats_Analyzer:
         stack_type = stats_details["stack_type"]
         stack_issue = stats_details["stack_issue"]
 
-        avg_stack_value = stack.mean()
+        avg_stack_value = np.mean(stack)
         time_stamp = str(datetime.utcnow())[0:22]
         head = f'📄 Analysis report for the {stack_type}\nGenerated at -> ⏱ {time_stamp}\n'
         body = f'{stack_issue} -> The average value of the stack is {avg_stack_value}%, which is above the threshold value of {threshold}%.\n📈 Stack values for the past {cycle_time} seconds ->\n************\n{stack}\n************'
@@ -652,6 +659,12 @@ class Reader():
             cpu_threshold = thresholds["cpu"]
             mem_threshold = thresholds["mem"]
 
+            # set up the paths for the attachments which will be sent within the alert message
+            # the first file is the stack data and the second file is a graphical representation with the monitored resources that raised the alert
+            stack_data_file = 'failed_stack_report.dat'
+            cpu_plot_file = 'cpu_usage.pdf'
+            mem_plot_file = 'mem_usage.pdf'
+
             # prepare the observer
             time.sleep(1)
             if(DEBUG_MODE):
@@ -728,6 +741,16 @@ class Reader():
                                 print(
                                     f'[Alert:] CPU usage is above the threshold! ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds\nWill alert the DevOps team!!!')
                                 # TODO Must implement the alert procedure for the CPU usage
+                                # construction of the file with details about the stack which failed must be constructed first
+                                attachment_files = [
+                                    stack_data_file, cpu_plot_file]
+                                failed_stack = Stats_Analyzer.Create_Stack_Details(
+                                    cpu_threshold, cycle_time, RESOURCE_TYPE["CPU"], RESOURCE_ISSUES["CPU"])
+                                failed_stack_report = Stats_Analyzer.Stack_Report(
+                                    cpu_stack, failed_stack, attachment_files[0])
+                                Attachment.Create_DataFile_Attachment(
+                                    failed_stack_report, attachment_files)
+
                             else:
                                 print(
                                     f'[Info:] CPU usage is normal ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
@@ -737,6 +760,14 @@ class Reader():
                                 print(
                                     f'[Alert:] Memory usage is above the threshold! ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds\nWill alert the DevOps team!!!')
                                 # TODO Must implement the alert procedure for the MEM usage
+                                attachment_files = [
+                                    stack_data_file, mem_plot_file]
+                                failed_stack = Stats_Analyzer.Create_Stack_Details(
+                                    mem_threshold, cycle_time, RESOURCE_TYPE["MEM"], RESOURCE_ISSUES["MEM"])
+                                failed_stack_report = Stats_Analyzer.Stack_Report(
+                                    mem_stack, failed_stack, attachment_files[0])
+                                Attachment.Create_DataFile_Attachment(
+                                    failed_stack_report, attachment_files)
                             else:
                                 print(
                                     f'[Info:] Memory usage is normal ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
