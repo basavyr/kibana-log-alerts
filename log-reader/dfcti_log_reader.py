@@ -160,6 +160,8 @@ class Alerter:
         """
         Uses the `smtp` module and `ssl` in order to create a text message, and then send it via e-mail.
 
+        It only sends the message to ONE e-mail address at a time.
+
         The method also adds fully customized subject and some attachments.
         """
         PORT = 465  # For SSL
@@ -240,19 +242,16 @@ class Alerter:
 
 class Attachment:
     @classmethod
-    def Create_Attachment(self, data, file_path):
-        """the incoming file_path contains the .dat file with the fail stack
-        second path is the plot
-        here, only the first file is required
+    def Create_DataFile_Attachment(cls, stack_data, attachment_files):
+        """Writes 
         """
-        with open(file_path[0], 'w+') as attach:
+        with open(attachment_files[0], 'w+') as attachment:
             try:
-                # attach.write(str(data) + '\n')
                 # use str format for a better compatibility with different data formats
-                attach.write(str(data) + '\n')
+                attachment.write(str(stack_data) + '\n')
             except Exception as error:
                 print(
-                    f'Could not write data at -> {file_path[0]}\nReason: {error}')
+                    f'Could not write data at -> {attachment_files[0]}\nReason: {error}')
                 return -1
             else:
                 return 1
@@ -331,8 +330,8 @@ class Stats_Analyzer:
     def Stack_Report(cls, stack, stats_details, file_stack):
         """
         * Takes the stack which raised unusual behavior for a particular system stat.
-        * Saves the stack to a file
-        * Writes some information with regards to the analysis, like the timestamp and direct comparison with the threshold value.
+        * Uses the extra stack details to compose a message in which the occuring issue and the stack values are saved.
+        * Returns the message as a string, for an eventual write to a file.
         """
 
         # Gather the stack information from the `stack_details` dictionary
@@ -347,8 +346,10 @@ class Stats_Analyzer:
         body = f'{stack_issue} -> The average value of the stack is {avg_stack_value}%, which is above the threshold value of {threshold}%.\n📈 Stack values for the past {cycle_time} seconds ->\n************\n{stack}\n************'
         STACK_MESSAGE = head + body
 
-        with open(file_stack, 'w+') as stack_writer:
-            stack_writer.write(STACK_MESSAGE)
+        return STACK_MESSAGE
+
+        # with open(file_stack, 'w+') as stack_writer:
+        #     stack_writer.write(STACK_MESSAGE)
 
     @classmethod
     def Plot_Stack(cls, time_stamp, machine_id, failed_stack, time, threshold, plot_stack_file, labels):
