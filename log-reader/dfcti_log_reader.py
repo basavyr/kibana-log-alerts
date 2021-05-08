@@ -686,7 +686,8 @@ class Reader():
                                 mem_stack, mem_threshold)
 
                             if(cpu_analysis[0] == 1):
-                                print(f'Will raise alert for the CPU')
+                                print(
+                                    f'[Alert:] CPU usage is above the threshold! ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds\nWill alert the DevOps team!!!')
                                 # TODO Must implement the alert procedure for the CPU usage
                             else:
                                 print(
@@ -694,7 +695,8 @@ class Reader():
                                 pass
 
                             if(mem_analysis[0] == 1):
-                                print(f'Will raise alert for the MEM')
+                                print(
+                                    f'[Alert:] Memory usage is above the threshold! ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds\nWill alert the DevOps team!!!')
                                 # TODO Must implement the alert procedure for the MEM usage
                             else:
                                 print(
@@ -817,7 +819,8 @@ def Read_Pipeline(log_file_path):
 
 
 def Read_Process(log_file_path=LOG_FILE_PATH):
-    cycle_time = 60
+    # set the time window after which the pipeline is doing analysis of the incoming log events
+    cycle_time = 10
 
     # thresholds are implemented as a dictionary, for easier manipulation
     thresholds = {"cpu": 40,
@@ -827,6 +830,4 @@ def Read_Process(log_file_path=LOG_FILE_PATH):
 
 
 if __name__ == "__main__":
-    # Do_Asymmetric_Test(LOG_FILE_PATH)
-    # Read_Pipeline(LOG_FILE_PATH)
-    Read_Process(LOG_FILE_PATH)
+    Read_Process()
