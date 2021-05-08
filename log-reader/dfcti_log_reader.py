@@ -89,16 +89,20 @@ def Split_Stack(stack, length):
         return [sub_array_1, sub_array_2]
 
 
-# The name and e-mail for each client that needs to be alerted
 EMAIL_LIST = [['Test Receive', 'alerts.dfcti.recv@gmail.com']]
-# EMAIL_LIST = [['ROBERT-MSFT', 'robert.poenaru@outlook.com'],
-#               ['ROBERT-GOOGL', 'robert.poenaru@drd.unibuc.ro']]
+"""The name and e-mail for each client that needs to be alerted"""
 
-# the list of potential issues which can occur during monitoring
+
 RESOURCE_ISSUES = {
     "CPU": "🔥 HIGH CPU USAGE 🔥",
     "MEM": "🔥 HIGH (RAM) MEMORY USAGE 🔥"
 }
+"""List of potential issues which can occur during monitoring of the system"""
+
+
+RESOURCE_TYPE = {"CPU": "CPU_USAGE_STACK",
+                 "MEM": "MEM_USAGE_STACK"}
+"""List of system stats which are being monitored by the log reader"""
 
 
 def Get_Machine_ID(machine_id_file):
@@ -142,12 +146,22 @@ class Alerter:
 
     @classmethod
     def SendAlert(self, alert, attachment_files, email):
-        """ the files represent the actual stack in a .dat file + the plot file made with matplotlib via CreatePlot class method
+        """
+        Calls the `Send_Email` method which sends an alert e-mail with attachments to a client.
+
+        The attachment files represent:
+        1. A `.dat` file in which the stack that raised the alert is shown.
+        2. A graphical representation (plot) with the system stats over the last `cycle_time` seconds.
         """
         Alerter.Send_Email(email, alert, attachment_files, True)
 
     @classmethod
     def Send_Email(self, email_address, alert_content, attachment_files, alert_state=False):
+        """
+        Uses the `smtp` module and `ssl` in order to create a text message, and then send it via e-mail.
+
+        The method also adds fully customized subject and some attachments.
+        """
         PORT = 465  # For SSL
         ROOT_EMAIL = 'alerts.dfcti@gmail.com'
         UNICORN_ID = 'v2a&tw@uGVWt7%LVjXFD'
@@ -265,6 +279,8 @@ class Message:
 class Stats_Analyzer:
     """Analyze a given stack (array) of system stats (e.g., CPU, MEM) and checks whether the values represent an unusual behavior or not
     """
+    stack_details = lambda threshold, cycle_time, stack_type, stack_issue: {
+        "threshold": threshold, "cycle_time": cycle_time, "stack_type": stack_type, "stack_issue": stack_issue}
 
     @classmethod
     def Valid_Stacks(cls, system_stacks, valid_size):
@@ -311,6 +327,29 @@ class Stats_Analyzer:
             return [1, mean_value]
         # print(f'✅ normal behavior: {mean_value}<{mem_threshold}')
         return [0, mean_value]
+
+    @classmethod
+    def Stack_Report(cls, stack, stats_details, file_stack):
+        """
+        * Takes the stack which raised unusual behavior for a particular system stat.
+        * Saves the stack to a file
+        * Writes some information with regards to the analysis, like the timestamp and direct comparison with the threshold value.
+        """
+
+        # Gather the stack information from the `stack_details` dictionary
+        threshold = stats_details["threshold"]
+        cycle_time = stats_details["cycle_time"]
+        stack_type = stats_details["stack_type"]
+        stack_issue = stats_details["stack_issue"]
+
+        avg_stack_value = stack.mean()
+        time_stamp = str(datetime.utcnow())[0:22]
+        head = f'📄 Analysis report for the {stack_type}\nGenerated at -> ⏱ {time_stamp}\n'
+        body = f'{stack_issue} -> The average value of the stack is {avg_stack_value}%, which is above the threshold value of {threshold}%.\n📈 Stack values for the past {cycle_time} seconds ->\n************\n{stack}\n************'
+        STACK_MESSAGE = head + body
+
+        with open(file_stack, 'w+') as stack_writer:
+            stack_writer.write(STACK_MESSAGE)
 
     @classmethod
     def Plot_Stack(cls, time_stamp, machine_id, failed_stack, time, threshold, plot_stack_file, labels):
