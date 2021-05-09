@@ -820,6 +820,7 @@ class Reader():
 
                                         # *step 4: create the plot that shows the stats of the analyzed stack
                                         # this is a graphical representation with the behavior of the monitored resource during one cycle time
+                                        # the plot will be used as the second attachment of the e-mail which is sent to the client after the alter has been raised
                                         cpu_plot_label = "CPU Usage"
                                         Stats_Analyzer.Plot_Stack(
                                             time_stamp, machine_id[0], cpu_stack, cycle_time, cpu_threshold, ALERT_FILES["CPU_PLOT"], cpu_plot_label)
