@@ -1016,11 +1016,17 @@ def Read_Pipeline(log_file_path):
 def Read_Process(log_file_path=LOG_FILE_PATH):
     # set the time window after which the pipeline is doing analysis of the incoming log events
     cycle_time = 10
-    # TODO The cycle time must be also set from the command line by the user, when running the actual script on a system.
+    try:
+        cycle_time = int(sys.argv[1])
+    except IndexError as err:
+        print('No cycle time given!\nDefaulting to the safe value...')
+    else:
+        print(f'Cycle time set to {cycle_time} seconds...')
+        pass
 
     # thresholds are implemented as a dictionary, for easier manipulation
-    thresholds = {"cpu": 10,
-                  "mem": 45}
+    thresholds = {"cpu": 50,
+                  "mem": 80}
 
     Reader.Watch_Process(log_file_path, cycle_time, thresholds)
 
