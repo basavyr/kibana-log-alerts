@@ -804,6 +804,7 @@ class Reader():
                                             print(
                                                 f'[Alert:] CPU usage is above the threshold! ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds (Threshold value: {cpu_threshold}%).\nWill alert the DevOps team!!!')
 
+                                        # create the body of the message which will be sent to the client
                                         cpu_fail_value = f'AVG_CPU_USAGE for the past {cycle_time} seconds: {cpu_analysis[1]}%, which is above the threshold value {cpu_threshold}%.'
 
                                         # initialize the paths for the attachment files that will be sent via e-mail to the client
@@ -814,18 +815,23 @@ class Reader():
                                         # *step1: create the stack details such as threshold value, the cycle time, the type of resource being analyzed and the issue which occurred as a dictionary
                                         failed_stack = Stats_Analyzer.Create_Stack_Details(
                                             cpu_threshold, cycle_time, RESOURCE_TYPE["CPU"], RESOURCE_ISSUES["CPU"])
-                                        # *step1: take the dictionary obtained previously at step (1) with the stack details, and create a pre-defined output format to be stored in a data file
+
+                                        # *step2: take the dictionary obtained previously at step (1) with the stack details, and create a pre-defined output format to be stored in a data file
                                         failed_stack_report = Stats_Analyzer.Stack_Report(
                                             cpu_stack, failed_stack, attachment_files[0])
+
                                         # *step3: add the formatted output generated from the stack report at step (2) into a data file, to be used as first attachment (first attachment is marked by the [0] index within the method called below)
                                         Attachment.Create_DataFile_Attachment(
                                             failed_stack_report, attachment_files)
+
                                         # *step 4: create the plot that shows the stats of the analyzed stack
                                         # this is a graphical representation with the behavior of the monitored resource during one cycle time
                                         # the plot will be used as the second attachment of the e-mail which is sent to the client after the alter has been raised
                                         cpu_plot_label = "CPU Usage"
                                         Stats_Analyzer.Plot_Stack(
                                             time_stamp, machine_id[0], cpu_stack, cycle_time, cpu_threshold, ALERT_FILES["CPU_PLOT"], cpu_plot_label)
+
+                                        # with the body of the message generated, and the two attachments ready, each client within the e-mail list will receive an alert containing the details with the failed stacks
                                         for email in EMAIL_LIST:
                                             cpu_fail_stats = Alerter.Generate_Fail_Stats(
                                                 email["name"], RESOURCE_ISSUES["CPU"], cpu_fail_value)
@@ -857,18 +863,23 @@ class Reader():
                                         # *step1: create the stack details such as threshold value, the cycle time, the type of resource being analyzed and the issue which occurred as a dictionary
                                         failed_stack = Stats_Analyzer.Create_Stack_Details(
                                             mem_threshold, cycle_time, RESOURCE_TYPE["MEM"], RESOURCE_ISSUES["MEM"])
-                                        # *step1: take the dictionary obtained previously at step (1) with the stack details, and create a pre-defined output format to be stored in a data file
+
+                                        # *step2: take the dictionary obtained previously at step (1) with the stack details, and create a pre-defined output format to be stored in a data file
                                         failed_stack_report = Stats_Analyzer.Stack_Report(
                                             mem_stack, failed_stack, attachment_files[0])
+
                                         # *step3: add the formatted output generated from the stack report at step (2) into a data file, to be used as first attachment (first attachment is marked by the [0] index within the method called below)
                                         Attachment.Create_DataFile_Attachment(
                                             failed_stack_report, attachment_files)
+
                                         # *step 4: create the plot that shows the stats of the analyzed stack
                                         # this is a graphical representation with the behavior of the monitored resource during one cycle time
                                         # the plot will be used as the second attachment of the e-mail which is sent to the client after the alter has been raised
                                         mem_plot_label = "Memory (RAM) Usage"
                                         Stats_Analyzer.Plot_Stack(
                                             time_stamp, machine_id[0], mem_stack, cycle_time, mem_threshold, ALERT_FILES["MEM_PLOT"], mem_plot_label)
+
+                                        # with the body of the message generated, and the two attachments ready, each client within the e-mail list will receive an alert containing the details with the failed stacks
                                         for email in EMAIL_LIST:
                                             mem_fail_stats = Alerter.Generate_Fail_Stats(
                                                 email["name"], RESOURCE_ISSUES["MEM"], mem_fail_value)
