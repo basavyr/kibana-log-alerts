@@ -732,70 +732,77 @@ class Reader():
                             break
 
                         # only perform analysis on the stacks if the events arrived properly, without any interruptions
-                        if(time.time() - cycler >= cycle_time and no_log_events_counter == 0 and Stats_Analyzer.Valid_Stacks([cpu_stack, mem_stack], cycle_time) == 1):
-                            if(DEBUG_MODE):
-                                print(
-                                    f'A complete cycle_time has passed ({cycle_time} seconds).\nAnalyzing the stacks')
-                                print(f'{cpu_stack} -> {len(cpu_stack)}')
-                                print(f'{mem_stack} -> {len(mem_stack)}')
+                        if(Stats_Analyzer.Valid_Stacks([cpu_stack, mem_stack], cycle_time) == 1):
+                            if(time.time() - cycler <= cycle_time + 0.25 * cycle_time and no_log_events_counter == 0):
+                                if(DEBUG_MODE):
+                                    print(
+                                        f'A complete cycle_time has passed ({cycle_time} seconds).\nAnalyzing the stacks')
+                                    print(f'{cpu_stack} -> {len(cpu_stack)}')
+                                    print(f'{mem_stack} -> {len(mem_stack)}')
 
-                            # analyze the stacks in terms of their average values
-                            # comparison with the corresponding threshold values is done
-                            #! in case the avg values are higher than the thresholds, the methods return true
-                            cpu_analysis = Stats_Analyzer.Analyze_CPU_Usage_Stack(
-                                cpu_stack, cpu_threshold)
-                            mem_analysis = Stats_Analyzer.Analyze_MEM_Usage_Stack(
-                                mem_stack, mem_threshold)
+                                # analyze the stacks in terms of their average values
+                                # comparison with the corresponding threshold values is done
+                                #! in case the avg values are higher than the thresholds, the methods return true
+                                cpu_analysis = Stats_Analyzer.Analyze_CPU_Usage_Stack(
+                                    cpu_stack, cpu_threshold)
+                                mem_analysis = Stats_Analyzer.Analyze_MEM_Usage_Stack(
+                                    mem_stack, mem_threshold)
 
-                            # the first value of the tuple returned by  `Analyze_CPU_Usage_Stack` checks wether the average value is in the high usage regime or not
-                            if(cpu_analysis[0] == 1):
-                                print(
-                                    f'[Alert:] CPU usage is above the threshold! ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds\nWill alert the DevOps team!!!')
-                                # TODO Must implement the alert procedure for the CPU usage
-                                # construction of the file with details about the stack which failed must be constructed first
-                                attachment_files = [
-                                    stack_data_file, cpu_plot_file]
-                                failed_stack = Stats_Analyzer.Create_Stack_Details(
-                                    cpu_threshold, cycle_time, RESOURCE_TYPE["CPU"], RESOURCE_ISSUES["CPU"])
-                                failed_stack_report = Stats_Analyzer.Stack_Report(
-                                    cpu_stack, failed_stack, attachment_files[0])
-                                Attachment.Create_DataFile_Attachment(
-                                    failed_stack_report, attachment_files)
+                                # the first value of the tuple returned by  `Analyze_CPU_Usage_Stack` checks wether the average value is in the high usage regime or not
+                                if(cpu_analysis[0] == 1):
+                                    print(
+                                        f'[Alert:] CPU usage is above the threshold! ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds (Above the threshold value {cpu_threshold}%)\nWill alert the DevOps team!!!')
+                                    # construction of the .dat file with details about the stack which failed
+                                    attachment_files = [
+                                        stack_data_file, cpu_plot_file]
+                                    failed_stack = Stats_Analyzer.Create_Stack_Details(
+                                        cpu_threshold, cycle_time, RESOURCE_TYPE["CPU"], RESOURCE_ISSUES["CPU"])
+                                    failed_stack_report = Stats_Analyzer.Stack_Report(
+                                        cpu_stack, failed_stack, attachment_files[0])
+                                    Attachment.Create_DataFile_Attachment(
+                                        failed_stack_report, attachment_files)
+                                    # TODO Must implement the alert procedure for the CPU usage
 
+                                else:
+                                    print(
+                                        f'[Info:] CPU usage is normal ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
+                                    pass
+
+                                # the first value of the tuple returned by  `Analyze_MEM_Usage_Stack` checks wether the average value is in the high usage regime or not
+                                if(mem_analysis[0] == 1):
+                                    print(
+                                        f'[Alert:] Memory usage is above the threshold! ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds\nWill alert the DevOps team!!!')
+                                    # TODO Must implement the alert procedure for the MEM usage
+                                    attachment_files = [
+                                        stack_data_file, mem_plot_file]
+                                    failed_stack = Stats_Analyzer.Create_Stack_Details(
+                                        mem_threshold, cycle_time, RESOURCE_TYPE["MEM"], RESOURCE_ISSUES["MEM"])
+                                    failed_stack_report = Stats_Analyzer.Stack_Report(
+                                        mem_stack, failed_stack, attachment_files[0])
+                                    Attachment.Create_DataFile_Attachment(
+                                        failed_stack_report, attachment_files)
+                                else:
+                                    print(
+                                        f'[Info:] Memory usage is normal ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
+                                    pass
+
+                                print(f'CPU analysis yields -> {cpu_analysis}')
+                                print(f'MEM analysis yields -> {mem_analysis}')
+
+                                # the stacks must be cleared after the analysis is done
+                                if(DEBUG_MODE):
+                                    print(
+                                        f'Analysis of the current cycle is complete. Clearing the stacks...')
+                                cpu_stack.clear()
+                                mem_stack.clear()
+                                bar()
+                                cycler = time.time()
                             else:
-                                print(
-                                    f'[Info:] CPU usage is normal ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
-                                pass
-
-                            # the first value of the tuple returned by  `Analyze_MEM_Usage_Stack` checks wether the average value is in the high usage regime or not
-                            if(mem_analysis[0] == 1):
-                                print(
-                                    f'[Alert:] Memory usage is above the threshold! ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds\nWill alert the DevOps team!!!')
-                                # TODO Must implement the alert procedure for the MEM usage
-                                attachment_files = [
-                                    stack_data_file, mem_plot_file]
-                                failed_stack = Stats_Analyzer.Create_Stack_Details(
-                                    mem_threshold, cycle_time, RESOURCE_TYPE["MEM"], RESOURCE_ISSUES["MEM"])
-                                failed_stack_report = Stats_Analyzer.Stack_Report(
-                                    mem_stack, failed_stack, attachment_files[0])
-                                Attachment.Create_DataFile_Attachment(
-                                    failed_stack_report, attachment_files)
-                            else:
-                                print(
-                                    f'[Info:] Memory usage is normal ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
-                                pass
-
-                            print(f'CPU analysis yields -> {cpu_analysis}')
-                            print(f'MEM analysis yields -> {mem_analysis}')
-
-                            # the stacks must be cleared after the analysis is done
-                            if(DEBUG_MODE):
-                                print(
-                                    f'Analysis of the current cycle is complete. Clearing the stacks...')
-                            cpu_stack.clear()
-                            mem_stack.clear()
-                            bar()
-                            cycler = time.time()
+                                print('Entered in the stack overflow regime without performing analysis')
+                                cpu_stack.clear()
+                                mem_stack.clear()
+                                cycler = time.time()
+                                bar()
                     except KeyboardInterrupt:
                         print('Process was stopped from the keyboard!')
                         observer.stop()
