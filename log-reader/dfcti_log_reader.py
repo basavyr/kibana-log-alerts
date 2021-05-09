@@ -409,7 +409,7 @@ class Stats_Analyzer:
         plt.xlabel(f'Last {time} seconds')
         plt.legend(loc='best')
         plt.title(
-            f'DFCTI Resource monitor\n@{time_stamp}\nMachine-ID:{machine_id}')
+            f'DFCTI Resource Monitor\n@{time_stamp}\nMachine-ID:{machine_id}')
         plt.savefig(plot_stack_file, bbox_inches='tight')
         plt.close()
 
@@ -764,11 +764,12 @@ class Reader():
 
                         # the first condition for a potential stack analysis is to have the stack sizes greater or equal than the `cycle_time`
                         if(Stats_Analyzer.Valid_Stacks([cpu_stack, mem_stack], cycle_time) == 1):
-                            # uses a defined time stamp for marking when the analysis can be performed
-                            #! it can produce a small difference from the first validity condition up to the actual analysis (step 2 and 3, respectively)
-                            time_stamp = now() - cycler
+                            # uses a variable `time_stamp` for marking when analysis can be performed
+                            time_stamp = datetime.utcnow()
+                            time_stamp_duration = now() - cycler
+
                             # second condition for performing an analysis of the stacks is to have the total elapsed time since the last cycle no bigger than 25% of the cycle_time
-                            if(time_stamp >= cycle_time and time_stamp <= 1.25 * cycle_time):
+                            if(time_stamp_duration >= cycle_time and time_stamp_duration <= 1.25 * cycle_time):
                                 # the no-logs counter must be within a marging of "confidence"
                                 # the confidence is given by the cycle time
                                 if(no_log_events_counter <= int(cycle_time / 4)):
@@ -782,12 +783,12 @@ class Reader():
 
                                     # analyze the stacks in terms of their average values
                                     # comparison with the corresponding threshold values is done
-                                    #! in case the avg values are higher than the thresholds, the methods return true
                                     # the analysis report is a tuple, containing the result of the comparison between the average and threshold, plus the mean value itself
                                     cpu_analysis = Stats_Analyzer.Analyze_CPU_Usage_Stack(
                                         cpu_stack, cpu_threshold)
                                     mem_analysis = Stats_Analyzer.Analyze_MEM_Usage_Stack(
                                         mem_stack, mem_threshold)
+                                    #! in case the avg values are higher than the thresholds, the methods return true
 
                                     if(DEBUG_MODE):
                                         print(
@@ -819,13 +820,15 @@ class Reader():
 
                                         # *step 4: create the plot that shows the stats of the analyzed stack
                                         # this is a graphical representation with the behavior of the monitored resource during one cycle time
+                                        cpu_plot_label = "CPU Usage"
                                         Stats_Analyzer.Plot_Stack(
-                                            time_stamp, machine_id[0], adjusted_cpu_stack, cycle_time, cpu_threshold, 'cpu_usage.pdf', 'CPU Usage')
+                                            time_stamp, machine_id[0], cpu_stack, cycle_time, cpu_threshold, ALERT_FILES["CPU_PLOT"], cpu_plot_label)
                                         # TODO Must implement the alert procedure for the CPU usage
 
                                     else:
-                                        print(
-                                            f'[Info:] CPU usage is normal ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
+                                        if(DEBUG_MODE):
+                                            print(
+                                                f'[Info:] CPU usage is normal ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
                                         pass
 
                                     # the first value of the tuple returned by  `Analyze_MEM_Usage_Stack` checks wether the average value is in the high usage regime or not
