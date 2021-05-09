@@ -95,7 +95,7 @@ EMAIL_LIST = [['Test Receive', 'alerts.dfcti.recv@gmail.com']]
 
 RESOURCE_ISSUES = {
     "CPU": "🔥 HIGH CPU USAGE 🔥",
-    "MEM": "🔥 HIGH (RAM) MEMORY USAGE 🔥"
+    "MEM": "🔥 HIGH MEMORY (RAM) USAGE 🔥"
 }
 """List of potential issues which can occur during monitoring of the system"""
 
@@ -350,7 +350,7 @@ class Stats_Analyzer:
         avg_stack_value = np.mean(stack)
         time_stamp = str(datetime.utcnow())[0:22]
         head = f'📄 Analysis report for the {stack_type}\nGenerated at -> ⏱ {time_stamp}\n'
-        body = f'{stack_issue} -> The average value of the stack is {avg_stack_value}%, which is above the threshold value of {threshold}%.\n📈 Stack values for the past {cycle_time} seconds ->\n************\n{stack}\n************'
+        body = f'{stack_issue} -> The average value of the stack for the past {cycle_time} seconds is {round(avg_stack_value,3)}%, which is above the threshold value of {threshold}%.\n📈 Stack values for the past {cycle_time} seconds ->\n************\n{stack}\n************'
         STACK_MESSAGE = head + body
 
         return STACK_MESSAGE
@@ -694,15 +694,22 @@ class Reader():
                         mem_stack_size_0 = len(mem_stack)
 
                         if(DEBUG_MODE):
-                            print(cpu_stack)
+                            print(f'CPU_STACK -> {cpu_stack}')
+                            print(f'MEM_STACK -> {mem_stack}')
+
                         # watcher must  wait for a potential new event in the stack
+                        # the events are sent by the log writer implementation
+                        # ? normally, the log writer creates a new event each second
+
                         time.sleep(WAIT_TIME)
                         if(DEBUG_MODE):
-                            print(cpu_stack)
+                            print(f'CPU_STACK -> {cpu_stack}')
+                            print(f'MEM_STACK -> {mem_stack}')
 
                         cpu_stack_size_1 = len(cpu_stack)
                         mem_stack_size_1 = len(mem_stack)
 
+                        # if the length of the stacks are unchanged after a `WAIT_TIME`, that means no new entries arrived in the stacks
                         if((cpu_stack_size_0 == cpu_stack_size_1) or (mem_stack_size_0 == mem_stack_size_1)):
                             if(DEBUG_MODE):
                                 print(
@@ -718,8 +725,8 @@ class Reader():
                         else:
                             no_log_events_counter = 0
 
+                        #! Stops the reading pipeline when no new entries are detected for more than 25% of the `WAIT_TIME` period
                         if(no_log_events_counter == process_dispatch_time):
-                            # if(DEBUG_MODE):
                             print(
                                 f'The log file has not been updated for the past {process_dispatch_time} seconds. Stopping the watcher...')
                             break
@@ -732,11 +739,15 @@ class Reader():
                                 print(f'{cpu_stack} -> {len(cpu_stack)}')
                                 print(f'{mem_stack} -> {len(mem_stack)}')
 
+                            # analyze the stacks in terms of their average values
+                            # comparison with the corresponding threshold values is done
+                            #! in case the avg values are higher than the thresholds, the methods return true
                             cpu_analysis = Stats_Analyzer.Analyze_CPU_Usage_Stack(
                                 cpu_stack, cpu_threshold)
                             mem_analysis = Stats_Analyzer.Analyze_MEM_Usage_Stack(
                                 mem_stack, mem_threshold)
 
+                            # the first value of the tuple returned by  `Analyze_CPU_Usage_Stack` checks wether the average value is in the high usage regime or not
                             if(cpu_analysis[0] == 1):
                                 print(
                                     f'[Alert:] CPU usage is above the threshold! ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds\nWill alert the DevOps team!!!')
@@ -756,6 +767,7 @@ class Reader():
                                     f'[Info:] CPU usage is normal ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
                                 pass
 
+                            # the first value of the tuple returned by  `Analyze_MEM_Usage_Stack` checks wether the average value is in the high usage regime or not
                             if(mem_analysis[0] == 1):
                                 print(
                                     f'[Alert:] Memory usage is above the threshold! ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds\nWill alert the DevOps team!!!')
@@ -893,7 +905,7 @@ def Read_Process(log_file_path=LOG_FILE_PATH):
     cycle_time = 10
 
     # thresholds are implemented as a dictionary, for easier manipulation
-    thresholds = {"cpu": 40,
+    thresholds = {"cpu": 0.1,
                   "mem": 50}
 
     Reader.Watch_Process(log_file_path, cycle_time, thresholds)
