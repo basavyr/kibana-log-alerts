@@ -59,14 +59,21 @@ def Create_LogFile_Path():
 
 # Set the path to the log file used for analysis
 LOG_FILE_PATH = Create_LogFile_Path()
+"""Global variable with the proper log file path. 
+
+The log file path is determined based on the operating system of the machine on which the current application is running
+"""
 
 # !define the stacks where each system stat will be stored
 # e.g. CPU stack, MEM stack, and Machine ID
 # in the current implementation, the stacks are global variables
 # they are updated by the `on_modified` method from the FileSystem Event Handler of the watchdog module
 cpu_stack = []
+"""Global variable (array) where the cpu stats are saved."""
 mem_stack = []
+"""Global variable (array) where the memory (RAM) stats are saved."""
 machine_id = []
+"""Global variable (array) with only one element where the machine ID is stored."""
 
 
 # create a method for showing the current time
@@ -671,6 +678,7 @@ class Reader():
                         f'The thresholds are incompatible with the current log file format!\nRequired format: [CPU,MEM]\nCurrent Format: {thresholds}')
                 return -1
 
+            # stop executing the proess if the log file path is invalid
             if(os.path.isfile(log_file_path) == False):
                 if(DEBUG_MODE):
                     print(
@@ -686,8 +694,13 @@ class Reader():
             if(DEBUG_MODE):
                 print(
                     f'Preparing the file system event handler and the log file observer...')
+
+            # TODO: add try/except blocks for each process related to the observer/watcher
+            # -> here
             file_event_handler = Modified_State_Handler(log_file_path)
+            # -> here
             observer = Observer()
+            # -> here
             observer.schedule(file_event_handler,
                               path=log_file_path, recursive=True)
 
@@ -800,9 +813,14 @@ class Reader():
                                         # *step1: take the dictionary obtained previously at step (1) with the stack details, and create a pre-defined output format to be stored in a data file
                                         failed_stack_report = Stats_Analyzer.Stack_Report(
                                             cpu_stack, failed_stack, attachment_files[0])
-                                        # *step3: add the formatted output generated from the stack report at step (2) with the failed stack into a data file, to be used as first attachment (first attachment is marked by the [0] index within the method called below)
+                                        # *step3: add the formatted output generated from the stack report at step (2) into a data file, to be used as first attachment (first attachment is marked by the [0] index within the method called below)
                                         Attachment.Create_DataFile_Attachment(
                                             failed_stack_report, attachment_files)
+
+                                        # *step 4: create the plot that shows the stats of the analyzed stack
+                                        # this is a graphical representation with the behavior of the monitored resource during one cycle time
+                                        Stats_Analyzer.Plot_Stack(
+                                            time_stamp, machine_id[0], adjusted_cpu_stack, cycle_time, cpu_threshold, 'cpu_usage.pdf', 'CPU Usage')
                                         # TODO Must implement the alert procedure for the CPU usage
 
                                     else:
