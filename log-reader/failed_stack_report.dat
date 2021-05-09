@@ -1,7 +1,0 @@
-📄 Analysis report for the MEM_USAGE_STACK
-Generated at -> ⏱ 2021-05-09 07:20:28.60
-🔥 HIGH MEMORY (RAM) USAGE 🔥 -> The average value of the stack for the past 10 seconds is 50.5%, which is above the threshold value of 50%.
-📈 Stack values for the past 10 seconds ->
-************
-[50.5, 50.5, 50.5, 50.5, 50.5, 50.5, 50.5, 50.5, 50.5, 50.5]
-************

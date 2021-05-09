@@ -675,7 +675,8 @@ class Reader():
 
             # set up the paths for the attachments which will be sent within the alert message
             # the first file is the stack data and the second file is a graphical representation with the monitored resources that raised the alert
-            stack_data_file = 'failed_stack_report.dat'
+            cpu_stack_data_file = 'cpu_failed_stack_report.dat'
+            mem_stack_data_file = 'mem_failed_stack_report.dat'
             cpu_plot_file = 'cpu_usage.pdf'
             mem_plot_file = 'mem_usage.pdf'
 
@@ -778,7 +779,7 @@ class Reader():
                                             f'[Alert:] CPU usage is above the threshold! ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds (Above the threshold value {cpu_threshold}%)\nWill alert the DevOps team!!!')
                                         # construction of the .dat file with details about the stack which failed
                                         attachment_files = [
-                                            stack_data_file, cpu_plot_file]
+                                            cpu_stack_data_file, cpu_plot_file]
                                         failed_stack = Stats_Analyzer.Create_Stack_Details(
                                             cpu_threshold, cycle_time, RESOURCE_TYPE["CPU"], RESOURCE_ISSUES["CPU"])
                                         failed_stack_report = Stats_Analyzer.Stack_Report(
@@ -799,7 +800,7 @@ class Reader():
                                             f'[Alert:] Memory usage is above the threshold! ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds\nWill alert the DevOps team!!!')
                                         # TODO Must implement the alert procedure for the MEM usage
                                         attachment_files = [
-                                            stack_data_file, mem_plot_file]
+                                            mem_stack_data_file, mem_plot_file]
                                         failed_stack = Stats_Analyzer.Create_Stack_Details(
                                             mem_threshold, cycle_time, RESOURCE_TYPE["MEM"], RESOURCE_ISSUES["MEM"])
                                         failed_stack_report = Stats_Analyzer.Stack_Report(
@@ -937,11 +938,12 @@ def Read_Pipeline(log_file_path):
 
 def Read_Process(log_file_path=LOG_FILE_PATH):
     # set the time window after which the pipeline is doing analysis of the incoming log events
-    cycle_time = 20
+    cycle_time = 10
+    # TODO The cycle time must be also set from the command line by the user, when running the actual script on a system.
 
     # thresholds are implemented as a dictionary, for easier manipulation
     thresholds = {"cpu": 0.1,
-                  "mem": 50}
+                  "mem": 45}
 
     Reader.Watch_Process(log_file_path, cycle_time, thresholds)
 
