@@ -59,7 +59,7 @@ def Create_LogFile_Path():
 
 # Set the path to the log file used for analysis
 LOG_FILE_PATH = Create_LogFile_Path()
-"""Global variable with the proper log file path. 
+"""Global variable with the proper log file path.
 
 The log file path is determined based on the operating system of the machine on which the current application is running
 """
@@ -301,7 +301,7 @@ class Stats_Analyzer:
 
     @classmethod
     def Create_Stack_Details(cls, threshold, cycle_time, stack_type, stack_issue):
-        """Creates a dictionary-list from the stack which raised unusual behavior. 
+        """Creates a dictionary-list from the stack which raised unusual behavior.
         The threshold, cycle_time, the stack type and also the type of issues are all returned in this list.
         """
         stack_details = lambda threshold, cycle_time, stack_type, stack_issue: {
@@ -789,7 +789,7 @@ class Reader():
                                         cpu_stack, cpu_threshold)
                                     mem_analysis = Stats_Analyzer.Analyze_MEM_Usage_Stack(
                                         mem_stack, mem_threshold)
-                                    #! in case the avg values are higher than the thresholds, the methods return true
+                                    #! in case the avg values are higher than the thresholds, the above methods will return true (1)
 
                                     if(DEBUG_MODE):
                                         print(
@@ -820,14 +820,12 @@ class Reader():
                                         # *step3: add the formatted output generated from the stack report at step (2) into a data file, to be used as first attachment (first attachment is marked by the [0] index within the method called below)
                                         Attachment.Create_DataFile_Attachment(
                                             failed_stack_report, attachment_files)
-
                                         # *step 4: create the plot that shows the stats of the analyzed stack
                                         # this is a graphical representation with the behavior of the monitored resource during one cycle time
                                         # the plot will be used as the second attachment of the e-mail which is sent to the client after the alter has been raised
                                         cpu_plot_label = "CPU Usage"
                                         Stats_Analyzer.Plot_Stack(
                                             time_stamp, machine_id[0], cpu_stack, cycle_time, cpu_threshold, ALERT_FILES["CPU_PLOT"], cpu_plot_label)
-                                        # TODO Must implement the alert procedure for the CPU usage
                                         for email in EMAIL_LIST:
                                             cpu_fail_stats = Alerter.Generate_Fail_Stats(
                                                 email["name"], RESOURCE_ISSUES["CPU"], cpu_fail_value)
@@ -845,17 +843,40 @@ class Reader():
                                     # the first value of the tuple returned by  `Analyze_MEM_Usage_Stack` checks wether the average value is in the high usage regime or not
                                     # this is the condition for raising an alert
                                     if(mem_analysis[0] == 1):
-                                        print(
-                                            f'[Alert:] Memory (RAM) usage is above the threshold! ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds (Threshold value: {mem_threshold}%).\nWill alert the DevOps team!!!')
-                                        # TODO Must implement the alert procedure for the MEM usage
+                                        if(DEBUG_MODE):
+                                            print(
+                                                f'[Alert:] Memory (RAM) usage is above the threshold! ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds (Threshold value: {mem_threshold}%).\nWill alert the DevOps team!!!')
+
+                                        mem_fail_value = f'AVG_MEM_USAGE for the past {cycle_time} seconds: {mem_analysis[1]}%, which is above the threshold value {mem_threshold}%.'
+
+                                        # initialize the paths for the attachment files that will be sent via e-mail to the client
                                         attachment_files = [
                                             ALERT_FILES["MEM_STACK"], ALERT_FILES["MEM_PLOT"]]
+
+                                        # construction of the attachment files with details on the stack that raised unusual behavior
+                                        # *step1: create the stack details such as threshold value, the cycle time, the type of resource being analyzed and the issue which occurred as a dictionary
                                         failed_stack = Stats_Analyzer.Create_Stack_Details(
                                             mem_threshold, cycle_time, RESOURCE_TYPE["MEM"], RESOURCE_ISSUES["MEM"])
+                                        # *step1: take the dictionary obtained previously at step (1) with the stack details, and create a pre-defined output format to be stored in a data file
                                         failed_stack_report = Stats_Analyzer.Stack_Report(
                                             mem_stack, failed_stack, attachment_files[0])
+                                        # *step3: add the formatted output generated from the stack report at step (2) into a data file, to be used as first attachment (first attachment is marked by the [0] index within the method called below)
                                         Attachment.Create_DataFile_Attachment(
                                             failed_stack_report, attachment_files)
+                                        # *step 4: create the plot that shows the stats of the analyzed stack
+                                        # this is a graphical representation with the behavior of the monitored resource during one cycle time
+                                        # the plot will be used as the second attachment of the e-mail which is sent to the client after the alter has been raised
+                                        mem_plot_label = "Memory (RAM) Usage"
+                                        Stats_Analyzer.Plot_Stack(
+                                            time_stamp, machine_id[0], mem_stack, cycle_time, mem_threshold, ALERT_FILES["MEM_PLOT"], mem_plot_label)
+                                        for email in EMAIL_LIST:
+                                            mem_fail_stats = Alerter.Generate_Fail_Stats(
+                                                email["name"], RESOURCE_ISSUES["MEM"], mem_fail_value)
+                                            alert = Alerter.Create_Alert(
+                                                mem_fail_stats)
+                                            Alerter.SendAlert(
+                                                alert, attachment_files, email["email"])
+
                                     else:
                                         print(
                                             f'[Info:] Memory usage is normal ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
