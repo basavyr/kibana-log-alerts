@@ -743,7 +743,7 @@ class Reader():
                         else:
                             no_log_events_counter = 0
 
-                        #! Stops the reading pipeline when no new entries are detected for more than 25% of the `WAIT_TIME` period
+                        #! Stops the reading pipeline when no new entries are detected for more than 25% of the `CYCLE_TIME` period
                         if(no_log_events_counter == process_dispatch_time):
                             print(
                                 f'The log file has not been updated for the past {process_dispatch_time} seconds. Stopping the watcher...')
@@ -751,10 +751,13 @@ class Reader():
 
                         # the first condition for a potential stack analysis is to have the stack sizes greater or equal than the `cycle_time`
                         if(Stats_Analyzer.Valid_Stacks([cpu_stack, mem_stack], cycle_time) == 1):
+                            # uses a defined time stamp for marking when the analysis can be performed
+                            #! it can produce a small difference from the first validity condition up to the actual analysis (step 2 and 3, respectively)
                             time_stamp = now() - cycler
                             # second condition for performing an analysis of the stacks is to have the total elapsed time since the last cycle no bigger than 25% of the cycle_time
-                            # log counter, which counts how many
                             if(time_stamp >= cycle_time and time_stamp <= 1.25 * cycle_time):
+                                # the no-logs counter must be within a marging of "confidence"
+                                # the confidence is given by the cycle time
                                 if(no_log_events_counter <= int(cycle_time / 4)):
                                     if(DEBUG_MODE):
                                         print(
