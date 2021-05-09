@@ -101,7 +101,8 @@ def Split_Stack(stack, length):
         return [sub_array_1, sub_array_2]
 
 
-EMAIL_LIST = [['Test Receive', 'alerts.dfcti.recv@gmail.com']]
+EMAIL_LIST = [{"name": 'DFCTI Test Receiver',
+               "email": 'alerts.dfcti.recv@gmail.com'}]
 """The name and e-mail for each client that needs to be alerted"""
 
 
@@ -803,6 +804,8 @@ class Reader():
                                             print(
                                                 f'[Alert:] CPU usage is above the threshold! ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds (Threshold value: {cpu_threshold}%).\nWill alert the DevOps team!!!')
 
+                                        cpu_fail_value = f'AVG_CPU_USAGE for the past {cycle_time} seconds: {cpu_analysis[1]}%, which is above the threshold value {cpu_threshold}%.'
+
                                         # initialize the paths for the attachment files that will be sent via e-mail to the client
                                         attachment_files = [
                                             ALERT_FILES["CPU_STACK"], ALERT_FILES["CPU_PLOT"]]
@@ -825,6 +828,13 @@ class Reader():
                                         Stats_Analyzer.Plot_Stack(
                                             time_stamp, machine_id[0], cpu_stack, cycle_time, cpu_threshold, ALERT_FILES["CPU_PLOT"], cpu_plot_label)
                                         # TODO Must implement the alert procedure for the CPU usage
+                                        for email in EMAIL_LIST:
+                                            cpu_fail_stats = Alerter.Generate_Fail_Stats(
+                                                email["name"], RESOURCE_ISSUES["CPU"], cpu_fail_value)
+                                            alert = Alerter.Create_Alert(
+                                                cpu_fail_stats)
+                                            Alerter.SendAlert(
+                                                alert, attachment_files, email["email"])
 
                                     else:
                                         if(DEBUG_MODE):
