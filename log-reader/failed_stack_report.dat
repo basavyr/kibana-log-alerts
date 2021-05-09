@@ -1,7 +1,7 @@
 📄 Analysis report for the CPU_USAGE_STACK
-Generated at -> ⏱ 2021-05-09 05:06:44.52
-🔥 HIGH CPU USAGE 🔥 -> The average value of the stack for the past 10 seconds is 4.73%, which is above the threshold value of 0.1%.
+Generated at -> ⏱ 2021-05-09 05:17:26.98
+🔥 HIGH CPU USAGE 🔥 -> The average value of the stack for the past 10 seconds is 12.96%, which is above the threshold value of 0.1%.
 📈 Stack values for the past 10 seconds ->
 ************
-[4.2, 5.3, 4.4, 5.5, 4.9, 4.2, 4.4, 3.5, 3.9, 7.0]
+[4.1, 4.8, 5.4, 4.0, 4.1, 46.1, 4.8, 4.4, 48.3, 3.6]
 ************

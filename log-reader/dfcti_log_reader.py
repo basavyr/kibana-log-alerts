@@ -301,7 +301,13 @@ class Stats_Analyzer:
             if(length >= valid_size):
                 validity_counter += 1
 
-        if(validity_counter == len(system_stacks)):
+        #the system stacks should have the exact same size, as each log entry contains values for each of the stacks
+        #having unequal stack sizes means that there are severe issues with the log writer and the system should stop
+        same_sizes = 0
+        if(lengths.count(lengths[0]) == len(lengths)):
+            same_sizes = 1
+
+        if(validity_counter == len(system_stacks) and same_sizes):
             return 1
         return 0
 
@@ -731,8 +737,9 @@ class Reader():
                                 f'The log file has not been updated for the past {process_dispatch_time} seconds. Stopping the watcher...')
                             break
 
-                        # only perform analysis on the stacks if the events arrived properly, without any interruptions
+                        # the first condition for a potential stack analysis is to have the stack sizes greater or equal than the `cycle_time`
                         if(Stats_Analyzer.Valid_Stacks([cpu_stack, mem_stack], cycle_time) == 1):
+                            # only perform analysis on the stacks if the events arrived properly, without any interruptions
                             if(time.time() - cycler <= cycle_time + 0.25 * cycle_time and no_log_events_counter == 0):
                                 if(DEBUG_MODE):
                                     print(
@@ -798,7 +805,8 @@ class Reader():
                                 bar()
                                 cycler = time.time()
                             else:
-                                print('Entered in the stack overflow regime without performing analysis')
+                                print(
+                                    'Entered in the stack overflow regime without performing analysis')
                                 cpu_stack.clear()
                                 mem_stack.clear()
                                 cycler = time.time()
