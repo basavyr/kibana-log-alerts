@@ -831,14 +831,15 @@ class Reader():
                                     bar()
                                     cycler = time.time()
                             else:
-                                print(
-                                    'Entered in the stack overflow regime without performing analysis')
+                                if(DEBUG_MODE):
+                                    print(
+                                        'Entered in the stack overflow regime without performing analysis')
                                 cpu_stack.clear()
                                 mem_stack.clear()
                                 cycler = time.time()
                                 bar()
                     except KeyboardInterrupt:
-                        print('Process was stopped from the keyboard!')
+                        print('The Reading-Process was stopped from the keyboard!')
                         observer.stop()
                         observer.join()
                         break
