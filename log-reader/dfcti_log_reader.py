@@ -60,7 +60,7 @@ def Create_LogFile_Path():
 # Set the path to the log file used for analysis
 LOG_FILE_PATH = Create_LogFile_Path()
 
-# define the stacks where each system stat will be stored
+# !define the stacks where each system stat will be stored
 # e.g. CPU stack, MEM stack, and Machine ID
 # in the current implementation, the stacks are global variables
 # they are updated by the `on_modified` method from the FileSystem Event Handler of the watchdog module
@@ -108,6 +108,14 @@ RESOURCE_ISSUES = {
 RESOURCE_TYPE = {"CPU": "CPU_USAGE_STACK",
                  "MEM": "MEM_USAGE_STACK"}
 """List of system stats which are being monitored by the log reader"""
+
+
+# set up the paths for the attachments which will be sent within the alert message
+# the first file is the stack data and the second file is a graphical representation with the monitored resources that raised the alert
+ALERT_FILES = {"CPU_STACK": 'cpu_failed_stack_report.dat',
+               "MEM_STACK": 'mem_failed_stack_report.dat',
+               "CPU_PLOT": 'cpu_usage.pdf',
+               "MEM_PLOT": 'mem_usage.pdf'}
 
 
 def Get_Machine_ID(machine_id_file):
@@ -673,13 +681,6 @@ class Reader():
             cpu_threshold = thresholds["cpu"]
             mem_threshold = thresholds["mem"]
 
-            # set up the paths for the attachments which will be sent within the alert message
-            # the first file is the stack data and the second file is a graphical representation with the monitored resources that raised the alert
-            cpu_stack_data_file = 'cpu_failed_stack_report.dat'
-            mem_stack_data_file = 'mem_failed_stack_report.dat'
-            cpu_plot_file = 'cpu_usage.pdf'
-            mem_plot_file = 'mem_usage.pdf'
-
             # prepare the observer
             time.sleep(1)
             if(DEBUG_MODE):
@@ -772,14 +773,20 @@ class Reader():
                                     mem_analysis = Stats_Analyzer.Analyze_MEM_Usage_Stack(
                                         mem_stack, mem_threshold)
 
+                                    if(DEBUG_MODE):
+                                        print(
+                                            f'CPU analysis yields -> {cpu_analysis}')
+                                        print(
+                                            f'MEM analysis yields -> {mem_analysis}')
+
                                     # the first value of the tuple returned by  `Analyze_CPU_Usage_Stack` checks wether the average value is in the high usage regime or not
                                     # this is the condition for raising an alert
                                     if(cpu_analysis[0] == 1):
                                         print(
-                                            f'[Alert:] CPU usage is above the threshold! ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds (Above the threshold value {cpu_threshold}%)\nWill alert the DevOps team!!!')
+                                            f'[Alert:] CPU usage is above the threshold! ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds (Threshold value: {cpu_threshold}%).\nWill alert the DevOps team!!!')
                                         # construction of the .dat file with details about the stack which failed
                                         attachment_files = [
-                                            cpu_stack_data_file, cpu_plot_file]
+                                            ALERT_FILES["CPU_STACK"], ALERT_FILES["CPU_PLOT"]]
                                         failed_stack = Stats_Analyzer.Create_Stack_Details(
                                             cpu_threshold, cycle_time, RESOURCE_TYPE["CPU"], RESOURCE_ISSUES["CPU"])
                                         failed_stack_report = Stats_Analyzer.Stack_Report(
@@ -797,10 +804,10 @@ class Reader():
                                     # this is the condition for raising an alert
                                     if(mem_analysis[0] == 1):
                                         print(
-                                            f'[Alert:] Memory usage is above the threshold! ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds\nWill alert the DevOps team!!!')
+                                            f'[Alert:] Memory (RAM) usage is above the threshold! ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds (Threshold value: {mem_threshold}%).\nWill alert the DevOps team!!!')
                                         # TODO Must implement the alert procedure for the MEM usage
                                         attachment_files = [
-                                            mem_stack_data_file, mem_plot_file]
+                                            ALERT_FILES["MEM_STACK"], ALERT_FILES["MEM_PLOT"]]
                                         failed_stack = Stats_Analyzer.Create_Stack_Details(
                                             mem_threshold, cycle_time, RESOURCE_TYPE["MEM"], RESOURCE_ISSUES["MEM"])
                                         failed_stack_report = Stats_Analyzer.Stack_Report(
@@ -811,11 +818,6 @@ class Reader():
                                         print(
                                             f'[Info:] Memory usage is normal ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
                                         pass
-
-                                    print(
-                                        f'CPU analysis yields -> {cpu_analysis}')
-                                    print(
-                                        f'MEM analysis yields -> {mem_analysis}')
 
                                     # the stacks must be cleared after the analysis is done
                                     if(DEBUG_MODE):
