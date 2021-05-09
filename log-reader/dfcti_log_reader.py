@@ -785,15 +785,22 @@ class Reader():
                                     # the first value of the tuple returned by  `Analyze_CPU_Usage_Stack` checks wether the average value is in the high usage regime or not
                                     # this is the condition for raising an alert
                                     if(cpu_analysis[0] == 1):
-                                        print(
-                                            f'[Alert:] CPU usage is above the threshold! ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds (Threshold value: {cpu_threshold}%).\nWill alert the DevOps team!!!')
-                                        # construction of the .dat file with details about the stack which failed
+                                        if(DEBUG_MODE):
+                                            print(
+                                                f'[Alert:] CPU usage is above the threshold! ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds (Threshold value: {cpu_threshold}%).\nWill alert the DevOps team!!!')
+
+                                        # initialize the paths for the attachment files that will be sent via e-mail to the client
                                         attachment_files = [
                                             ALERT_FILES["CPU_STACK"], ALERT_FILES["CPU_PLOT"]]
+
+                                        # construction of the attachment files with details on the stack that raised unusual behavior
+                                        # *step1: create the stack details such as threshold value, the cycle time, the type of resource being analyzed and the issue which occurred as a dictionary
                                         failed_stack = Stats_Analyzer.Create_Stack_Details(
                                             cpu_threshold, cycle_time, RESOURCE_TYPE["CPU"], RESOURCE_ISSUES["CPU"])
+                                        # *step1: take the dictionary obtained previously at step (1) with the stack details, and create a pre-defined output format to be stored in a data file
                                         failed_stack_report = Stats_Analyzer.Stack_Report(
                                             cpu_stack, failed_stack, attachment_files[0])
+                                        # *step3: add the formatted output generated from the stack report at step (2) with the failed stack into a data file, to be used as first attachment (first attachment is marked by the [0] index within the method called below)
                                         Attachment.Create_DataFile_Attachment(
                                             failed_stack_report, attachment_files)
                                         # TODO Must implement the alert procedure for the CPU usage
