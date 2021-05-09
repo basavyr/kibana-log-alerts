@@ -987,7 +987,7 @@ def Read_Process(log_file_path=LOG_FILE_PATH):
     # TODO The cycle time must be also set from the command line by the user, when running the actual script on a system.
 
     # thresholds are implemented as a dictionary, for easier manipulation
-    thresholds = {"cpu": 0.1,
+    thresholds = {"cpu": 10,
                   "mem": 45}
 
     Reader.Watch_Process(log_file_path, cycle_time, thresholds)
