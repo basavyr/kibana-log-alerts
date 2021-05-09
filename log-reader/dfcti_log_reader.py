@@ -301,8 +301,8 @@ class Stats_Analyzer:
             if(length >= valid_size):
                 validity_counter += 1
 
-        #the system stacks should have the exact same size, as each log entry contains values for each of the stacks
-        #having unequal stack sizes means that there are severe issues with the log writer and the system should stop
+        # the system stacks should have the exact same size, as each log entry contains values for each of the stacks
+        # !having unequal stack sizes means that there are severe issues with the log writer and the system should stop
         same_sizes = 0
         if(lengths.count(lengths[0]) == len(lengths)):
             same_sizes = 1
@@ -626,6 +626,9 @@ class Reader():
         ⚙️ The watch process will run indefinitely, with a pre-defined `cycle_time` 🔄 .
 
         The `cycle_time` variable is responsible for analyzing the system stats after that exact amount of time has passed.
+        ! Update ⚙️ -> the log reader pipeline now allows stack analysis of log entries even if there were several time periods without any new entries.
+        This is given by the condition that the total elapsed time since a cycle has started does not exceed the initial cycle time plus an additional 25%.
+        Example: for a cycle time set to 60 seconds, the pipeline will perform analysis on the ingested logs as long as the total elapsed time (`cycler`) does not exceed the cycle time plus an additional 25% of its value, meaning that no analysis will be performed if 75 seconds passed and the system stacks are not valid
 
         📉 With each cycle, the stats are analyzed, then based on their behavior, alerts are raised or not 🚦. After a cycle has finished, the system stats are cleared from memory, and the process repeats.
         """
@@ -699,6 +702,7 @@ class Reader():
                         cpu_stack_size_0 = len(cpu_stack)
                         mem_stack_size_0 = len(mem_stack)
 
+                        # the system stacks BEFORE the watcher checked the log file for modified states
                         if(DEBUG_MODE):
                             print(f'CPU_STACK -> {cpu_stack}')
                             print(f'MEM_STACK -> {mem_stack}')
@@ -706,9 +710,10 @@ class Reader():
                         # watcher must  wait for a potential new event in the stack
                         # the events are sent by the log writer implementation
                         # ? normally, the log writer creates a new event each second
-
                         time.sleep(WAIT_TIME)
+
                         if(DEBUG_MODE):
+                            # the system stacks AFTER the watcher checked the log file for modified states
                             print(f'CPU_STACK -> {cpu_stack}')
                             print(f'MEM_STACK -> {mem_stack}')
 
@@ -739,8 +744,9 @@ class Reader():
 
                         # the first condition for a potential stack analysis is to have the stack sizes greater or equal than the `cycle_time`
                         if(Stats_Analyzer.Valid_Stacks([cpu_stack, mem_stack], cycle_time) == 1):
-                            # only perform analysis on the stacks if the events arrived properly, without any interruptions
-                            if(time.time() - cycler <= cycle_time + 0.25 * cycle_time and no_log_events_counter == 0):
+                            # second condition for performing an analysis of the stacks is to have the total elapsed time since the last cycle no bigger than 25% of the cycle_time
+                            # log counter, which counts how many
+                            if(time.time() - cycler <= cycle_time + 0.25 * cycle_time and no_log_events_counter < int(0.25 * cycle_time)):
                                 if(DEBUG_MODE):
                                     print(
                                         f'A complete cycle_time has passed ({cycle_time} seconds).\nAnalyzing the stacks')
@@ -818,7 +824,7 @@ class Reader():
                         break
                 print(
                     f'Process stopped completely... [⏱ Duration: {round(time.time()-total_execution_time,3)}]')
-                # the join method must be called outside the while loop
+                # the join method must be called inside the while loop
 
 
 def Do_Asymmetric_Test(log_file_path):
