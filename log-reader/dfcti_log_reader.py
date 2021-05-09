@@ -756,12 +756,14 @@ class Reader():
                                 # analyze the stacks in terms of their average values
                                 # comparison with the corresponding threshold values is done
                                 #! in case the avg values are higher than the thresholds, the methods return true
+                                # the analysis report is a tuple, containing the result of the comparison between the average and threshold, plus the mean value itself
                                 cpu_analysis = Stats_Analyzer.Analyze_CPU_Usage_Stack(
                                     cpu_stack, cpu_threshold)
                                 mem_analysis = Stats_Analyzer.Analyze_MEM_Usage_Stack(
                                     mem_stack, mem_threshold)
 
                                 # the first value of the tuple returned by  `Analyze_CPU_Usage_Stack` checks wether the average value is in the high usage regime or not
+                                # this is the condition for raising an alert
                                 if(cpu_analysis[0] == 1):
                                     print(
                                         f'[Alert:] CPU usage is above the threshold! ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds (Above the threshold value {cpu_threshold}%)\nWill alert the DevOps team!!!')
@@ -782,6 +784,7 @@ class Reader():
                                     pass
 
                                 # the first value of the tuple returned by  `Analyze_MEM_Usage_Stack` checks wether the average value is in the high usage regime or not
+                                # this is the condition for raising an alert
                                 if(mem_analysis[0] == 1):
                                     print(
                                         f'[Alert:] Memory usage is above the threshold! ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds\nWill alert the DevOps team!!!')
