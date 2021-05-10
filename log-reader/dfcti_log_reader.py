@@ -154,7 +154,7 @@ def Get_Machine_ID(machine_id_file):
 class Alerter:
 
     @classmethod
-    def Generate_Alert_Code(resource_type):
+    def Generate_Alert_Code(cls, resource_type):
         k = np.random.choice([0, 1, 2])
         code = str(uuid.uuid4())[k:k + 4]
         small_id = str(uuid.uuid4())[-3:]
@@ -167,7 +167,7 @@ class Alerter:
         return stats
 
     @classmethod
-    def Create_Alert(self, stats):
+    def Create_Alert(self, stats, alert_code):
         """Get:
         the name
         +the type of issue which occurred during log monitoring
@@ -178,11 +178,12 @@ class Alerter:
         name = stats[0]
         issue_info = stats[1]
         issue_stats = stats[2]
-        alert_message = Message.Create_Message(name, issue_info, issue_stats)
+        alert_message = Message.Create_Message(
+            name, issue_info, issue_stats, alert_code)
         return alert_message
 
     @classmethod
-    def SendAlert(self, alert, attachment_files, email, mail_registry_file):
+    def SendAlert(self, alert, alert_code, attachment_files, email, mail_registry_file):
         """
         Calls the `Send_Email` method which sends an alert e-mail with attachments to a client.
 
@@ -190,10 +191,11 @@ class Alerter:
         1. A `.dat` file in which the stack that raised the alert is shown.
         2. A graphical representation (plot) with the system stats over the last `cycle_time` seconds.
         """
-        Alerter.Send_Email(email, alert, attachment_files, mail_registry_file)
+        Alerter.Send_Email(email, alert, alert_code,
+                           attachment_files, mail_registry_file)
 
     @classmethod
-    def Send_Email(self, email_address, alert_content, attachment_files, mail_registry_file):
+    def Send_Email(self, email_address, alert_content, alert_code, attachment_files, mail_registry_file):
         """
         Uses the `smtp` module and `ssl` in order to create a text message, and then send it via e-mail.
 
@@ -273,14 +275,14 @@ class Alerter:
                     print(f'Reason: {exc}')
                 with open(mail_registry_file, 'a+') as registry:
                     registry.write(
-                        f'{time_stamp} -------- ❌ Unsuccessful log-in for: {ROOT_EMAIL} -------- Reason: {exc}\n')
+                        f'{time_stamp} -------- ❌ Unsuccessful log-in for: {ROOT_EMAIL} -------- Reason: {exc} | Alert code: {alert_code}\n')
             else:
                 if(DEBUG_MODE):
                     print(f'🔐 Successful log-in into -> {ROOT_EMAIL}')
                     print(f'📤 Ready to send alerts to -> {email_address}')
                 with open(mail_registry_file, 'a+') as registry:
                     registry.write(
-                        f'{time_stamp} -------- 🔐 Successful log-in for: {ROOT_EMAIL}\n')
+                        f'{time_stamp} -------- 🔐 Successful log-in for: {ROOT_EMAIL} | Alert code: {alert_code}\n')
             # sending stage
             try:
                 mail_server.sendmail(
@@ -291,13 +293,13 @@ class Alerter:
                     print(f'Reason: {exc}')
                 with open(mail_registry_file, 'a+') as registry:
                     registry.write(
-                        f'{time_stamp} -------- ❌ Failed sending alert to: {email_address} -------- Reason: {exc}\n')
+                        f'{time_stamp} -------- ❌ Failed sending alert to: {email_address} -------- Reason: {exc} | Alert code: {alert_code}\n')
             else:
                 if(DEBUG_MODE):
                     print(f'🚀 Sent alert to {email_address} ! ✅')
                 with open(mail_registry_file, 'a+') as registry:
                     registry.write(
-                        f'{time_stamp} -------- ✅ Alert was sent to: {email_address}\n')
+                        f'{time_stamp} -------- ✅ Alert sent to: {email_address} | Alert code: {alert_code}\n')
 
 
 class Attachment:
@@ -319,7 +321,7 @@ class Attachment:
 
 class Message:
     @classmethod
-    def Create_Message(self, name, info, stats):
+    def Create_Message(self, name, info, stats, alert_code):
         message = """
         Hey {name},
         You have received this message because you are on the DevOps list managing the computing resources at DFCTI.
@@ -328,10 +330,12 @@ class Message:
         More info: {info}
         Stats: {stats}
 
+        Alert code: {alert_code} (the code is uniquely generated and associated with this alert only).
+        
         The DFCTI Team,
         https://elk.nipne.ro
         """
-        return message.format(name=name, info=info, stats=stats)
+        return message.format(name=name, info=info, stats=stats, alert_code=alert_code)
 
 
 class Stats_Analyzer:
@@ -866,6 +870,10 @@ class Reader():
                                             print(
                                                 f'[Alert:] CPU usage is above the threshold! ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds (Threshold value: {cpu_threshold}%).\nWill alert the DevOps team!!!')
 
+                                        # generate a code for the current alert
+                                        cpu_alert_code = Alerter.Generate_Alert_Code(
+                                            "CPU")
+
                                         # create the body of the message which will be sent to the client
                                         cpu_fail_value = f'AVG_CPU_USAGE for the past {cycle_time} seconds: {cpu_analysis[1]}%, which is above the threshold value {cpu_threshold}%.'
 
@@ -898,9 +906,11 @@ class Reader():
                                             cpu_fail_stats = Alerter.Generate_Fail_Stats(
                                                 email["name"], RESOURCE_ISSUES["CPU"], cpu_fail_value)
                                             alert = Alerter.Create_Alert(
-                                                cpu_fail_stats)
+                                                cpu_fail_stats, cpu_alert_code)
                                             Alerter.SendAlert(
-                                                alert, attachment_files, email["email"], mail_registry_file)
+                                                alert, cpu_alert_code, attachment_files, email["email"], mail_registry_file)
+                                            print(
+                                                'CPU alert detected. Sent report to the DevOps team...')
 
                                     else:
                                         if(DEBUG_MODE):
@@ -914,6 +924,10 @@ class Reader():
                                         if(DEBUG_MODE):
                                             print(
                                                 f'[Alert:] Memory (RAM) usage is above the threshold! ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds (Threshold value: {mem_threshold}%).\nWill alert the DevOps team!!!')
+
+                                        # generate a code for the current alert
+                                        mem_alert_code = Alerter.Generate_Alert_Code(
+                                            "MEM")
 
                                         mem_fail_value = f'AVG_MEM_USAGE for the past {cycle_time} seconds: {mem_analysis[1]}%, which is above the threshold value {mem_threshold}%.'
 
@@ -946,9 +960,11 @@ class Reader():
                                             mem_fail_stats = Alerter.Generate_Fail_Stats(
                                                 email["name"], RESOURCE_ISSUES["MEM"], mem_fail_value)
                                             alert = Alerter.Create_Alert(
-                                                mem_fail_stats)
+                                                mem_fail_stats, mem_alert_code)
                                             Alerter.SendAlert(
-                                                alert, attachment_files, email["email"], mail_registry_file)
+                                                alert, mem_alert_code, attachment_files, email["email"], mail_registry_file)
+                                            print(
+                                                'RAM alert detected. Sent report to the DevOps team...')
 
                                     else:
                                         if(DEBUG_MODE):
@@ -1090,7 +1106,7 @@ def Read_Process(log_file_path):
 
     # thresholds are implemented as a dictionary, for easier manipulation
     thresholds = {"cpu": 50,
-                  "mem": 20}
+                  "mem": 50}
 
     # the main process which reads any log entry from a given path, performs analysis of the logs, and then sends alerts to clients if the behavior of the logs are unusual
     Reader.Watch_Process(log_file_path, cycle_time, thresholds)
