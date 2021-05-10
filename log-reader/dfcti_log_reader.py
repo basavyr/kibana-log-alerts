@@ -656,7 +656,7 @@ class Reader():
 
         # This will be executed only if the pipeline is directly executed from the command line
         if __name__ == "__main__":
-            # set the debug mode for testing purposes
+            # ?set the debug mode for testing purposes
             DEBUG_MODE = True
 
             # amount of time the watcher should wait between two consecutive log events within the pipeline
@@ -696,14 +696,26 @@ class Reader():
                 print(
                     f'Preparing the file system event handler and the log file observer...')
 
-            # TODO: add try/except blocks for each process related to the observer/watcher
-            # -> here
-            file_event_handler = Modified_State_Handler(log_file_path)
-            # -> here
-            observer = Observer()
-            # -> here
-            observer.schedule(file_event_handler,
-                              path=log_file_path, recursive=True)
+            # this variable acts as a safety in case any of the steps for starting the watcher/observer fails to properly be executed
+            try:
+                file_event_handler = Modified_State_Handler(log_file_path)
+            except Exception as error:
+                return -1
+            else:
+                pass
+            try:
+                observer = Observer()
+            except Exception as error:
+                return -1
+            else:
+                pass
+            try:
+                observer.schedule(file_event_handler,
+                                  path=log_file_path, recursive=True)
+            except Exception as error:
+                return -1
+            else:
+                pass
 
             # start the observer
             time.sleep(1)
