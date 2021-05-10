@@ -26,44 +26,40 @@ jobs:
     
       - uses: ahmadnassri/action-workflow-run-wait@v1
       
-      # - name: Set up Python 3.8.6
-      #   uses: actions/setup-python@v2
-      #   with:
-      #     python-version: 3.8.6
+      - name: Set up Python 3.8.6
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8.6
 
       - name: Install pipenv for Python and other packages
         run: |
-          echo Nice
+          sudo apt-get install zip gzip tar
+          python -m pip install --upgrade pip
+          python -m pip install pipenv
 
-      # - name: Install pipenv for Python and other packages
-      #   run: |
-      #     sudo apt-get install zip gzip tar
-      #     python -m pip install --upgrade pip
-      #     python -m pip install pipenv
-
-      # - name: Create log-file in /var/log
-      #   run: |
-      #     sudo touch /var/log/dfcti_system_logs.log
-      #     sudo chmod 777 /var/log/dfcti_system_logs.log
+      - name: Create log-file in /var/log
+        run: |
+          sudo touch /var/log/dfcti_system_logs.log
+          sudo chmod 777 /var/log/dfcti_system_logs.log
       
-      # - name: Install packages for log-writer script + give permission
-      #   run: |
-      #     cd log-writer
-      #     pipenv install
-      #     chmod +x dfcti_log_writer.py
+      - name: Install packages for log-writer script + give permission
+        run: |
+          cd log-writer
+          pipenv install
+          chmod +x dfcti_log_writer.py
 
-      # - name: Install packages for log-reader script + give permission
-      #   run: |
-      #     cd log-reader
-      #     pipenv install
-      #     chmod +x dfcti_log_reader.py
+      - name: Install packages for log-reader script + give permission
+        run: |
+          cd log-reader
+          pipenv install
+          chmod +x dfcti_log_reader.py
 
-      # - name: Smart script for writing and reading logs
-      #   run: |
-      #     cd log-reader
-      #     sudo chmod 777 run.sh
-      #     sudo chmod 777 stop.sh
-      #     echo 'Starting the pipeline'
-      #     ./run.sh
-      #     echo 'Stopping the pipeline'
-      #     ./stop.sh
+      - name: Smart script for writing and reading logs
+        run: |
+          cd log-reader
+          sudo chmod 777 run.sh
+          sudo chmod 777 stop.sh
+          echo 'Starting the pipeline'
+          ./run.sh
+          echo 'Stopping the pipeline'
+          ./stop.sh
