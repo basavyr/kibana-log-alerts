@@ -28,32 +28,31 @@ class MachineID:
 
     When the script is ran for the first time, the presence of a dedicated `MACHINE_ID` file is checked.
 
-    If the file exists, it checks if it is empty or not. If the file is empty, a new machine ID will be generated and stored just ONCE. If the file is not empty, then the already stored machine ID will be used throughout the logging process.
+    If the file exists, it checks if it is empty or not. If the file is empty, a new machine ID will be generated and stored just ONCE. Otherwise, the already stored machine ID will be used throughout the logging process.
 
-    It is essential that the machine ID will remain unchanged on the machine!
+    !It is essential that the machine ID will remain unchanged on the machine!
     """
-    machine_id_path = "machine_id"
+    machine_id_path = "machine_id"  # !the file will be local relative to the path of the log-writer script itself
 
     @classmethod
     def Check_File_Exists(self, file_path):
         """
-        🔎 📄  Check if the file with machine id exists or not.
-        If the file does not exist,
+        🔎 📄  Check if the file with machine ID exists or not.
+        If the file does not exist, it returns -1.
         """
         try:
             checker = os.path.isfile(file_path)
         except FileNotFoundError as exc:
             print(f'File_Exists_Check_Error: ------> {exc}')
-            return -1
+            return False
         else:
             return checker
 
     @classmethod
     def Check_Empty_File(self, file_path):
         """
-        🔎 📄  Check if the file with machine id is empty.
+        🔎 📄  Check if the file with machine ID is empty.
         This method is called only if the file itself exists in the first place.
-        If the file is empty, it generates a machine id.
         """
         if(MachineID.Check_File_Exists(file_path) == False):
             return -1
@@ -66,35 +65,51 @@ class MachineID:
                 return size_check
 
     @classmethod
-    def Generate_Machine_ID(self):
+    def Check_Valid_ID(self, file_path):
+        """This function checks wether the pre-existing machine ID from the file is indeed a valid UUID4.
+        If not, it will return 0.
+        """
+
+        file_size = os.stat(file_path).st_size
+        if(file_size == 36):
+            return 1
+        return 0
+
+    @classmethod
+    def Generate_Machine_ID(self, file_path):
         """
         💻 Generate a machine ID for the current system.
+        If the file is empty, it generates a new machine ID and stores the key there. Otherwise, same ID will be kept.
+
         Machine ID will not change during multiple runtimes of the logging scripts.
         """
         print('Checking for a Machine-ID...')
-        check_exists = MachineID.Check_File_Exists(MachineID.machine_id_path)
-        check_size = MachineID.Check_Empty_File(MachineID.machine_id_path)
+        check_exists = MachineID.Check_File_Exists(file_path)
+        check_size = MachineID.Check_Empty_File(file_path)
         if(check_exists == False):
             # file does not exist
+            # will create machine ID
+            # will store ID on the newly created file
             new_machine_id = uuid.uuid4()
             print(' => Creating a new Machine-ID and saving it to file...')
-            with open(MachineID.machine_id_path, 'w+') as set_id:
+            with open(file_path, 'w') as set_id:
                 set_id.write(f'{new_machine_id}')
         else:
             # check if file is empty
-            if(check_size != 0):
+            if(MachineID.Check_Valid_ID(file_path)):
                 # keep old id
                 print('Machine ID already exists -> No new ID required')
+                pass
             else:
                 # will write an uuid to the file
                 print('Generate new Machine ID and saving it to file...')
                 new_machine_id = uuid.uuid4()
-                with open(MachineID.machine_id_path, 'w+') as set_id:
+                with open(file_path, 'w') as set_id:
                     set_id.write(f'{new_machine_id}')
 
     @classmethod
     def Get_Machine_ID(self):
-        MachineID.Generate_Machine_ID()
+        MachineID.Generate_Machine_ID(MachineID.machine_id_path)
         with open(MachineID.machine_id_path) as idx:
             ID = idx.read()
         if(ID == '' or ID == ' '):
@@ -172,6 +187,10 @@ class Write_Logs:
     Writes logs that are collected from other internal classes within the script
     """
 
+    # the class must take as argument the path to the log file
+    def __init__(self, log_file_path):
+        self.log_file_path = log_file_path
+
     @classmethod
     def Generate_Random_Log_Line(cls, machine_id):
         """
@@ -200,16 +219,16 @@ class Write_Logs:
             return log_line
 
     @classmethod
-    def Write_Log_Line(cls, log_line, log_file):
+    def Write_Log_Line(cls, log_line, log_file_path):
         """
         Once a log line has been generated via the proper method, it writes that line into its corresponding log-file
         """
         try:
-            with open(log_file, 'a+') as logger:
+            with open(log_file_path, 'a+') as logger:
                 logger.write(log_line + '\n')
         except Exception as error:
             print(
-                f'There was a problem while trying write logs at -> {log_file}\nReason: {error}')
+                f'There was a problem while trying write logs at -> {log_file_path}\nReason: {error}')
             return 0
         else:
             return 1
@@ -259,12 +278,12 @@ class Write_Logs:
 REFRESH_CYCLE = 1
 """
 this value represents the frequency for updating the log-file with system information
-Example: 
+Example:
 `REFRESH_CYCLE=1` means that the log writer will update the file ONCE each second
 """
 
 
-def Do_Write_Test(machine_id):
+def Do_Write_Test(machine_id, log_file_path):
     total_execution_time = 69
     try:
         total_execution_time = int(sys.argv[1])
@@ -276,18 +295,23 @@ def Do_Write_Test(machine_id):
         total_execution_time, REFRESH_CYCLE, log_file_path, machine_id)
 
 
-def Do_Write(machine_id):
+def Do_Write(machine_id, log_file_path):
     total_execution_time = 69
+    # initialize the class instance with its corresponding instance variable
+    process = Write_Logs(log_file_path)
     try:
         total_execution_time = int(sys.argv[1])
     except IndexError as err:
         print('No argument given!\nDefaulting to the safe value')
     else:
         pass
-    proc = Write_Logs.Write_Process(
+    process.Write_Process(
         total_execution_time, REFRESH_CYCLE, log_file_path, machine_id)
 
 
 if __name__ == '__main__':
     MACHINE_ID = MachineID.Get_Machine_ID()
-    Do_Write(MACHINE_ID)
+    try:
+        Do_Write(MACHINE_ID, log_file_path)
+    except KeyboardInterrupt:
+        print(f'Finished executing the writing process -> Keyboard Interrupt')

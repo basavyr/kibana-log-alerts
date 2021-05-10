@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+
+# use fancy progress bar for animation
+from alive_progress import alive_bar
+
 # import system's related modules
 import os
 import platform
@@ -7,12 +11,10 @@ import time
 import sys  # using it for getting command line arguments
 from datetime import datetime
 
-
 # import file watcher module
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import watchdog.events as eventer
-
 
 # import modules for sending e-mails
 import email
@@ -23,11 +25,9 @@ from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-
 # import plotting modules
 import matplotlib.pyplot as plt
 from matplotlib import rc
-
 
 # use the newly implemented default_rng
 import numpy as np
@@ -49,6 +49,7 @@ def Create_LogFile_Path():
     log_file_path = ''
     if(system_os == 'Darwin'):
         log_file_path = '/private/var/log/dfcti_system_logs.log'
+        # log_file_path = '/var/log/dfcti_system_logs.log'
     elif(system_os == 'Linux'):
         log_file_path = '/var/log/dfcti_system_logs.log'
     if(log_file_path != ''):
@@ -58,12 +59,30 @@ def Create_LogFile_Path():
 
 # Set the path to the log file used for analysis
 LOG_FILE_PATH = Create_LogFile_Path()
+"""Global variable with the proper log file path.
 
-# define the stacks where each system stat will be stored
+The log file path is determined based on the operating system of the machine on which the current application is running
+"""
+
+
+MAIL_LOGGER_PATH = 'sent_alerts_registry.log'
+"""Save a local copy of all the sent alerts during the reading process."""
+
+# !define the stacks where each system stat will be stored
 # e.g. CPU stack, MEM stack, and Machine ID
+# in the current implementation, the stacks are global variables
+# they are updated by the `on_modified` method from the FileSystem Event Handler of the watchdog module
 cpu_stack = []
+"""Global variable (array) where the cpu stats are saved."""
 mem_stack = []
+"""Global variable (array) where the memory (RAM) stats are saved."""
 machine_id = []
+"""Global variable (array) with only one element where the machine ID is stored."""
+
+
+# create a method for showing the current time
+def now():
+    return time.time()
 
 
 def Split_Stack(stack, length):
@@ -86,16 +105,29 @@ def Split_Stack(stack, length):
         return [sub_array_1, sub_array_2]
 
 
-# The name and e-mail for each client that needs to be alerted
-EMAIL_LIST = [['Test Receive', 'alerts.dfcti.recv@gmail.com']]
-# EMAIL_LIST = [['ROBERT-MSFT', 'robert.poenaru@outlook.com'],
-#               ['ROBERT-GOOGL', 'robert.poenaru@drd.unibuc.ro']]
+EMAIL_LIST = [{"name": 'DFCTI Test Receiver',
+               "email": 'alerts.dfcti.recv@gmail.com'}]
+"""The name and e-mail for each client that needs to be alerted"""
 
-# the list of potential issues which can occur during monitoring
+
 RESOURCE_ISSUES = {
     "CPU": "🔥 HIGH CPU USAGE 🔥",
-    "MEM": "🔥 HIGH (RAM) MEMORY USAGE 🔥"
+    "MEM": "🔥 HIGH MEMORY (RAM) USAGE 🔥"
 }
+"""List of potential issues which can occur during monitoring of the system"""
+
+
+RESOURCE_TYPE = {"CPU": "CPU_USAGE_STACK",
+                 "MEM": "MEM_USAGE_STACK"}
+"""List of system stats which are being monitored by the log reader"""
+
+
+# set up the paths for the attachments which will be sent within the alert message
+# the first file is the stack data and the second file is a graphical representation with the monitored resources that raised the alert
+ALERT_FILES = {"CPU_STACK": 'cpu_failed_stack_report.dat',
+               "MEM_STACK": 'mem_failed_stack_report.dat',
+               "CPU_PLOT": 'cpu_usage.pdf',
+               "MEM_PLOT": 'mem_usage.pdf'}
 
 
 def Get_Machine_ID(machine_id_file):
@@ -138,13 +170,31 @@ class Alerter:
         return alert_message
 
     @classmethod
-    def SendAlert(self, alert, attachment_files, email):
-        """ the files represent the actual stack in a .dat file + the plot file made with matplotlib via CreatePlot class method
+    def SendAlert(self, alert, attachment_files, email, mail_registry_file):
         """
-        Alerter.Send_Email(email, alert, attachment_files, True)
+        Calls the `Send_Email` method which sends an alert e-mail with attachments to a client.
+
+        The attachment files represent:
+        1. A `.dat` file in which the stack that raised the alert is shown.
+        2. A graphical representation (plot) with the system stats over the last `cycle_time` seconds.
+        """
+        Alerter.Send_Email(email, alert, attachment_files, mail_registry_file)
 
     @classmethod
-    def Send_Email(self, email_address, alert_content, attachment_files, alert_state=False):
+    def Send_Email(self, email_address, alert_content, attachment_files, mail_registry_file):
+        """
+        Uses the `smtp` module and `ssl` in order to create a text message, and then send it via e-mail.
+
+        It only sends the message to ONE e-mail address at a time.
+
+        The method also adds fully customized subject and some attachments.
+
+        With each successfull log-in and e-mail sent, the events info will be saved into the `mail_registry_file`. 
+        """
+
+        # add a debug mode in the mail sender
+        DEBUG_MODE = False
+
         PORT = 465  # For SSL
         ROOT_EMAIL = 'alerts.dfcti@gmail.com'
         UNICORN_ID = 'v2a&tw@uGVWt7%LVjXFD'
@@ -153,7 +203,7 @@ class Alerter:
         message["From"] = ROOT_EMAIL
         # https://stackoverflow.com/questions/38151440/can-anyone-tell-my-why-im-getting-the-error-attributeerror-list-object-has
         message["To"] = email_address
-        message["Subject"] = f'{str(datetime.utcnow())[:19]} - Alert via DFCTI monitoring system'
+        message["Subject"] = f'{str(datetime.utcnow())[:19]} - Alert via DFCTI Monitoring System'
 
         # generating the e-mail body
         message_body = alert_content
@@ -197,46 +247,59 @@ class Alerter:
 
         final_alert = message.as_string()
 
-        IN_SEND = True
+        # create a context using `ssl`
         CONTEXT = ssl.create_default_context()
-        with smtplib.SMTP_SSL("smtp.gmail.com", PORT, context=CONTEXT) as MAIL_SERVER:
+
+        with smtplib.SMTP_SSL("smtp.gmail.com", PORT, context=CONTEXT) as mail_server:
+            time_stamp = str(datetime.utcnow())[0:19]
+            # log-in stage
             try:
-                MAIL_SERVER.login(ROOT_EMAIL, UNICORN_ID)
+                mail_server.login(ROOT_EMAIL, UNICORN_ID)
             except Exception as exc:
-                print(f'❌ Cannot log-in!')
-                print(f'Reason: {exc}')
+                if(DEBUG_MODE):
+                    print(f'❌ Cannot log-in!')
+                    print(f'Reason: {exc}')
+                with open(mail_registry_file, 'a+') as registry:
+                    registry.write(
+                        f'{time_stamp} -------- ❌ Unsuccessful log-in for: {ROOT_EMAIL} -------- Reason: {exc}\n')
             else:
-                print(f'🔐 Successful log-in into -> {ROOT_EMAIL}')
-                print(f'📤 Ready to send alerts to -> {email_address}')
-            if(IN_SEND):
-                try:
-                    MAIL_SERVER.sendmail(
-                        ROOT_EMAIL, email_address, final_alert)
-                except Exception as exc:
+                if(DEBUG_MODE):
+                    print(f'🔐 Successful log-in into -> {ROOT_EMAIL}')
+                    print(f'📤 Ready to send alerts to -> {email_address}')
+                with open(mail_registry_file, 'a+') as registry:
+                    registry.write(
+                        f'{time_stamp} -------- 🔐 Successful log-in for: {ROOT_EMAIL}\n')
+            # sending stage
+            try:
+                mail_server.sendmail(
+                    ROOT_EMAIL, email_address, final_alert)
+            except Exception as exc:
+                if(DEBUG_MODE):
                     print(f'❌ Cannot send alert to {email_address}...')
                     print(f'Reason: {exc}')
-                else:
-                    print(f'🚀 Sent alert to {email_address} ! ✅')
+                with open(mail_registry_file, 'a+') as registry:
+                    registry.write(
+                        f'{time_stamp} -------- ❌ Failed sending alert to: {email_address} -------- Reason: {exc}\n')
             else:
-                print('Internal alert system is paused...')
-                print('Cannot send alerts at this time ------> #IN_SEND_VALUE:NULL')
+                if(DEBUG_MODE):
+                    print(f'🚀 Sent alert to {email_address} ! ✅')
+                with open(mail_registry_file, 'a+') as registry:
+                    registry.write(
+                        f'{time_stamp} -------- ✅ Alert was sent to: {email_address}\n')
 
 
 class Attachment:
     @classmethod
-    def Create_Attachment(self, data, file_path):
-        """the incoming file_path contains the .dat file with the fail stack
-        second path is the plot
-        here, only the first file is required
+    def Create_DataFile_Attachment(cls, stack_data, attachment_files):
+        """Writes the stack data which raised an alert to an output file, which will be used as an attachment within the email.
         """
-        with open(file_path[0], 'w+') as attach:
+        with open(attachment_files[0], 'w+') as attachment:
             try:
-                # attach.write(str(data) + '\n')
                 # use str format for a better compatibility with different data formats
-                attach.write(str(data) + '\n')
+                attachment.write(str(stack_data) + '\n')
             except Exception as error:
                 print(
-                    f'Could not write data at -> {file_path[0]}\nReason: {error}')
+                    f'Could not write data at -> {attachment_files[0]}\nReason: {error}')
                 return -1
             else:
                 return 1
@@ -264,11 +327,46 @@ class Stats_Analyzer:
     """
 
     @classmethod
-    def Analyze_CPU_Usage_Stack(self, cpu_usage_stack, cpu_threshold):
+    def Create_Stack_Details(cls, threshold, cycle_time, stack_type, stack_issue):
+        """Creates a dictionary-list from the stack which raised unusual behavior.
+        The threshold, cycle_time, the stack type and also the type of issues are all returned in this list.
+        """
+        stack_details = lambda threshold, cycle_time, stack_type, stack_issue: {
+            "threshold": threshold, "cycle_time": cycle_time, "stack_type": stack_type, "stack_issue": stack_issue}
+        return stack_details(threshold, cycle_time, stack_type, stack_issue)
+
+    @classmethod
+    def Valid_Stacks(cls, system_stacks, valid_size):
+        """Determines if the system stacks are valid or not
+
+        Validity condition is given by the size of the stacks. Namely, if the size of a stack is less than a pre-defined size, the stacks are considered as invalid.
+        """
+
+        validity_counter = 0
+
+        lengths = [len(stack) for stack in system_stacks]
+        for length in lengths:
+            if(length >= valid_size):
+                validity_counter += 1
+
+        # the system stacks should have the exact same size, as each log entry contains values for each of the stacks
+        # !having unequal stack sizes means that there are severe issues with the log writer and the system should stop
+        same_sizes = 0
+        if(lengths.count(lengths[0]) == len(lengths)):
+            same_sizes = 1
+
+        if(validity_counter == len(system_stacks) and same_sizes):
+            return 1
+        return 0
+
+    @classmethod
+    def Analyze_CPU_Usage_Stack(cls, cpu_usage_stack, cpu_threshold):
         """Interpret a stack with CPU usages.
         Raises unusual behavior based on the average value of the stack.
         The average is predefined by the user as a `threshold`
         """
+        if(len(cpu_usage_stack) == 0):
+            return [0, -1]
         mean_value = round(
             float(sum(cpu_usage_stack) / len(cpu_usage_stack)), 2)
         if(mean_value >= cpu_threshold):
@@ -278,11 +376,13 @@ class Stats_Analyzer:
         return [0, mean_value]
 
     @classmethod
-    def Analyze_MEM_Usage_Stack(self, mem_usage_stack, mem_threshold):
+    def Analyze_MEM_Usage_Stack(cls, mem_usage_stack, mem_threshold):
         """Interpret a stack with MEM usages.
         Raises unusual behavior based on the average value of the stack.
         The average is predefined by the user as a `threshold`
         """
+        if(len(mem_usage_stack) == 0):
+            return [0, -1]
         mean_value = round(
             float(sum(mem_usage_stack) / len(mem_usage_stack)), 2)
         if(mean_value >= mem_threshold):
@@ -292,7 +392,32 @@ class Stats_Analyzer:
         return [0, mean_value]
 
     @classmethod
-    def Plot_Stack(self, time_stamp, machine_id, failed_stack, time, threshold, plot_stack_file, labels):
+    def Stack_Report(cls, stack, stats_details, file_stack):
+        """
+        * Takes the stack which raised unusual behavior for a particular system stat.
+        * Uses the extra stack details to compose a message in which the occuring issue and the stack values are saved.
+        * Returns the message as a string, for an eventual write to a file.
+        """
+
+        # Gather the stack information from the `stack_details` dictionary
+        threshold = stats_details["threshold"]
+        cycle_time = stats_details["cycle_time"]
+        stack_type = stats_details["stack_type"]
+        stack_issue = stats_details["stack_issue"]
+
+        avg_stack_value = np.mean(stack)
+        time_stamp = str(datetime.utcnow())[0:22]
+        head = f'📄 Analysis report for the {stack_type}\nGenerated at -> ⏱ {time_stamp}\n'
+        body = f'{stack_issue} -> The average value of the stack for the past {cycle_time} seconds is {round(avg_stack_value,3)}%, which is above the threshold value of {threshold}%.\n📈 Stack values for the past {cycle_time} seconds ->\n************\n{stack}\n************'
+        STACK_MESSAGE = head + body
+
+        return STACK_MESSAGE
+
+        # with open(file_stack, 'w+') as stack_writer:
+        #     stack_writer.write(STACK_MESSAGE)
+
+    @classmethod
+    def Plot_Stack(cls, time_stamp, machine_id, failed_stack, time, threshold, plot_stack_file, labels):
         averages = [np.mean(failed_stack) for _ in range(len(failed_stack))]
         thresholds = [float(threshold) for _ in range(len(failed_stack))]
         if(averages[0] >= thresholds[0]):
@@ -316,46 +441,50 @@ class Stats_Analyzer:
         plt.xlabel(f'Last {time} seconds')
         plt.legend(loc='best')
         plt.title(
-            f'DFCTI Resource monitor\n@{time_stamp}\nMachine-ID:{machine_id}')
+            f'DFCTI Resource Monitor\n@{time_stamp}\nMachine-ID:{machine_id}')
         plt.savefig(plot_stack_file, bbox_inches='tight')
         plt.close()
 
 
 class Modified_State_Handler(FileSystemEventHandler):
+    def __init__(self, log_file_path):
+        self.log_file_path = log_file_path
+
     def on_modified(self, event):
         event_path = event.src_path
-        if(os.path.isfile(event_path)):
-            if(event_path == LOG_FILE_PATH):
-                # print(f'OS: {Get_OS()}\nLog-File-Path: {event_path}')
-                # print(f'New log-event in -> {event_path}')
-
-                # easy two-liner for getting the last line of the log-file
-                with open(LOG_FILE_PATH, 'r') as reader:
-                    last_line = list(reader)[-1]
-                try:
-                    # must append only the value of the cpu or memory
-                    cpu_stack.append(Reader.get_cpu_usage(last_line))
-                except Exception as error:
-                    print(f'could not add CPU stats into the cpu stack')
-                    print(f'Reason -> {error}')
-                else:
-                    pass
-                try:
-                    # must append only the value of the cpu or memory
-                    mem_stack.append(Reader.get_mem_usage(last_line))
-                except Exception as error:
-                    print(f'could not add MEM stats into the cpu stack')
-                    print(f'Reason -> {error}')
-                else:
-                    pass
-                try:
-                    if(len(machine_id) == 0):
-                        machine_id.append(Reader.get_machine_id(last_line))
-                except Exception as error:
-                    print(f'could not get machine ID')
-                    print(f'Reason -> {error}')
-                else:
-                    pass
+        # check if the event was triggered by a file
+        # print(f'OS: {Get_OS()}\nLog-File-Path: {event_path}')
+        # print(f'New log-event in -> {event_path}')
+        if(os.path.isfile(event_path) and event_path == self.log_file_path):
+            # print(f'OS: {Get_OS()}\nLog-File-Path: {event_path}')
+            # print(f'New log-event in -> {event_path}')
+            # easy two-liner for getting the last line of the log-file
+            with open(self.log_file_path, 'r') as reader:
+                last_line = list(reader)[-1]
+            try:
+                # must append only the value of the cpu or memory
+                cpu_stack.append(Reader.get_cpu_usage(last_line))
+            except Exception as error:
+                print(f'could not add CPU stats into the cpu stack')
+                print(f'Reason -> {error}')
+            else:
+                pass
+            try:
+                # must append only the value of the cpu or memory
+                mem_stack.append(Reader.get_mem_usage(last_line))
+            except Exception as error:
+                print(f'could not add MEM stats into the cpu stack')
+                print(f'Reason -> {error}')
+            else:
+                pass
+            try:
+                if(len(machine_id) == 0):
+                    machine_id.append(Reader.get_machine_id(last_line))
+            except Exception as error:
+                print(f'could not get machine ID')
+                print(f'Reason -> {error}')
+            else:
+                pass
 
 
 class Reader():
@@ -391,7 +520,7 @@ class Reader():
         The entire process stops after `execution_time` has been reached.
         """
 
-        event_handler = Modified_State_Handler()
+        event_handler = Modified_State_Handler(LOG_FILE_PATH)
 
         observer = Observer()
         observer.schedule(event_handler, path=log_file_path, recursive=False)
@@ -544,12 +673,304 @@ class Reader():
     @classmethod
     def Watch_Process(cls, log_file_path, cycle_time, thresholds):
         """
-        Docs 📚
+        ➡️ Start the watching process if the script is directly executed from the command line.
+
+        ⚙️ The watch process will run indefinitely, with a pre-defined `cycle_time` 🔄 .
+
+        The `cycle_time` variable is responsible for analyzing the system stats after that exact amount of time has passed.
+        ! Update ⚙️ -> the log reader pipeline now allows stack analysis of log entries even if there were several time periods without any new entries.
+        This is given by the condition that the total elapsed time since a cycle has started does not exceed the initial cycle time plus an additional 25%.
+        Example: for a cycle time set to 60 seconds, the pipeline will perform analysis on the ingested logs as long as the total elapsed time (`cycler`) does not exceed the cycle time plus an additional 25% of its value, meaning that no analysis will be performed if 75 seconds passed and the system stacks are not valid
+
+        📉 With each cycle, the stats are analyzed, then based on their behavior, alerts are raised or not 🚦. After a cycle has finished, the system stats are cleared from memory, and the process repeats.
         """
-        return -1
+
+        # This will be executed only if the pipeline is directly executed from the command line
+        if __name__ == "__main__":
+            # ?set the debug mode for testing purposes
+            DEBUG_MODE = False
+
+            # amount of time the watcher should wait between two consecutive log events within the pipeline
+            WAIT_TIME = 1
+
+            # amount of time before disconnecting the process from the system
+            # if no new log events are arriving
+            # set to half (50%) of the total cycle time
+            process_dispatch_time = int(cycle_time / 2)
+            # count how many events passed without ingesting a new log line
+            no_log_events_counter = 0
+
+            if(DEBUG_MODE):
+                print(f'Debug mode is ON. Will show output within the console...')
+
+            # stop executing the process if the thresholds do not have the proper format
+            if(len(thresholds) != 2):
+                if(DEBUG_MODE):
+                    print(
+                        f'The thresholds are incompatible with the current log file format!\nRequired format: [CPU,MEM]\nCurrent Format: {thresholds}')
+                return -1
+
+            # stop executing the proess if the log file path is invalid
+            if(os.path.isfile(log_file_path) == False):
+                if(DEBUG_MODE):
+                    print(
+                        f'The log file at {log_file_path} is not a valid path!')
+                return -1
+
+            mail_registry_file = MAIL_LOGGER_PATH
+            # if(os.path.isfile(mail_registry_file) == False):
+            #     if(DEBUG_MODE):
+            #         print(
+            #             f'The log file at {mail_registry_file} is not a valid path!')
+            #     return -1
+
+            # setting up the thresholds
+            cpu_threshold = thresholds["cpu"]
+            mem_threshold = thresholds["mem"]
+
+            # prepare the observer
+            time.sleep(1)
+            if(DEBUG_MODE):
+                print(
+                    f'Preparing the file system event handler and the log file observer...')
+
+            # this variable acts as a safety in case any of the steps for starting the watcher/observer fails to properly be executed
+            try:
+                file_event_handler = Modified_State_Handler(log_file_path)
+            except Exception as error:
+                return -1
+            else:
+                pass
+            try:
+                observer = Observer()
+            except Exception as error:
+                return -1
+            else:
+                pass
+            try:
+                observer.schedule(file_event_handler,
+                                  path=log_file_path, recursive=True)
+            except Exception as error:
+                return -1
+            else:
+                pass
+
+            # start the observer
+            time.sleep(1)
+            if(DEBUG_MODE):
+                print(f'Starting the log file observer...')
+            if(DEBUG_MODE):
+                print(
+                    f'The reader process will refresh its cycle each {cycle_time} seconds...')
+            observer.start()
+            total_execution_time = time.time()
+            cycler = time.time()
+
+            # use the progress bar in *unknown mode*
+            with alive_bar(length=9, title='⚙️ Analyzing incoming events 🥺', spinner='dots_reverse') as bar:
+                while(True):
+                    try:
+                        cpu_stack_size_0 = len(cpu_stack)
+                        mem_stack_size_0 = len(mem_stack)
+
+                        # the system stacks BEFORE the watcher checked the log file for modified states
+                        if(DEBUG_MODE):
+                            print(f'CPU_STACK -> {cpu_stack}')
+                            print(f'MEM_STACK -> {mem_stack}')
+
+                        # watcher must  wait for a potential new event in the stack
+                        # the events are sent by the log writer implementation
+                        # ? normally, the log writer creates a new event each second
+                        time.sleep(WAIT_TIME)
+
+                        if(DEBUG_MODE):
+                            # the system stacks AFTER the watcher checked the log file for modified states
+                            print(f'CPU_STACK -> {cpu_stack}')
+                            print(f'MEM_STACK -> {mem_stack}')
+
+                        cpu_stack_size_1 = len(cpu_stack)
+                        mem_stack_size_1 = len(mem_stack)
+
+                        # if the length of the stacks are unchanged after a `WAIT_TIME`, that means no new entries arrived in the stacks
+                        if((cpu_stack_size_0 == cpu_stack_size_1) or (mem_stack_size_0 == mem_stack_size_1)):
+                            if(DEBUG_MODE):
+                                print(
+                                    'No new event detected within the wait time period')
+                            no_log_events_counter += 1
+                            # if no events are detected for more than 25% of the cycle_time, clear the stacks
+                            if(no_log_events_counter >= int(cycle_time / 4)):
+                                if(DEBUG_MODE):
+                                    print(
+                                        'No incoming logs for more than a quarter of the current cycle time! Will clear the system info stacks...')
+                                cpu_stack.clear()
+                                mem_stack.clear()
+                        else:
+                            no_log_events_counter = 0
+
+                        #! Stops the reading pipeline when no new entries are detected for more than 25% of the `CYCLE_TIME` period
+                        if(no_log_events_counter == process_dispatch_time):
+                            print(
+                                f'The log file has not been updated for the past {process_dispatch_time} seconds. Stopping the watcher...')
+                            break
+
+                        # the first condition for a potential stack analysis is to have the stack sizes greater or equal than the `cycle_time`
+                        if(Stats_Analyzer.Valid_Stacks([cpu_stack, mem_stack], cycle_time) == 1):
+                            # uses a variable `time_stamp` for marking when analysis can be performed
+                            time_stamp = datetime.utcnow()
+                            time_stamp_duration = now() - cycler
+
+                            # second condition for performing an analysis of the stacks is to have the total elapsed time since the last cycle no bigger than 25% of the cycle_time
+                            if(time_stamp_duration >= cycle_time and time_stamp_duration <= 1.25 * cycle_time):
+                                # the no-logs counter must be within a marging of "confidence"
+                                # the confidence is given by the cycle time
+                                if(no_log_events_counter <= int(cycle_time / 4)):
+                                    if(DEBUG_MODE):
+                                        print(
+                                            f'A complete cycle_time has passed ({cycle_time} seconds and the stacks are valid).\nPerforming analysis on the stacks...')
+                                        print(
+                                            f'{cpu_stack} -> {len(cpu_stack)}')
+                                        print(
+                                            f'{mem_stack} -> {len(mem_stack)}')
+
+                                    # analyze the stacks in terms of their average values
+                                    # comparison with the corresponding threshold values is done
+                                    # the analysis report is a tuple, containing the result of the comparison between the average and threshold, plus the mean value itself
+                                    cpu_analysis = Stats_Analyzer.Analyze_CPU_Usage_Stack(
+                                        cpu_stack, cpu_threshold)
+                                    mem_analysis = Stats_Analyzer.Analyze_MEM_Usage_Stack(
+                                        mem_stack, mem_threshold)
+                                    #! in case the avg values are higher than the thresholds, the above methods will return true (1)
+
+                                    if(DEBUG_MODE):
+                                        print(
+                                            f'CPU analysis yields -> {cpu_analysis}')
+                                        print(
+                                            f'MEM analysis yields -> {mem_analysis}')
+
+                                    # the first value of the tuple returned by  `Analyze_CPU_Usage_Stack` checks wether the average value is in the high usage regime or not
+                                    # this is the condition for raising an alert
+                                    if(cpu_analysis[0] == 1):
+                                        if(DEBUG_MODE):
+                                            print(
+                                                f'[Alert:] CPU usage is above the threshold! ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds (Threshold value: {cpu_threshold}%).\nWill alert the DevOps team!!!')
+
+                                        # create the body of the message which will be sent to the client
+                                        cpu_fail_value = f'AVG_CPU_USAGE for the past {cycle_time} seconds: {cpu_analysis[1]}%, which is above the threshold value {cpu_threshold}%.'
+
+                                        # initialize the paths for the attachment files that will be sent via e-mail to the client
+                                        attachment_files = [
+                                            ALERT_FILES["CPU_STACK"], ALERT_FILES["CPU_PLOT"]]
+
+                                        # construction of the attachment files with details on the stack that raised unusual behavior
+                                        # *step1: create the stack details such as threshold value, the cycle time, the type of resource being analyzed and the issue which occurred as a dictionary
+                                        failed_stack = Stats_Analyzer.Create_Stack_Details(
+                                            cpu_threshold, cycle_time, RESOURCE_TYPE["CPU"], RESOURCE_ISSUES["CPU"])
+
+                                        # *step2: take the dictionary obtained previously at step (1) with the stack details, and create a pre-defined output format to be stored in a data file
+                                        failed_stack_report = Stats_Analyzer.Stack_Report(
+                                            cpu_stack, failed_stack, attachment_files[0])
+
+                                        # *step3: add the formatted output generated from the stack report at step (2) into a data file, to be used as first attachment (first attachment is marked by the [0] index within the method called below)
+                                        Attachment.Create_DataFile_Attachment(
+                                            failed_stack_report, attachment_files)
+
+                                        # *step 4: create the plot that shows the stats of the analyzed stack
+                                        # this is a graphical representation with the behavior of the monitored resource during one cycle time
+                                        # the plot will be used as the second attachment of the e-mail which is sent to the client after the alter has been raised
+                                        cpu_plot_label = "CPU Usage"
+                                        Stats_Analyzer.Plot_Stack(
+                                            time_stamp, machine_id[0], cpu_stack, cycle_time, cpu_threshold, ALERT_FILES["CPU_PLOT"], cpu_plot_label)
+
+                                        # with the body of the message generated, and the two attachments ready, each client within the e-mail list will receive an alert containing the details with the failed stacks
+                                        for email in EMAIL_LIST:
+                                            cpu_fail_stats = Alerter.Generate_Fail_Stats(
+                                                email["name"], RESOURCE_ISSUES["CPU"], cpu_fail_value)
+                                            alert = Alerter.Create_Alert(
+                                                cpu_fail_stats)
+                                            Alerter.SendAlert(
+                                                alert, attachment_files, email["email"], mail_registry_file)
+
+                                    else:
+                                        if(DEBUG_MODE):
+                                            print(
+                                                f'[Info:] CPU usage is normal ---> [{cpu_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
+                                        pass
+
+                                    # the first value of the tuple returned by  `Analyze_MEM_Usage_Stack` checks wether the average value is in the high usage regime or not
+                                    # this is the condition for raising an alert
+                                    if(mem_analysis[0] == 1):
+                                        if(DEBUG_MODE):
+                                            print(
+                                                f'[Alert:] Memory (RAM) usage is above the threshold! ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds (Threshold value: {mem_threshold}%).\nWill alert the DevOps team!!!')
+
+                                        mem_fail_value = f'AVG_MEM_USAGE for the past {cycle_time} seconds: {mem_analysis[1]}%, which is above the threshold value {mem_threshold}%.'
+
+                                        # initialize the paths for the attachment files that will be sent via e-mail to the client
+                                        attachment_files = [
+                                            ALERT_FILES["MEM_STACK"], ALERT_FILES["MEM_PLOT"]]
+
+                                        # construction of the attachment files with details on the stack that raised unusual behavior
+                                        # *step1: create the stack details such as threshold value, the cycle time, the type of resource being analyzed and the issue which occurred as a dictionary
+                                        failed_stack = Stats_Analyzer.Create_Stack_Details(
+                                            mem_threshold, cycle_time, RESOURCE_TYPE["MEM"], RESOURCE_ISSUES["MEM"])
+
+                                        # *step2: take the dictionary obtained previously at step (1) with the stack details, and create a pre-defined output format to be stored in a data file
+                                        failed_stack_report = Stats_Analyzer.Stack_Report(
+                                            mem_stack, failed_stack, attachment_files[0])
+
+                                        # *step3: add the formatted output generated from the stack report at step (2) into a data file, to be used as first attachment (first attachment is marked by the [0] index within the method called below)
+                                        Attachment.Create_DataFile_Attachment(
+                                            failed_stack_report, attachment_files)
+
+                                        # *step 4: create the plot that shows the stats of the analyzed stack
+                                        # this is a graphical representation with the behavior of the monitored resource during one cycle time
+                                        # the plot will be used as the second attachment of the e-mail which is sent to the client after the alter has been raised
+                                        mem_plot_label = "Memory (RAM) Usage"
+                                        Stats_Analyzer.Plot_Stack(
+                                            time_stamp, machine_id[0], mem_stack, cycle_time, mem_threshold, ALERT_FILES["MEM_PLOT"], mem_plot_label)
+
+                                        # with the body of the message generated, and the two attachments ready, each client within the e-mail list will receive an alert containing the details with the failed stacks
+                                        for email in EMAIL_LIST:
+                                            mem_fail_stats = Alerter.Generate_Fail_Stats(
+                                                email["name"], RESOURCE_ISSUES["MEM"], mem_fail_value)
+                                            alert = Alerter.Create_Alert(
+                                                mem_fail_stats)
+                                            Alerter.SendAlert(
+                                                alert, attachment_files, email["email"], mail_registry_file)
+
+                                    else:
+                                        if(DEBUG_MODE):
+                                            print(
+                                                f'[Info:] Memory usage is normal ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
+                                        pass
+
+                                    # the stacks must be cleared after the analysis is done
+                                    if(DEBUG_MODE):
+                                        print(
+                                            f'Analysis of the current cycle is complete. Clearing the stacks...')
+                                    cpu_stack.clear()
+                                    mem_stack.clear()
+                                    bar()
+                                    cycler = time.time()
+                            else:
+                                if(DEBUG_MODE):
+                                    print(
+                                        'Entered in the stack overflow regime without performing analysis')
+                                cpu_stack.clear()
+                                mem_stack.clear()
+                                cycler = time.time()
+                                bar()
+                    except KeyboardInterrupt:
+                        print('The Reading-Process was stopped from the keyboard!')
+                        observer.stop()
+                        # the join method must be called inside the while loop
+                        observer.join()
+                        break
+                print(
+                    f'Process stopped completely... [⏱ Duration: {round(time.time()-total_execution_time,3)}]')
 
 
-def Do_Asymmetric_Test():
+def Do_Asymmetric_Test(log_file_path):
     # giving default (safe-mode) values for the total execution time in case no cli args are set by the user
     timer = 69
     cycle_time = 5
@@ -581,9 +1002,9 @@ def Do_Asymmetric_Test():
             f'Each log analysis will be performed after a window of {cycle_time} s')
         cycle_count = 0
 
-        event_handler = Modified_State_Handler()
+        event_handler = Modified_State_Handler(log_file_path)
         observer = Observer()
-        observer.schedule(event_handler, path=LOG_FILE_PATH, recursive=False)
+        observer.schedule(event_handler, path=log_file_path, recursive=False)
 
         observer.start()
         cycle_time_start = time.time()
@@ -638,15 +1059,30 @@ def Do_Asymmetric_Test():
         pass
 
 
-def Read_Pipeline():
-    Reader.Watch_Log_File(LOG_FILE_PATH, 50,
-                          20, [70, 45])
+def Read_Pipeline(log_file_path):
+    Reader.Watch_Log_File(log_file_path, 50,
+                          20, [70, 70])
 
 
+# the reading pipeline which is called only when the script is executed directly from the CLI
 def Read_Process(log_file_path):
-    Reader().Watch_Process(log_file_path, cycle_time, thresholds)
+    # set the time window after which the pipeline is doing analysis of the incoming log events
+    cycle_time = 10
+    try:
+        cycle_time = int(sys.argv[1])
+    except IndexError as err:
+        print('No cycle time given!\nDefaulting to the safe value...')
+    else:
+        print(f'Cycle time set to {cycle_time} seconds...')
+        pass
+
+    # thresholds are implemented as a dictionary, for easier manipulation
+    thresholds = {"cpu": 50,
+                  "mem": 20}
+
+    # the main process which reads any log entry from a given path, performs analysis of the logs, and then sends alerts to clients if the behavior of the logs are unusual
+    Reader.Watch_Process(log_file_path, cycle_time, thresholds)
 
 
 if __name__ == "__main__":
-    # Do_Asymmetric_Test()
-    Read_Pipeline()
+    Read_Process(LOG_FILE_PATH)

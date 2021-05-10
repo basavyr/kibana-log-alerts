@@ -35,4 +35,4 @@ RUN chmod +x tests_entrypoint.sh
 RUN chmod +x reader_entrypoint.sh
 RUN chmod +x writer_entrypoint.sh
 
-CMD ["./writer_entrypoint.sh"]
+CMD ["./tests_entrypoint.sh"]

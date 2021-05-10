@@ -5,7 +5,7 @@ import time
 
 
 class Test(unittest.TestCase):
-    writer = logwriter.Write_Logs()
+    writer = logwriter.Write_Logs(logwriter.log_file_path)
     system = logwriter.SystemLogs()
     log_file_path = logwriter.log_file_path
     logs = []

@@ -1,6 +1,6 @@
 *.DS_Store
 *.password
-*fail_stack.dat
+*stack_report.dat
 *nohup.out
 *cpu_usage.pdf
 *mem_usage.pdf
@@ -9,3 +9,4 @@
 *machine_id
 .vscode/settings.json
 log-reader/1.test
+*registry.log

@@ -1,6 +1,6 @@
 #!/bin/bash
 touch /var/log/dfcti_system_logs.log
-chmod +x /var/log/dfcti_system_logs.log
+chmod 777 /var/log/dfcti_system_logs.log
 echo 'Testing the writer implementation'
 cd exec/writer/
 pyenv virtualenv systems
