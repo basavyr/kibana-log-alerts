@@ -2,11 +2,11 @@ name: Main
 
 on:
   push:
-  #   tags:        
-  #     - v*           
-  # pull_request:
-  #   branches:
-  #     - main
+    tags:        
+      - v*           
+  pull_request:
+    branches:
+      - main
 
 env:
   imageName: img_system_logs
@@ -65,49 +65,49 @@ jobs:
       #     cd log-reader
       #     pipenv run python dfcti_log_reader.py 240 55
 
-      # - name: Create release | Deliver log-file
-      #   uses: softprops/action-gh-release@v1
-      #   id: create_release
-      #   if: startsWith(github.ref, 'refs/tags/')
-      #   with:
-      #     body_path: CHANGELOG.md
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create release | Deliver log-file
+        uses: softprops/action-gh-release@v1
+        id: create_release
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          body_path: CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # - name: Get release `url`
-      #   id: get_release_url
-      #   uses: bruceadams/get-release@v1.2.2
-      #   env:
-      #     GITHUB_TOKEN: ${{ github.token }}      
+      - name: Get release `url`
+        id: get_release_url
+        uses: bruceadams/get-release@v1.2.2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}      
 
-      # - name: Create py-log-writer package
-      #   run: |
-      #     sudo apt-get install zip gzip tar
-      #     zip -r py_log_writer.zip log-writer
+      - name: Create py-log-writer package
+        run: |
+          sudo apt-get install zip gzip tar
+          zip -r py_log_writer.zip log-writer
       
-      # - name: Create py-log-reader package
-      #   run: |
-      #     zip -r py_log_reader.zip log-reader
+      - name: Create py-log-reader package
+        run: |
+          zip -r py_log_reader.zip log-reader
 
-      # - name: Upload py-log-writer artifact
-      #   uses: actions/upload-release-asset@v1
-      #   env:
-      #      GITHUB_TOKEN: ${{ github.token }}
-      #   with:
-      #     asset_path: py_log_writer.zip
-      #     asset_name: py_log_writer.zip
-      #     asset_content_type: application/zip
-      #     upload_url: ${{ steps.get_release_url.outputs.upload_url }}
+      - name: Upload py-log-writer artifact
+        uses: actions/upload-release-asset@v1
+        env:
+           GITHUB_TOKEN: ${{ github.token }}
+        with:
+          asset_path: py_log_writer.zip
+          asset_name: py_log_writer.zip
+          asset_content_type: application/zip
+          upload_url: ${{ steps.get_release_url.outputs.upload_url }}
       
-      # - name: Upload py-log-reader artifact
-      #   uses: actions/upload-release-asset@v1
-      #   env:
-      #      GITHUB_TOKEN: ${{ github.token }}
-      #   with:
-      #     asset_path: py_log_reader.zip
-      #     asset_name: py_log_reader.zip
-      #     asset_content_type: application/zip
-      #     upload_url: ${{ steps.get_release_url.outputs.upload_url }}
+      - name: Upload py-log-reader artifact
+        uses: actions/upload-release-asset@v1
+        env:
+           GITHUB_TOKEN: ${{ github.token }}
+        with:
+          asset_path: py_log_reader.zip
+          asset_name: py_log_reader.zip
+          asset_content_type: application/zip
+          upload_url: ${{ steps.get_release_url.outputs.upload_url }}
   
   docker-test-logging-pipeline:
     runs-on: ubuntu-latest
