@@ -1,0 +1,59 @@
+name: release-pipeline
+
+on:
+  push:
+    tags:        
+      - v*
+
+jobs:
+  release-pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      
+      - name: Install packages for creating archives
+        run: sudo apt-get install zip gzip tar
+      
+      - name: Create release | Deliver log-file
+        uses: softprops/action-gh-release@v1
+        id: create_release
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          body_path: CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Get release `url`
+        id: get_release_url
+        uses: bruceadams/get-release@v1.2.2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}      
+
+      - name: Create py-log-writer package
+        run: |
+          zip -r py_log_writer.zip log-writer
+      
+      - name: Create py-log-reader package
+        run: |
+          zip -r py_log_reader.zip log-reader
+
+      - name: Upload py-log-writer artifact
+        uses: actions/upload-release-asset@v1
+        env:
+           GITHUB_TOKEN: ${{ github.token }}
+        with:
+          asset_path: py_log_writer.zip
+          asset_name: py_log_writer.zip
+          asset_content_type: application/zip
+          upload_url: ${{ steps.get_release_url.outputs.upload_url }}
+      
+      - name: Upload py-log-reader artifact
+        uses: actions/upload-release-asset@v1
+        env:
+           GITHUB_TOKEN: ${{ github.token }}
+        with:
+          asset_path: py_log_reader.zip
+          asset_name: py_log_reader.zip
+          asset_content_type: application/zip
+          upload_url: ${{ steps.get_release_url.outputs.upload_url }}
