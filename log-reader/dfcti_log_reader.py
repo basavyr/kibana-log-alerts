@@ -64,6 +64,10 @@ LOG_FILE_PATH = Create_LogFile_Path()
 The log file path is determined based on the operating system of the machine on which the current application is running
 """
 
+
+MAIL_LOGGER_PATH = 'sent_alerts_registry.log'
+"""Save a local copy of all the sent alerts during the reading process."""
+
 # !define the stacks where each system stat will be stored
 # e.g. CPU stack, MEM stack, and Machine ID
 # in the current implementation, the stacks are global variables
@@ -177,13 +181,15 @@ class Alerter:
         Alerter.Send_Email(email, alert, attachment_files)
 
     @classmethod
-    def Send_Email(self, email_address, alert_content, attachment_files):
+    def Send_Email(self, email_address, alert_content, attachment_files, mail_registry_file):
         """
         Uses the `smtp` module and `ssl` in order to create a text message, and then send it via e-mail.
 
         It only sends the message to ONE e-mail address at a time.
 
         The method also adds fully customized subject and some attachments.
+
+        With each successfull log-in and e-mail sent, a log will be saved into the `mail_registry_file`. 
         """
         PORT = 465  # For SSL
         ROOT_EMAIL = 'alerts.dfcti@gmail.com'
@@ -661,7 +667,7 @@ class Reader():
         # This will be executed only if the pipeline is directly executed from the command line
         if __name__ == "__main__":
             # ?set the debug mode for testing purposes
-            DEBUG_MODE = True
+            DEBUG_MODE = False
 
             # amount of time the watcher should wait between two consecutive log events within the pipeline
             WAIT_TIME = 1
@@ -905,8 +911,9 @@ class Reader():
                                                 alert, attachment_files, email["email"])
 
                                     else:
-                                        print(
-                                            f'[Info:] Memory usage is normal ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
+                                        if(DEBUG_MODE):
+                                            print(
+                                                f'[Info:] Memory usage is normal ---> [{mem_analysis[1]}%] for the past {cycle_time} seconds. No alert needed.')
                                         pass
 
                                     # the stacks must be cleared after the analysis is done
@@ -928,11 +935,11 @@ class Reader():
                     except KeyboardInterrupt:
                         print('The Reading-Process was stopped from the keyboard!')
                         observer.stop()
+                        # the join method must be called inside the while loop
                         observer.join()
                         break
                 print(
                     f'Process stopped completely... [⏱ Duration: {round(time.time()-total_execution_time,3)}]')
-                # the join method must be called inside the while loop
 
 
 def Do_Asymmetric_Test(log_file_path):
@@ -1043,11 +1050,11 @@ def Read_Process(log_file_path):
 
     # thresholds are implemented as a dictionary, for easier manipulation
     thresholds = {"cpu": 50,
-                  "mem": 80}
+                  "mem": 20}
 
     # the main process which reads any log entry from a given path, performs analysis of the logs, and then sends alerts to clients if the behavior of the logs are unusual
     Reader.Watch_Process(log_file_path, cycle_time, thresholds)
 
 
 if __name__ == "__main__":
-    Read_Process()
+    Read_Process(LOG_FILE_PATH)
