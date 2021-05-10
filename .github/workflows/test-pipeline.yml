@@ -20,6 +20,7 @@ jobs:
     - name: Unit tests for log-reader 
       run: |
         docker images
+        ls
       # run: |
       #   docker pull basavyr/ubuntu:latest
       #   docker build . -t pypy
