@@ -170,7 +170,7 @@ class Alerter:
         return alert_message
 
     @classmethod
-    def SendAlert(self, alert, attachment_files, email):
+    def SendAlert(self, alert, attachment_files, email, mail_registry_file):
         """
         Calls the `Send_Email` method which sends an alert e-mail with attachments to a client.
 
@@ -178,7 +178,7 @@ class Alerter:
         1. A `.dat` file in which the stack that raised the alert is shown.
         2. A graphical representation (plot) with the system stats over the last `cycle_time` seconds.
         """
-        Alerter.Send_Email(email, alert, attachment_files)
+        Alerter.Send_Email(email, alert, attachment_files, mail_registry_file)
 
     @classmethod
     def Send_Email(self, email_address, alert_content, attachment_files, mail_registry_file):
@@ -189,7 +189,7 @@ class Alerter:
 
         The method also adds fully customized subject and some attachments.
 
-        With each successfull log-in and e-mail sent, a log will be saved into the `mail_registry_file`. 
+        With each successfull log-in and e-mail sent, the events info will be saved into the `mail_registry_file`. 
         """
         PORT = 465  # For SSL
         ROOT_EMAIL = 'alerts.dfcti@gmail.com'
@@ -696,6 +696,13 @@ class Reader():
                         f'The log file at {log_file_path} is not a valid path!')
                 return -1
 
+            mail_registry_file = MAIL_LOGGER_PATH
+            # if(os.path.isfile(mail_registry_file) == False):
+            #     if(DEBUG_MODE):
+            #         print(
+            #             f'The log file at {mail_registry_file} is not a valid path!')
+            #     return -1
+
             # setting up the thresholds
             cpu_threshold = thresholds["cpu"]
             mem_threshold = thresholds["mem"]
@@ -860,7 +867,7 @@ class Reader():
                                             alert = Alerter.Create_Alert(
                                                 cpu_fail_stats)
                                             Alerter.SendAlert(
-                                                alert, attachment_files, email["email"])
+                                                alert, attachment_files, email["email"], mail_registry_file)
 
                                     else:
                                         if(DEBUG_MODE):
@@ -908,7 +915,7 @@ class Reader():
                                             alert = Alerter.Create_Alert(
                                                 mem_fail_stats)
                                             Alerter.SendAlert(
-                                                alert, attachment_files, email["email"])
+                                                alert, attachment_files, email["email"], mail_registry_file)
 
                                     else:
                                         if(DEBUG_MODE):
