@@ -4,6 +4,8 @@ cycle_time=$2
 node_name=$(uname -n)
 elk_node_name='elk.nipne.ro'
 
+logstash_executable=/usr/share/logstash/bin/logstash 
+
 virtualenvName=systems
 
 log_file_path=/var/log/dfcti_system_logs.log
@@ -27,9 +29,8 @@ then
     nohup pipenv run python dfcti_log_writer.py $1 &
     cd ../log-reader/
     pipenv run python dfcti_log_reader.py $2
+    cd ../resources/pipelines/
+    sudo $logstash_executable -f py_logs.conf --config.reload.automatic
 else
     echo Cannot run the script on this node.
 fi
- 
-
-
