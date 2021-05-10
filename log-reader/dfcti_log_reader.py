@@ -338,6 +338,8 @@ class Stats_Analyzer:
         Raises unusual behavior based on the average value of the stack.
         The average is predefined by the user as a `threshold`
         """
+        if(len(cpu_usage_stack) == 0):
+            return [0, -1]
         mean_value = round(
             float(sum(cpu_usage_stack) / len(cpu_usage_stack)), 2)
         if(mean_value >= cpu_threshold):
@@ -352,6 +354,8 @@ class Stats_Analyzer:
         Raises unusual behavior based on the average value of the stack.
         The average is predefined by the user as a `threshold`
         """
+        if(len(mem_usage_stack) == 0):
+            return [0, -1]
         mean_value = round(
             float(sum(mem_usage_stack) / len(mem_usage_stack)), 2)
         if(mean_value >= mem_threshold):
@@ -1025,7 +1029,8 @@ def Read_Pipeline(log_file_path):
                           20, [70, 70])
 
 
-def Read_Process(log_file_path=LOG_FILE_PATH):
+# the reading pipeline which is called only when the script is executed directly from the CLI
+def Read_Process(log_file_path):
     # set the time window after which the pipeline is doing analysis of the incoming log events
     cycle_time = 10
     try:
@@ -1040,6 +1045,7 @@ def Read_Process(log_file_path=LOG_FILE_PATH):
     thresholds = {"cpu": 50,
                   "mem": 80}
 
+    # the main process which reads any log entry from a given path, performs analysis of the logs, and then sends alerts to clients if the behavior of the logs are unusual
     Reader.Watch_Process(log_file_path, cycle_time, thresholds)
 
 
