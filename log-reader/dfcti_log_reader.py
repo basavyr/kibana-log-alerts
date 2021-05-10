@@ -191,6 +191,10 @@ class Alerter:
 
         With each successfull log-in and e-mail sent, the events info will be saved into the `mail_registry_file`. 
         """
+
+        # add a debug mode in the mail sender
+        DEBUG_MODE = False
+
         PORT = 465  # For SSL
         ROOT_EMAIL = 'alerts.dfcti@gmail.com'
         UNICORN_ID = 'v2a&tw@uGVWt7%LVjXFD'
@@ -199,7 +203,7 @@ class Alerter:
         message["From"] = ROOT_EMAIL
         # https://stackoverflow.com/questions/38151440/can-anyone-tell-my-why-im-getting-the-error-attributeerror-list-object-has
         message["To"] = email_address
-        message["Subject"] = f'{str(datetime.utcnow())[:19]} - Alert via DFCTI monitoring system'
+        message["Subject"] = f'{str(datetime.utcnow())[:19]} - Alert via DFCTI Monitoring System'
 
         # generating the e-mail body
         message_body = alert_content
@@ -247,24 +251,41 @@ class Alerter:
         CONTEXT = ssl.create_default_context()
 
         with smtplib.SMTP_SSL("smtp.gmail.com", PORT, context=CONTEXT) as mail_server:
+            time_stamp = str(datetime.utcnow())[0:19]
             # log-in stage
             try:
                 mail_server.login(ROOT_EMAIL, UNICORN_ID)
             except Exception as exc:
-                print(f'❌ Cannot log-in!')
-                print(f'Reason: {exc}')
+                if(DEBUG_MODE):
+                    print(f'❌ Cannot log-in!')
+                    print(f'Reason: {exc}')
+                with open(mail_registry_file, 'a+') as registry:
+                    registry.write(
+                        f'{time_stamp} -------- ❌ Unsuccessful log-in for: {ROOT_EMAIL} -------- Reason: {exc}\n')
             else:
-                print(f'🔐 Successful log-in into -> {ROOT_EMAIL}')
-                print(f'📤 Ready to send alerts to -> {email_address}')
+                if(DEBUG_MODE):
+                    print(f'🔐 Successful log-in into -> {ROOT_EMAIL}')
+                    print(f'📤 Ready to send alerts to -> {email_address}')
+                with open(mail_registry_file, 'a+') as registry:
+                    registry.write(
+                        f'{time_stamp} -------- 🔐 Successful log-in for: {ROOT_EMAIL}\n')
             # sending stage
             try:
                 mail_server.sendmail(
                     ROOT_EMAIL, email_address, final_alert)
             except Exception as exc:
-                print(f'❌ Cannot send alert to {email_address}...')
-                print(f'Reason: {exc}')
+                if(DEBUG_MODE):
+                    print(f'❌ Cannot send alert to {email_address}...')
+                    print(f'Reason: {exc}')
+                with open(mail_registry_file, 'a+') as registry:
+                    registry.write(
+                        f'{time_stamp} -------- ❌ Failed sending alert to: {email_address} -------- Reason: {exc}\n')
             else:
-                print(f'🚀 Sent alert to {email_address} ! ✅')
+                if(DEBUG_MODE):
+                    print(f'🚀 Sent alert to {email_address} ! ✅')
+                with open(mail_registry_file, 'a+') as registry:
+                    registry.write(
+                        f'{time_stamp} -------- ✅ Alert was sent to: {email_address}\n')
 
 
 class Attachment:
