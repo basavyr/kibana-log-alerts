@@ -1,4 +1,4 @@
-[![Main](https://github.com/basavyr/kibana-log-alerts/actions/workflows/python-app.yml/badge.svg)](https://github.com/basavyr/kibana-log-alerts/actions/workflows/python-app.yml)
+[![run-pipeline](https://github.com/basavyr/kibana-log-alerts/actions/workflows/run-pipeline.yml/badge.svg)](https://github.com/basavyr/kibana-log-alerts/actions/workflows/run-pipeline.yml)
 
 # Kibana Log Alerts
 
