@@ -1,4 +1,4 @@
-[![run-pipeline](https://github.com/basavyr/kibana-log-alerts/actions/workflows/run-pipeline.yml/badge.svg)](https://github.com/basavyr/kibana-log-alerts/actions/workflows/run-pipeline.yml)[![release-pipeline](https://github.com/basavyr/kibana-log-alerts/actions/workflows/release-pipeline.yml/badge.svg)](https://github.com/basavyr/kibana-log-alerts/actions/workflows/release-pipeline.yml)
+[![run-pipeline](https://github.com/basavyr/kibana-log-alerts/actions/workflows/run-pipeline.yml/badge.svg)](https://github.com/basavyr/kibana-log-alerts/actions/workflows/run-pipeline.yml)[![release-pipeline](https://github.com/basavyr/kibana-log-alerts/actions/workflows/release-pipeline.yml/badge.svg)](https://github.com/basavyr/kibana-log-alerts/actions/workflows/release-pipeline.yml)[![test-pipeline](https://github.com/basavyr/kibana-log-alerts/actions/workflows/test-pipeline.yml/badge.svg)](https://github.com/basavyr/kibana-log-alerts/actions/workflows/test-pipeline.yml)
 
 # Kibana Log Alerts
 
