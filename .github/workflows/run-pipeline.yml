@@ -1,4 +1,4 @@
-name: Main
+name: run-pipeline
 
 on:
   push:
@@ -7,27 +7,33 @@ on:
   pull_request:
     branches:
       - main
+  workflow_run:
+    workflows: [ "test-pipeline" ]
+    types:
+      - completed
 
 env:
   imageName: img_system_logs
   containerName: ctr_system_logs
 
-
 jobs:
-  Run-Pipelines:
+  run-pipeline:
     runs-on: ubuntu-latest
     steps:
 
       - name: Checkout
         uses: actions/checkout@v2
     
+      - uses: ahmadnassri/action-workflow-run-wait@v1
+      
       - name: Set up Python 3.8.6
         uses: actions/setup-python@v2
         with:
           python-version: 3.8.6
 
-      - name: Install pipenv for Python
+      - name: Install pipenv for Python and other packages
         run: |
+          sudo apt-get install zip gzip tar
           python -m pip install --upgrade pip
           python -m pip install pipenv
 
@@ -58,16 +64,6 @@ jobs:
           echo 'Stopping the pipeline'
           ./stop.sh
 
-    #   - name: Starts writing-[bg] logs
-    #     run: |
-    #       cd log-writer
-    #       pipenv run python dfcti_log_writer.py 10
-      
-      # - name: Starts reading-[active] logs
-      #   run: |
-      #     cd log-reader
-      #     pipenv run python dfcti_log_reader.py 240 55
-
       - name: Create release | Deliver log-file
         uses: softprops/action-gh-release@v1
         id: create_release
@@ -85,7 +81,6 @@ jobs:
 
       - name: Create py-log-writer package
         run: |
-          sudo apt-get install zip gzip tar
           zip -r py_log_writer.zip log-writer
       
       - name: Create py-log-reader package
@@ -111,19 +106,3 @@ jobs:
           asset_name: py_log_reader.zip
           asset_content_type: application/zip
           upload_url: ${{ steps.get_release_url.outputs.upload_url }}
-  
-  Test-Pipelines:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Log-in to Docker Hub
-      uses: docker/login-action@v1
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: Unit tests for log-reader 
-      run: |
-        docker pull basavyr/ubuntu:latest
-        docker build . -t pypy
-        docker run pypy
