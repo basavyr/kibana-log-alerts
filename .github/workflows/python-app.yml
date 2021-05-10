@@ -53,7 +53,10 @@ jobs:
           cd log-reader
           sudo chmod 777 run.sh
           sudo chmod 777 stop.sh
+          echo 'Starting the pipeline'
           ./run.sh
+          echo 'Stopping the pipeline'
+          ./stop.sh
 
     #   - name: Starts writing-[bg] logs
     #     run: |

@@ -455,9 +455,10 @@ class Stats_Analyzer:
         plt.plot(thresholds, '-b', label=f'Threshold')
         plt.ylabel(f'%')
         plt.xlabel(f'Last {time} seconds')
+        plt.ylim([0, 100])  # show the entire interval along the y-axis
         plt.legend(loc='best')
         plt.title(
-            f'DFCTI Resource Monitor\n@{time_stamp}\nMachine-ID:{machine_id}')
+            f'DFCTI Resource Monitor\n@ {time_stamp}\nMachine-ID: {machine_id}')
         plt.savefig(plot_stack_file, bbox_inches='tight')
         plt.close()
 
