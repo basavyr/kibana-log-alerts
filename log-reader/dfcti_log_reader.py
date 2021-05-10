@@ -32,6 +32,10 @@ from matplotlib import rc
 # use the newly implemented default_rng
 import numpy as np
 from numpy.random import default_rng
+
+# use uuid for generating an alert code
+import uuid
+
 rd = default_rng()
 
 
@@ -148,6 +152,14 @@ def Get_Machine_ID(machine_id_file):
 
 
 class Alerter:
+
+    @classmethod
+    def Generate_Alert_Code(resource_type):
+        k = np.random.choice([0, 1, 2])
+        code = str(uuid.uuid4())[k:k + 4]
+        small_id = str(uuid.uuid4())[-3:]
+        alert_code = f'{code}-{resource_type}-{small_id}'
+        return alert_code
 
     @classmethod
     def Generate_Fail_Stats(self, name, issue, fail_stack):

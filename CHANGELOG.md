@@ -2,7 +2,12 @@
 
 ### Latest updates 
 
-* Debug mode for the reader has been improved, and it is more consistent with the `watchdog` *event handler*.
+* Multiple improvements for the documentation of the classes and their corresponding attributes, methods and so on.
+* Clean and consistent output in case any errors might occur during the reading pipeline.
+* Optimized the conditions for sending alerts with regards to the monitored system logs
+* Improved the way of sending alerts to the client list
+* Docker container for testing the methods in `log-reader` and `log-writer` was configured
+* Debug mode for the reader has been improved, and it is more consistent with the `watchdog` *event handler*
 * Improved the writer log by adding `__name__`, such that certain methods are not executed within the unit tests
 * Improved the reader log by adding `__name__`, such that certain methods are not executed within the unit tests
 * Improved pipeline for docker
