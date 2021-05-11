@@ -1,4 +1,4 @@
-name: run-pipeline
+name: Build-Logger
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
     branches:
       - main
   workflow_run:
-    workflows: [ "test-pipeline" ]
+    workflows: [ "Test-Logger" ]
     types:
       - completed
 
