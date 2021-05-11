@@ -28,9 +28,9 @@ then
     pipenv install
     nohup pipenv run python dfcti_log_writer.py $1 &
     cd ../log-reader/
-    pipenv run python dfcti_log_reader.py $2
+    nohup pipenv run python dfcti_log_reader.py $2 &
     cd ../resources/pipelines/
-    sudo $logstash_executable -f py_logs.conf --config.reload.automatic
+    sudo nohup $logstash_executable -f py_logs.conf --config.reload.automatic &
 else
     echo Cannot run the script on this node.
 fi
