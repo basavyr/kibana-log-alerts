@@ -779,8 +779,11 @@ class Reader():
             if(DEBUG_MODE):
                 print(
                     f'The reader process will refresh its cycle each {cycle_time} seconds...')
-            observer.start()
+            observer.start()  # <---------------- command that starts the actual watcher for the log-file
+
+            #  keep track of the total execution time ⬇️
             total_execution_time = time.time()
+            # keep track of the total execution time ⬇️
             cycler = time.time()
 
             # use the progress bar in *unknown mode*
@@ -865,7 +868,7 @@ class Reader():
                                             f'MEM analysis yields -> {mem_analysis}')
 
                                     # the first value of the tuple returned by  `Analyze_CPU_Usage_Stack` checks wether the average value is in the high usage regime or not
-                                    # this is the condition for raising an alert
+                                    # ! this is the condition for raising an alert
                                     if(cpu_analysis[0] == 1):
                                         if(DEBUG_MODE):
                                             print(
@@ -911,7 +914,7 @@ class Reader():
                                             Alerter.SendAlert(
                                                 alert, cpu_alert_code, attachment_files, email["email"], mail_registry_file)
                                             print(
-                                                'CPU alert detected. Sent report to the DevOps team...')
+                                                'CPU alert detected. Report sent to the DevOps team...')
 
                                     else:
                                         if(DEBUG_MODE):
@@ -965,7 +968,7 @@ class Reader():
                                             Alerter.SendAlert(
                                                 alert, mem_alert_code, attachment_files, email["email"], mail_registry_file)
                                             print(
-                                                'RAM alert detected. Sent report to the DevOps team...')
+                                                'RAM alert detected. Report sent to the DevOps team...')
 
                                     else:
                                         if(DEBUG_MODE):
