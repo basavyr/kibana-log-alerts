@@ -23,7 +23,22 @@ jobs:
         docker build . -t ${{env.imageName}}
         docker container create --name ${{env.containerName}} ${{env.imageName}}
         docker start -i ${{env.containerName}}
-      # run: |
-      #   docker pull basavyr/ubuntu:latest
-      #   docker build . -t pypy
-      #   docker run pypy
+    - name: Install packages for creating archives
+      run: sudo apt-get install zip gzip tar
+    - name: Create archive with the source code
+      run: |
+        mkdir -p packaged_app
+        cd packaged_app
+        cp ../log-reader/dfcti_log_reader.py .
+        cp ../log-reader/test_reader.py .
+        cp ../log-reader/Pipfile .
+        cp ../log-writer/dfcti_log_writer.py .
+        cp ../log-writer/test_writer.py .
+        cd ..
+        zip -r packaged_app.zip packaged_app
+    - name: Create artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: packaged_app.zip
+        path: packaged_app.zip
+        if-no-files-found: warn

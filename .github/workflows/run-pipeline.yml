@@ -1,12 +1,12 @@
 name: Build-Logger
 
 on:
-  push:
-    tags:        
-      - v*           
-  pull_request:
-    branches:
-      - main
+  # push:
+  #   tags:        
+  #     - v*           
+  # pull_request:
+  #   branches:
+  #     - main
   workflow_run:
     workflows: [ "Test-Logger" ]
     types:
@@ -63,3 +63,4 @@ jobs:
           ./run.sh
           echo 'Stopping the pipeline'
           ./stop.sh
+      
