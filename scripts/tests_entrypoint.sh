@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 touch /var/log/dfcti_system_logs.log
 chmod 777 /var/log/dfcti_system_logs.log
 echo 'Testing the reader implementation'
