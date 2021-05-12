@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 cycle_time=$2
 
 node_name=$(uname -n)

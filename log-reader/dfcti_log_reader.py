@@ -1096,7 +1096,7 @@ def Read_Pipeline(log_file_path):
 # the reading pipeline which is called only when the script is executed directly from the CLI
 def Read_Process(log_file_path):
     # set the time window after which the pipeline is doing analysis of the incoming log events
-    cycle_time = 10
+    cycle_time = 20
     try:
         cycle_time = int(sys.argv[1])
     except IndexError as err:

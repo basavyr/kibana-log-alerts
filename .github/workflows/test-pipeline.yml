@@ -19,8 +19,8 @@ jobs:
       uses: actions/checkout@v2
     - name: Unit tests for log-reader 
       run: |
+        docker pull basavyr/pyenv-ubuntu
         docker images
-        ls
       # run: |
       #   docker pull basavyr/ubuntu:latest
       #   docker build . -t pypy
